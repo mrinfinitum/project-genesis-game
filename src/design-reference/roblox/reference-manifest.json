@@ -1,0 +1,29 @@
+[
+  {
+    "id": "dashboard-main-1920",
+    "screen": "dashboard",
+    "filename": "dashboard/dashboard-main-1920.png",
+    "viewportWidth": 1920,
+    "viewportHeight": 1080,
+    "notes": "Primary Roblox dashboard visual reference",
+    "status": "active"
+  },
+  {
+    "id": "dashboard-main-1440",
+    "screen": "dashboard",
+    "filename": "dashboard/dashboard-main-1440.png",
+    "viewportWidth": 1440,
+    "viewportHeight": 900,
+    "notes": "Secondary desktop capture for density checks.",
+    "status": "missing"
+  },
+  {
+    "id": "dashboard-main-1024",
+    "screen": "dashboard",
+    "filename": "dashboard/dashboard-main-1024.png",
+    "viewportWidth": 1024,
+    "viewportHeight": 768,
+    "notes": "Tablet-sized desktop capture for overflow and panel checks.",
+    "status": "missing"
+  }
+]

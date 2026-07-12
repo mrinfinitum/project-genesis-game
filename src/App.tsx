@@ -1,122 +1,181 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useMemo, useState } from "react";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useOutletContext } from "react-router-dom";
+import {
+  ArtReviewGallery,
+  GameShell,
+  RobloxParityReview,
+  StoryCanvas
+} from "@/components/game-ui/genesis-ui";
+import {
+  BrowserRuntimeContentCache,
+  CanonicalRuntimeContentManager,
+  createRuntimeContentConfig,
+  mockRuntimeData,
+  normalizeRuntimeContentMode,
+  type GameRuntimeData,
+  type RuntimeContentState
+} from "@/lib/canonical-runtime";
 
-function App() {
-  const [count, setCount] = useState(0)
+type GenesisOutletContext = {
+  data: GameRuntimeData;
+  state: RuntimeContentState;
+};
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+const routeScreens: Record<string, { activeScreen: string; activeEraId?: string; activeCategoryId?: string }> = {
+  "/": { activeScreen: "dashboard", activeEraId: "survival", activeCategoryId: "workforce" },
+  "/production": { activeScreen: "production", activeEraId: "industrial", activeCategoryId: "industry" },
+  "/research": { activeScreen: "research", activeEraId: "space-age", activeCategoryId: "science" },
+  "/civilization": { activeScreen: "civilization", activeEraId: "modern", activeCategoryId: "workforce" },
+  "/earth": { activeScreen: "earth", activeEraId: "survival", activeCategoryId: "industry" },
+  "/solar-system": { activeScreen: "solar", activeEraId: "space-age", activeCategoryId: "technology" },
+  "/discovery": { activeScreen: "journal", activeEraId: "interstellar", activeCategoryId: "science" }
+};
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function payloadFromState(state: RuntimeContentState): GameRuntimeData {
+  return {
+    metadata: {
+      schemaVersion: state.schemaVersion as "game-runtime-v1",
+      contentVersion: state.contentVersion,
+      releaseName: state.releaseName,
+      checksum: state.checksum,
+      accessLevel: state.accessLevel as "public-published",
+      validationStatus: state.validationStatus as "Ready"
+    },
+    eras: state.eras,
+    resources: state.resources,
+    upgradeCategories: state.upgradeCategories,
+    upgrades: state.upgrades,
+    assets: state.assets,
+    balance: state.balance,
+    clientProfiles: state.clientProfiles
+  };
 }
 
-export default App
+function initialState(): RuntimeContentState {
+  return {
+    configuredMode: "mock",
+    activeSource: "mock",
+    status: "loading",
+    schemaVersion: mockRuntimeData.metadata.schemaVersion,
+    contentVersion: mockRuntimeData.metadata.contentVersion,
+    releaseName: mockRuntimeData.metadata.releaseName,
+    checksum: mockRuntimeData.metadata.checksum,
+    accessLevel: mockRuntimeData.metadata.accessLevel,
+    validationStatus: mockRuntimeData.metadata.validationStatus,
+    eras: mockRuntimeData.eras,
+    resources: mockRuntimeData.resources,
+    upgradeCategories: mockRuntimeData.upgradeCategories,
+    upgrades: mockRuntimeData.upgrades,
+    assets: mockRuntimeData.assets,
+    balance: mockRuntimeData.balance,
+    clientProfiles: mockRuntimeData.clientProfiles,
+    validationErrors: [],
+    validationWarnings: [],
+    isUsingFallback: true,
+    fallbackReason: "Runtime content is initializing.",
+    studioEndpoint: "",
+    cacheStatus: "unknown"
+  };
+}
+
+function createViteRuntimeManager() {
+  const config = createRuntimeContentConfig({
+    configuredMode: normalizeRuntimeContentMode(import.meta.env.VITE_CONTENT_MODE ?? "live"),
+    studioUrl: import.meta.env.VITE_GENESIS_STUDIO_URL,
+    runtimePath: import.meta.env.VITE_GENESIS_RUNTIME_PATH,
+    developerPanelEnabled: import.meta.env.VITE_ENABLE_DEV_TOOLS === "true"
+  });
+
+  return new CanonicalRuntimeContentManager(new BrowserRuntimeContentCache(), config);
+}
+
+function useRuntimeContent() {
+  const manager = useMemo(() => createViteRuntimeManager(), []);
+  const [state, setState] = useState<RuntimeContentState>(() => initialState());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const startup = await manager.loadStartup();
+      if (cancelled) return;
+      setState(startup);
+
+      if (manager.getConfig().configuredMode === "live") {
+        const refreshed = await manager.refreshLiveContent(payloadFromState(startup), startup.activeSource);
+        if (!cancelled) {
+          setState(refreshed.state);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [manager]);
+
+  return state;
+}
+
+function RuntimeRouteShell() {
+  const state = useRuntimeContent();
+  const data = useMemo(() => payloadFromState(state), [state]);
+
+  if (state.status === "loading") {
+    return (
+      <StoryCanvas>
+        <div className="flex min-h-screen items-center justify-center text-center">
+          <div className="rounded-md border border-cyan-200/25 bg-black/30 px-5 py-4 text-cyan-50">
+            <div className="text-xs font-bold uppercase text-cyan-100/60">Project Genesis</div>
+            <div className="mt-1 text-xl font-black text-white">Loading runtime content</div>
+          </div>
+        </div>
+      </StoryCanvas>
+    );
+  }
+
+  return <Outlet context={{ data, state } satisfies GenesisOutletContext} />;
+}
+
+function useGenesisRouteContext() {
+  return useOutletContext<GenesisOutletContext>();
+}
+
+function GameRoute({ pathKey }: { pathKey: keyof typeof routeScreens }) {
+  const { data } = useGenesisRouteContext();
+  const route = routeScreens[pathKey];
+  return <GameShell data={data} {...route} />;
+}
+
+function ArtReviewRoute() {
+  const { data } = useGenesisRouteContext();
+  return <ArtReviewGallery data={data} />;
+}
+
+function ParityReviewRoute() {
+  const { data } = useGenesisRouteContext();
+  return <RobloxParityReview data={data} />;
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<RuntimeRouteShell />}>
+          <Route index element={<GameRoute pathKey="/" />} />
+          <Route path="production" element={<GameRoute pathKey="/production" />} />
+          <Route path="research" element={<GameRoute pathKey="/research" />} />
+          <Route path="civilization" element={<GameRoute pathKey="/civilization" />} />
+          <Route path="earth" element={<GameRoute pathKey="/earth" />} />
+          <Route path="solar-system" element={<GameRoute pathKey="/solar-system" />} />
+          <Route path="discovery" element={<GameRoute pathKey="/discovery" />} />
+          <Route path="art-review" element={<ArtReviewRoute />} />
+          <Route path="parity-review" element={<ParityReviewRoute />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}

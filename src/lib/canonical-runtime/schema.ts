@@ -1,0 +1,338 @@
+import { z } from "zod";
+import type { GameRuntimeData, RuntimeValidationResult } from "./types";
+
+const id = z.string().trim().min(1);
+const finiteNumber = z.number().finite();
+const optionalFiniteNumber = z.number().finite().nullable().optional();
+const stringArray = z.array(z.string());
+const unknownRecord = z.record(z.string(), z.unknown());
+
+export const unlockRequirementSchema: z.ZodType<Record<string, unknown>> = unknownRecord;
+
+export const visibilityRulesSchema = z.object({
+  defaultState: z.string().optional(),
+  revealRequirements: unlockRequirementSchema.optional(),
+  availableRequirements: unlockRequirementSchema.optional(),
+  hideUntilEraId: z.string().nullable().optional(),
+  showTeaser: z.boolean().optional(),
+  teaserOrder: finiteNumber.optional()
+});
+
+export const runtimeMetadataSchema = z.object({
+  schemaVersion: z.literal("game-runtime-v1"),
+  contentVersion: z.number().int().positive(),
+  releaseName: z.string().optional(),
+  checksum: id,
+  accessLevel: z.literal("public-published"),
+  importedAt: z.string().optional(),
+  importedFrom: z.string().optional(),
+  sourceProject: z.string().optional(),
+  sourceFormat: z.string().optional(),
+  environment: z.string().optional(),
+  validationStatus: z.enum(["Ready", "ready", "READY"])
+});
+
+export const eraDefinitionSchema = z.object({
+  id,
+  index: z.number().int().positive(),
+  name: id,
+  displayName: id,
+  description: z.string(),
+  unlockRequirements: unlockRequirementSchema.optional(),
+  iconKey: z.string().optional(),
+  artKey: z.string().optional(),
+  themeKey: z.string().optional(),
+  masteryRequirements: unknownRecord.optional(),
+  tags: stringArray.optional()
+});
+
+export const resourceDefinitionSchema = z.object({
+  id,
+  name: id,
+  displayName: id,
+  resourceClass: id,
+  category: id,
+  rarity: id,
+  iconKey: id,
+  artKey: id,
+  color: z.string().optional(),
+  description: z.string(),
+  discoveredEraId: id,
+  usableEraId: id,
+  tradable: z.boolean(),
+  tags: stringArray.optional()
+});
+
+export const upgradeCategorySchema = z.object({
+  id,
+  name: id.optional(),
+  displayName: id,
+  description: z.string().optional(),
+  iconKey: z.string().optional(),
+  themeKey: z.string().optional(),
+  unlockedAtGameStart: z.boolean().optional(),
+  unlockRequirements: unlockRequirementSchema.optional(),
+  order: finiteNumber,
+  tags: stringArray.optional()
+});
+
+export const upgradeDefinitionSchema = z.object({
+  id,
+  categoryId: id,
+  eraId: id,
+  chainId: z.string().optional(),
+  order: finiteNumber,
+  name: id,
+  displayName: id,
+  description: z.string(),
+  iconKey: z.string().optional(),
+  defaultLevel: finiteNumber,
+  maxLevel: finiteNumber,
+  baseCost: finiteNumber,
+  costResourceId: z.string().nullable(),
+  costGrowthRate: finiteNumber,
+  effectType: z.string(),
+  baseEffectValue: finiteNumber,
+  effectGrowthRate: finiteNumber,
+  unlockRequirements: unlockRequirementSchema.optional(),
+  nextUpgradeIds: stringArray,
+  visibilityRules: visibilityRulesSchema.optional(),
+  tags: stringArray.optional()
+});
+
+export const platformAssetMappingsSchema = z
+  .object({
+    web: z
+      .object({
+        path: z.string().optional()
+      })
+      .catchall(z.unknown())
+      .optional()
+  })
+  .catchall(z.unknown());
+
+export const assetDefinitionSchema = z.object({
+  id,
+  name: id,
+  type: z.string(),
+  category: z.string(),
+  artKey: id,
+  width: optionalFiniteNumber,
+  height: optionalFiniteNumber,
+  aspectRatio: optionalFiniteNumber,
+  status: z.string().optional(),
+  notes: z.string().optional(),
+  platformMappings: platformAssetMappingsSchema.optional()
+});
+
+export const balanceDefinitionSchema = z
+  .object({
+    version: z.string().optional(),
+    startingCivilizationEnergy: finiteNumber,
+    startingCoins: finiteNumber,
+    startingResearch: finiteNumber,
+    startingPopulation: finiteNumber,
+    baseClickPower: finiteNumber,
+    baseAutoClickPower: finiteNumber,
+    autosaveSeconds: finiteNumber,
+    notes: z.string().optional(),
+    environmentOverrides: unknownRecord.optional(),
+    difficultyProfileOverrides: unknownRecord.optional()
+  })
+  .catchall(z.unknown());
+
+export const clientProfileSchema = z
+  .object({
+    defaultUpgradeRowsVisible: finiteNumber.optional(),
+    futureUpgradeTeaserCount: finiteNumber.optional(),
+    showUnknownUpgradeSlots: z.boolean().optional(),
+    lockedOpacity: finiteNumber.optional(),
+    availableGlowEnabled: z.boolean().optional()
+  })
+  .catchall(z.unknown());
+
+export const clientProfilesSchema = z
+  .object({
+    default: clientProfileSchema,
+    web: clientProfileSchema.optional(),
+    roblox: clientProfileSchema.optional(),
+    unity: clientProfileSchema.optional(),
+    unreal: clientProfileSchema.optional(),
+    godot: clientProfileSchema.optional()
+  })
+  .catchall(clientProfileSchema.optional());
+
+export const gameRuntimeDataSchema = z.object({
+  metadata: runtimeMetadataSchema,
+  eras: z.array(eraDefinitionSchema),
+  resources: z.array(resourceDefinitionSchema),
+  upgradeCategories: z.array(upgradeCategorySchema),
+  upgrades: z.array(upgradeDefinitionSchema),
+  assets: z.array(assetDefinitionSchema),
+  balance: balanceDefinitionSchema,
+  clientProfiles: clientProfilesSchema
+});
+
+function requireUnique(values: string[], label: string, errors: string[]) {
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    if (seen.has(value)) {
+      errors.push(`${label} contains duplicate id "${value}".`);
+    }
+
+    seen.add(value);
+  }
+}
+
+function validateRequirementReferences(
+  owner: string,
+  requirement: Record<string, unknown> | undefined,
+  ids: { eras: Set<string>; resources: Set<string>; upgrades: Set<string> },
+  errors: string[]
+) {
+  if (!requirement) {
+    return;
+  }
+
+  const eraId = requirement.eraId ?? requirement.previousEraId ?? requirement.hideUntilEraId;
+  if (typeof eraId === "string" && !ids.eras.has(eraId)) {
+    errors.push(`${owner} references unknown era "${eraId}".`);
+  }
+
+  const resourceId = requirement.resourceId ?? requirement.costResourceId;
+  if (typeof resourceId === "string" && !ids.resources.has(resourceId)) {
+    errors.push(`${owner} references unknown resource "${resourceId}".`);
+  }
+
+  const upgradeId = requirement.upgradeId ?? requirement.requiredUpgradeId;
+  if (typeof upgradeId === "string" && !ids.upgrades.has(upgradeId)) {
+    errors.push(`${owner} references unknown upgrade "${upgradeId}".`);
+  }
+}
+
+export function validateGameRuntimeData(input: unknown): RuntimeValidationResult {
+  const parsed = gameRuntimeDataSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      errors: parsed.error.issues.map((issue) => `${issue.path.join(".") || "payload"}: ${issue.message}`),
+      warnings: []
+    };
+  }
+
+  const payload = parsed.data as GameRuntimeData;
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const eraIds = new Set(payload.eras.map((era) => era.id));
+  const resourceIds = new Set(payload.resources.map((resource) => resource.id));
+  const categoryIds = new Set(payload.upgradeCategories.map((category) => category.id));
+  const upgradeIds = new Set(payload.upgrades.map((upgrade) => upgrade.id));
+  const assetIds = new Set(payload.assets.map((asset) => asset.id));
+  const assetKeys = new Set(payload.assets.map((asset) => asset.artKey));
+  const ids = { eras: eraIds, resources: resourceIds, upgrades: upgradeIds };
+
+  if (payload.metadata.contentVersion < 3) {
+    errors.push(`Expected canonical contentVersion 3 or newer, received ${payload.metadata.contentVersion}.`);
+  }
+
+  if (payload.eras.length !== 9) {
+    errors.push(`Expected exactly 9 canonical eras, received ${payload.eras.length}.`);
+  }
+
+  if (payload.upgradeCategories.length !== 4) {
+    errors.push(`Expected exactly 4 upgrade categories, received ${payload.upgradeCategories.length}.`);
+  }
+
+  requireUnique(payload.eras.map((era) => era.id), "eras", errors);
+  requireUnique(payload.resources.map((resource) => resource.id), "resources", errors);
+  requireUnique(payload.upgradeCategories.map((category) => category.id), "upgradeCategories", errors);
+  requireUnique(payload.upgrades.map((upgrade) => upgrade.id), "upgrades", errors);
+  requireUnique(payload.assets.map((asset) => asset.id), "assets", errors);
+
+  for (const era of payload.eras) {
+    validateRequirementReferences(`era "${era.id}"`, era.unlockRequirements, ids, errors);
+  }
+
+  for (const resource of payload.resources) {
+    if (!eraIds.has(resource.discoveredEraId)) {
+      errors.push(`resource "${resource.id}" references unknown discoveredEraId "${resource.discoveredEraId}".`);
+    }
+
+    if (!eraIds.has(resource.usableEraId)) {
+      errors.push(`resource "${resource.id}" references unknown usableEraId "${resource.usableEraId}".`);
+    }
+  }
+
+  for (const upgrade of payload.upgrades) {
+    if (!categoryIds.has(upgrade.categoryId)) {
+      errors.push(`upgrade "${upgrade.id}" references unknown categoryId "${upgrade.categoryId}".`);
+    }
+
+    if (!eraIds.has(upgrade.eraId)) {
+      errors.push(`upgrade "${upgrade.id}" references unknown eraId "${upgrade.eraId}".`);
+    }
+
+    if (upgrade.costResourceId && !resourceIds.has(upgrade.costResourceId)) {
+      errors.push(`upgrade "${upgrade.id}" references unknown costResourceId "${upgrade.costResourceId}".`);
+    }
+
+    for (const nextUpgradeId of upgrade.nextUpgradeIds) {
+      if (!upgradeIds.has(nextUpgradeId)) {
+        errors.push(`upgrade "${upgrade.id}" references unknown nextUpgradeId "${nextUpgradeId}".`);
+      }
+    }
+
+    validateRequirementReferences(`upgrade "${upgrade.id}" unlockRequirements`, upgrade.unlockRequirements, ids, errors);
+    validateRequirementReferences(`upgrade "${upgrade.id}" revealRequirements`, upgrade.visibilityRules?.revealRequirements, ids, errors);
+    validateRequirementReferences(`upgrade "${upgrade.id}" availableRequirements`, upgrade.visibilityRules?.availableRequirements, ids, errors);
+
+    if (upgrade.visibilityRules?.hideUntilEraId && !eraIds.has(upgrade.visibilityRules.hideUntilEraId)) {
+      errors.push(`upgrade "${upgrade.id}" references unknown hideUntilEraId "${upgrade.visibilityRules.hideUntilEraId}".`);
+    }
+  }
+
+  for (const asset of payload.assets) {
+    const webPath = asset.platformMappings?.web?.path;
+
+    if (webPath && typeof webPath === "string" && !webPath.startsWith("/")) {
+      errors.push(`asset "${asset.id}" has invalid web path "${webPath}".`);
+    }
+
+    if (!asset.artKey.trim()) {
+      errors.push(`asset "${asset.id}" is missing artKey.`);
+    }
+  }
+
+  const requiredBalanceKeys = [
+    "startingCivilizationEnergy",
+    "startingCoins",
+    "startingResearch",
+    "startingPopulation",
+    "baseClickPower",
+    "baseAutoClickPower",
+    "autosaveSeconds"
+  ];
+
+  for (const key of requiredBalanceKeys) {
+    if (typeof payload.balance[key] !== "number" || !Number.isFinite(payload.balance[key])) {
+      errors.push(`balance.${key} must be a finite number.`);
+    }
+  }
+
+  if (!assetIds.size) {
+    warnings.push("No runtime assets were provided.");
+  }
+
+  if (!assetKeys.size) {
+    warnings.push("No runtime asset keys were provided.");
+  }
+
+  return {
+    ok: errors.length === 0,
+    payload: errors.length === 0 ? payload : undefined,
+    errors,
+    warnings
+  };
+}
