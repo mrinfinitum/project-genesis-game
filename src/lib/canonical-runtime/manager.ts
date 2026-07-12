@@ -97,8 +97,8 @@ export class CanonicalRuntimeContentManager {
     };
   }
 
-  private bundledOrMockState(reason?: string) {
-    const bundled = getBundledStudioRuntimeSnapshot();
+  private async bundledOrMockState(reason?: string) {
+    const bundled = await getBundledStudioRuntimeSnapshot();
 
     if (bundled) {
       return stateFromPayload(bundled, this.config, "bundled-snapshot", {
@@ -169,7 +169,7 @@ export class CanonicalRuntimeContentManager {
                 lastCheckedAt: checkedAt,
                 cacheStatus: "valid"
               })
-            : this.bundledOrMockState("Live payload failed validation."),
+            : await this.bundledOrMockState("Live payload failed validation."),
           activated: false,
           validation
         };
@@ -218,7 +218,7 @@ export class CanonicalRuntimeContentManager {
               lastCheckedAt: checkedAt,
               cacheStatus: "valid"
             })
-          : this.bundledOrMockState(reason),
+          : await this.bundledOrMockState(reason),
         activated: false,
         validation: { ok: false, errors: [reason], warnings: [] } satisfies RuntimeValidationResult
       };

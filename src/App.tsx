@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useOutletContext } from "react-router-dom";
 import {
-  ArtReviewGallery,
   GameShell,
-  RobloxParityReview,
   StoryCanvas
 } from "@/components/game-ui/genesis-ui";
 import {
@@ -16,20 +14,22 @@ import {
   type RuntimeContentState
 } from "@/lib/canonical-runtime";
 
+const ProductionRoute = lazy(() => import("@/routes/production-route"));
+const ResearchRoute = lazy(() => import("@/routes/research-route"));
+const CivilizationRoute = lazy(() => import("@/routes/civilization-route"));
+const EarthRoute = lazy(() => import("@/routes/earth-route"));
+const SolarSystemRoute = lazy(() => import("@/routes/solar-system-route"));
+const DiscoveryRoute = lazy(() => import("@/routes/discovery-route"));
+const ArtReviewRoute = lazy(() => import("@/routes/art-review-route"));
+const ParityReviewRoute = lazy(() => import("@/routes/parity-review-route"));
+const RuntimeDiagnostics = lazy(() => import("@/routes/runtime-diagnostics"));
+
 type GenesisOutletContext = {
   data: GameRuntimeData;
   state: RuntimeContentState;
 };
 
-const routeScreens: Record<string, { activeScreen: string; activeEraId?: string; activeCategoryId?: string }> = {
-  "/": { activeScreen: "dashboard", activeEraId: "survival", activeCategoryId: "workforce" },
-  "/production": { activeScreen: "production", activeEraId: "industrial", activeCategoryId: "industry" },
-  "/research": { activeScreen: "research", activeEraId: "space-age", activeCategoryId: "science" },
-  "/civilization": { activeScreen: "civilization", activeEraId: "modern", activeCategoryId: "workforce" },
-  "/earth": { activeScreen: "earth", activeEraId: "survival", activeCategoryId: "industry" },
-  "/solar-system": { activeScreen: "solar", activeEraId: "space-age", activeCategoryId: "technology" },
-  "/discovery": { activeScreen: "journal", activeEraId: "interstellar", activeCategoryId: "science" }
-};
+const developerToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
 
 function payloadFromState(state: RuntimeContentState): GameRuntimeData {
   return {
@@ -136,27 +136,50 @@ function RuntimeRouteShell() {
     );
   }
 
-  return <Outlet context={{ data, state } satisfies GenesisOutletContext} />;
+  return (
+    <>
+      <Outlet context={{ data, state } satisfies GenesisOutletContext} />
+      {developerToolsEnabled ? (
+        <Suspense fallback={null}>
+          <RuntimeDiagnostics state={state} />
+        </Suspense>
+      ) : null}
+    </>
+  );
 }
 
 function useGenesisRouteContext() {
   return useOutletContext<GenesisOutletContext>();
 }
 
-function GameRoute({ pathKey }: { pathKey: keyof typeof routeScreens }) {
-  const { data } = useGenesisRouteContext();
-  const route = routeScreens[pathKey];
-  return <GameShell data={data} {...route} />;
+function GenesisRouteFallback({ label }: { label: string }) {
+  return (
+    <StoryCanvas>
+      <div className="flex min-h-screen items-center justify-center text-center">
+        <div className="rounded-md border border-cyan-200/25 bg-black/35 px-5 py-4 text-cyan-50 shadow-[0_18px_56px_rgba(0,0,0,0.34)]">
+          <div className="text-xs font-bold uppercase text-cyan-100/55">Project Genesis</div>
+          <div className="mt-1 text-xl font-black text-white">Loading {label}</div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-md bg-cyan-950">
+            <div className="h-full w-2/3 rounded-md bg-gradient-to-r from-cyan-300 via-teal-300 to-amber-300" />
+          </div>
+        </div>
+      </div>
+    </StoryCanvas>
+  );
 }
 
-function ArtReviewRoute() {
+function LazyDataRoute({ component: Component, label }: { component: ComponentType<{ data: GameRuntimeData }>; label: string }) {
   const { data } = useGenesisRouteContext();
-  return <ArtReviewGallery data={data} />;
+  return (
+    <Suspense fallback={<GenesisRouteFallback label={label} />}>
+      <Component data={data} />
+    </Suspense>
+  );
 }
 
-function ParityReviewRoute() {
+function DashboardRoute() {
   const { data } = useGenesisRouteContext();
-  return <RobloxParityReview data={data} />;
+  return <GameShell data={data} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" />;
 }
 
 export default function App() {
@@ -164,15 +187,15 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<RuntimeRouteShell />}>
-          <Route index element={<GameRoute pathKey="/" />} />
-          <Route path="production" element={<GameRoute pathKey="/production" />} />
-          <Route path="research" element={<GameRoute pathKey="/research" />} />
-          <Route path="civilization" element={<GameRoute pathKey="/civilization" />} />
-          <Route path="earth" element={<GameRoute pathKey="/earth" />} />
-          <Route path="solar-system" element={<GameRoute pathKey="/solar-system" />} />
-          <Route path="discovery" element={<GameRoute pathKey="/discovery" />} />
-          <Route path="art-review" element={<ArtReviewRoute />} />
-          <Route path="parity-review" element={<ParityReviewRoute />} />
+          <Route index element={<DashboardRoute />} />
+          <Route path="production" element={<LazyDataRoute component={ProductionRoute} label="Production" />} />
+          <Route path="research" element={<LazyDataRoute component={ResearchRoute} label="Research" />} />
+          <Route path="civilization" element={<LazyDataRoute component={CivilizationRoute} label="Civilization" />} />
+          <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
+          <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
+          <Route path="discovery" element={<LazyDataRoute component={DiscoveryRoute} label="Discovery" />} />
+          <Route path="art-review" element={<LazyDataRoute component={ArtReviewRoute} label="Art Review" />} />
+          <Route path="parity-review" element={<LazyDataRoute component={ParityReviewRoute} label="Parity Review" />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

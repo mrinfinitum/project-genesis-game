@@ -13,8 +13,8 @@ import {
   type GameRuntimeData
 } from "@/lib/canonical-runtime";
 
-function bundledRuntime() {
-  const runtime = getBundledStudioRuntimeSnapshot();
+async function bundledRuntime() {
+  const runtime = await getBundledStudioRuntimeSnapshot();
   expect(runtime).not.toBeNull();
   return runtime as GameRuntimeData;
 }
@@ -24,8 +24,8 @@ function cloneRuntime(payload: GameRuntimeData): GameRuntimeData {
 }
 
 describe("canonical runtime", () => {
-  it("parses the current nine-era Studio snapshot", () => {
-    const runtime = bundledRuntime();
+  it("parses the current nine-era Studio snapshot", async () => {
+    const runtime = await bundledRuntime();
     const validation = validateGameRuntimeData(runtime);
 
     expect(validation.ok).toBe(true);
@@ -48,22 +48,22 @@ describe("canonical runtime", () => {
     expect(runtime.upgrades).toHaveLength(556);
   });
 
-  it("rejects invalid runtime shape and references", () => {
-    const invalidShape = cloneRuntime(bundledRuntime());
+  it("rejects invalid runtime shape and references", async () => {
+    const invalidShape = cloneRuntime(await bundledRuntime());
     invalidShape.metadata.schemaVersion = "unsupported" as never;
     const shapeValidation = validateGameRuntimeData(invalidShape);
     expect(shapeValidation.ok).toBe(false);
     expect(shapeValidation.errors.some((error) => error.includes("schemaVersion"))).toBe(true);
 
-    const invalidReference = cloneRuntime(bundledRuntime());
+    const invalidReference = cloneRuntime(await bundledRuntime());
     invalidReference.upgrades[0].categoryId = "missing-category";
     const referenceValidation = validateGameRuntimeData(invalidReference);
     expect(referenceValidation.ok).toBe(false);
     expect(referenceValidation.errors.some((error) => error.includes("categoryId"))).toBe(true);
   });
 
-  it("rejects old eight-era runtime content", () => {
-    const invalid = cloneRuntime(bundledRuntime());
+  it("rejects old eight-era runtime content", async () => {
+    const invalid = cloneRuntime(await bundledRuntime());
     invalid.eras = invalid.eras.filter((era) => era.id !== "renaissance");
 
     const validation = validateGameRuntimeData(invalid);
@@ -74,7 +74,7 @@ describe("canonical runtime", () => {
 
   it("uses the last valid cache before bundled fallback", async () => {
     const cache = new MemoryRuntimeContentCache();
-    const runtime = bundledRuntime();
+    const runtime = await bundledRuntime();
     await cache.write(createCacheRecord(runtime, "2026-07-12T00:00:00.000Z"));
 
     const manager = new CanonicalRuntimeContentManager(cache, createRuntimeContentConfig({ configuredMode: "live" }));
@@ -87,7 +87,7 @@ describe("canonical runtime", () => {
 
   it("falls back to the bundled snapshot when cache is empty or stale", async () => {
     const cache = new MemoryRuntimeContentCache();
-    const stale = cloneRuntime(bundledRuntime());
+    const stale = cloneRuntime(await bundledRuntime());
     stale.metadata.contentVersion = 2;
     await cache.write(createCacheRecord(stale));
 
@@ -101,7 +101,7 @@ describe("canonical runtime", () => {
   });
 
   it("can refresh valid live runtime and reject invalid live runtime", async () => {
-    const runtime = bundledRuntime();
+    const runtime = await bundledRuntime();
     const manager = new CanonicalRuntimeContentManager(new MemoryRuntimeContentCache(), createRuntimeContentConfig({ configuredMode: "live" }));
     const fetchMock = vi.spyOn(globalThis, "fetch");
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(runtime), { status: 200 }));
@@ -123,7 +123,7 @@ describe("canonical runtime", () => {
     const startup = await manager.loadStartup();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Studio offline"));
 
-    const refreshed = await manager.refreshLiveContent(bundledRuntime(), startup.activeSource);
+    const refreshed = await manager.refreshLiveContent(await bundledRuntime(), startup.activeSource);
 
     expect(refreshed.activated).toBe(false);
     expect(refreshed.state.status).toBe("fallback");
@@ -131,8 +131,8 @@ describe("canonical runtime", () => {
     fetchMock.mockRestore();
   });
 
-  it("resolves assets and client profile fallback", () => {
-    const runtime = bundledRuntime();
+  it("resolves assets and client profile fallback", async () => {
+    const runtime = await bundledRuntime();
     const webAsset = { ...runtime.assets[0], platformMappings: { web: { path: "/assets/test.webp" } } };
     const web = resolveRuntimeAsset(runtime.resources[0], webAsset);
     const placeholder = resolveRuntimeAsset({ ...runtime.resources[0], artKey: "missing", iconKey: "missing" });
@@ -145,8 +145,8 @@ describe("canonical runtime", () => {
     expect(webProfile).toBeDefined();
   });
 
-  it("preserves player-state references that still resolve and reports legacy ids", () => {
-    const runtime = bundledRuntime();
+  it("preserves player-state references that still resolve and reports legacy ids", async () => {
+    const runtime = await bundledRuntime();
     const knownResourceId = runtime.resources[0].id;
     const knownUpgradeId = runtime.upgrades[0].id;
     const resolved = resolvePlayerProgressReferences(
@@ -171,6 +171,6 @@ describe("canonical runtime", () => {
 
     expect(state.activeSource).toBe("mock");
     expect(state.contentVersion).toBe(mockRuntimeData.metadata.contentVersion);
-    expect(compareRuntimeVersions(bundledRuntime(), mockRuntimeData)).toBe("remote_newer");
+    expect(compareRuntimeVersions(await bundledRuntime(), mockRuntimeData)).toBe("remote_newer");
   });
 });
