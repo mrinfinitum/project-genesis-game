@@ -1,6 +1,7 @@
 export * from "./asset-resolver";
 export * from "./bundled-snapshot";
 export * from "./cache";
+export * from "./dashboard-art";
 export * from "./manager";
 export * from "./mock-fixture";
 export * from "./player-progress";

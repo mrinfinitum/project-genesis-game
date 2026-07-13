@@ -1,6 +1,6 @@
 import type { RuntimeContentState } from "@/lib/canonical-runtime";
 
-export default function RuntimeDiagnostics({ state }: { state: RuntimeContentState }) {
+export default function RuntimeDiagnostics({ state, onRefresh }: { state: RuntimeContentState; onRefresh: () => Promise<void> }) {
   const issues = [...state.validationErrors, ...state.validationWarnings];
 
   return (
@@ -12,6 +12,15 @@ export default function RuntimeDiagnostics({ state }: { state: RuntimeContentSta
         </div>
         <div className="rounded-md border border-cyan-200/20 bg-cyan-300/10 px-2 py-1 font-black text-cyan-50">v{state.contentVersion}</div>
       </div>
+      <button
+        className="mt-3 h-9 w-full rounded-md border border-cyan-200/30 bg-cyan-300/12 text-xs font-black uppercase text-cyan-50 transition hover:bg-cyan-300/20 disabled:border-slate-300/16 disabled:bg-slate-500/10 disabled:text-slate-300/50"
+        disabled={state.status === "refreshing"}
+        onClick={() => {
+          void onRefresh();
+        }}
+      >
+        {state.status === "refreshing" ? "Refreshing Canonical Runtime" : "Refresh Canonical Runtime"}
+      </button>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <div className="rounded-md bg-white/[0.04] p-2">
           <div className="uppercase text-cyan-100/50">Eras</div>

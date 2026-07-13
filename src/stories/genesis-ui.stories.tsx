@@ -457,7 +457,7 @@ export const ArtReviewAll41Assets: Story = {
 export const RobloxParityMainDashboard: Story = {
   render: () => {
     const { data } = useGenesisStoryContent();
-    return <RobloxParityReview data={data} status="In Progress" opacity={0.34} />;
+    return <RobloxParityReview data={data} status="In Progress" opacity={0.5} />;
   }
 };
 

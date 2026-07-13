@@ -8,8 +8,8 @@ const config: StorybookConfig = {
   stories: ["../src/stories/**/*.stories.@(ts|tsx)"],
   staticDirs: [
     {
-      from: "../src/design-reference/roblox",
-      to: "/design-reference/roblox"
+      from: "../public/design-reference",
+      to: "/design-reference"
     }
   ],
   addons: [],

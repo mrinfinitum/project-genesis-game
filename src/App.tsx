@@ -27,6 +27,7 @@ const RuntimeDiagnostics = lazy(() => import("@/routes/runtime-diagnostics"));
 type GenesisOutletContext = {
   data: GameRuntimeData;
   state: RuntimeContentState;
+  refreshCanonicalRuntime: () => Promise<void>;
 };
 
 const developerToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
@@ -116,11 +117,17 @@ function useRuntimeContent() {
     };
   }, [manager]);
 
-  return state;
+  async function refreshCanonicalRuntime() {
+    setState((current) => ({ ...current, status: "refreshing" }));
+    const refreshed = await manager.refreshLiveContent(payloadFromState(state), state.activeSource);
+    setState(refreshed.state);
+  }
+
+  return { state, refreshCanonicalRuntime };
 }
 
 function RuntimeRouteShell() {
-  const state = useRuntimeContent();
+  const { state, refreshCanonicalRuntime } = useRuntimeContent();
   const data = useMemo(() => payloadFromState(state), [state]);
 
   if (state.status === "loading") {
@@ -138,10 +145,10 @@ function RuntimeRouteShell() {
 
   return (
     <>
-      <Outlet context={{ data, state } satisfies GenesisOutletContext} />
+      <Outlet context={{ data, state, refreshCanonicalRuntime } satisfies GenesisOutletContext} />
       {developerToolsEnabled ? (
         <Suspense fallback={null}>
-          <RuntimeDiagnostics state={state} />
+          <RuntimeDiagnostics state={state} onRefresh={refreshCanonicalRuntime} />
         </Suspense>
       ) : null}
     </>
@@ -168,18 +175,18 @@ function GenesisRouteFallback({ label }: { label: string }) {
   );
 }
 
-function LazyDataRoute({ component: Component, label }: { component: ComponentType<{ data: GameRuntimeData }>; label: string }) {
-  const { data } = useGenesisRouteContext();
+function LazyDataRoute({ component: Component, label }: { component: ComponentType<{ data: GameRuntimeData; runtimeState: RuntimeContentState }>; label: string }) {
+  const { data, state } = useGenesisRouteContext();
   return (
     <Suspense fallback={<GenesisRouteFallback label={label} />}>
-      <Component data={data} />
+      <Component data={data} runtimeState={state} />
     </Suspense>
   );
 }
 
 function DashboardRoute() {
-  const { data } = useGenesisRouteContext();
-  return <GameShell data={data} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" />;
+  const { data, state } = useGenesisRouteContext();
+  return <GameShell data={data} runtimeState={state} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" />;
 }
 
 export default function App() {

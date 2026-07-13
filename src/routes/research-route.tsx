@@ -1,6 +1,6 @@
 import { GameShell } from "@/components/game-ui/genesis-ui";
-import type { GameRuntimeData } from "@/lib/canonical-runtime";
+import type { GameRuntimeData, RuntimeContentState } from "@/lib/canonical-runtime";
 
-export default function ResearchRoute({ data }: { data: GameRuntimeData }) {
-  return <GameShell data={data} activeScreen="research" activeEraId="space-age" activeCategoryId="science" />;
+export default function ResearchRoute({ data, runtimeState }: { data: GameRuntimeData; runtimeState: RuntimeContentState }) {
+  return <GameShell data={data} runtimeState={runtimeState} activeScreen="research" activeEraId="space-age" activeCategoryId="science" />;
 }
