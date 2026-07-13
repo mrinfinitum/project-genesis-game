@@ -253,6 +253,21 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.unresolved.migrationNotes.push(`Repaired hidden Survival ${CREDITS_ECONOMY_ID} passive balance into ${LABOR_ECONOMY_ID}.`);
     }
   }
+  if (previousSaveVersion < 8) {
+    const seedPopulation = seed.economy.balances[POPULATION_ECONOMY_ID] ?? seed.civilization.population;
+    const legacyPopulation = next.economy.balances[POPULATION_ECONOMY_ID];
+    const legacyCivilizationPopulation = next.civilization.population;
+    const staleUntouchedPopulation =
+      legacyPopulation === 125 &&
+      (legacyCivilizationPopulation === 125 || legacyCivilizationPopulation === seedPopulation) &&
+      (next.production.totalManualClicks ?? 0) === 0;
+
+    if (staleUntouchedPopulation && seedPopulation !== 125) {
+      next.economy.balances[POPULATION_ECONOMY_ID] = seedPopulation;
+      next.civilization.population = seedPopulation;
+      next.unresolved.migrationNotes.push(`Repaired stale untouched ${POPULATION_ECONOMY_ID} from 125 to ${seedPopulation}.`);
+    }
+  }
 
   return preserveUnresolvedPlayerRuntimeIds(next, content);
 }

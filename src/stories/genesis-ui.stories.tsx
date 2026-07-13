@@ -1152,8 +1152,41 @@ export const MainDashboard: Story = {
   }
 };
 
-function DashboardViewportStory({ width, height }: { width: number; height: number }) {
+function topHudStoryPlayerState(overrides: Partial<DashboardPlayerState> = {}): DashboardPlayerState {
+  return {
+    source: "player-runtime",
+    sourceLabel: "Top HUD Story",
+    currentEraId: "survival",
+    civilizationName: "Genesis",
+    economyBalances: {
+      "ECON-LABOR": 0,
+      "ECON-CREDITS": 0,
+      "ECON-POPULATION": 5,
+      "ECON-RESEARCH": 0,
+      "ECON-PREMIUM-CRYSTALS": 0
+    },
+    economyRates: {
+      "ECON-LABOR": 1,
+      "ECON-CREDITS": 0,
+      "ECON-POPULATION": 0,
+      "ECON-RESEARCH": 0,
+      "ECON-PREMIUM-CRYSTALS": 0
+    },
+    resourceInventory: {},
+    resourceRates: {},
+    upgradeLevels: {},
+    ...overrides
+  };
+}
+
+function DashboardViewportStory({ width, height, playerState, missingIcon = false }: { width: number; height: number; playerState?: DashboardPlayerState; missingIcon?: boolean }) {
   const { data } = useGenesisStoryContent();
+  const storyData = missingIcon
+    ? {
+        ...data,
+        assets: data.assets.filter((asset) => !["credits_icon", "population_icon", "research_icon", "civilization_points_icon"].includes(asset.artKey))
+      }
+    : data;
   const scale = calculateGameViewportScale({ viewportWidth: width, viewportHeight: height }).scale;
   return (
     <StoryCanvas>
@@ -1161,7 +1194,7 @@ function DashboardViewportStory({ width, height }: { width: number; height: numb
         <div className="mb-3 inline-flex rounded-sm border border-cyan-200/20 bg-black/35 px-3 py-2 text-xs font-black uppercase text-cyan-50">
           {width} x {height} · scale {scale.toFixed(3)}
         </div>
-        <GameShell data={data} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" frameScale={scale} embedded />
+        <GameShell data={storyData} playerState={playerState} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" frameScale={scale} embedded />
       </div>
     </StoryCanvas>
   );
@@ -1189,6 +1222,40 @@ export const DashboardViewport3440x1440: Story = {
 
 export const DashboardViewport3840x2160: Story = {
   render: () => <DashboardViewportStory width={3840} height={2160} />
+};
+
+export const DashboardTopHudCanonicalNewGame1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} />
+};
+
+export const DashboardTopHudLargeValues1920: Story = {
+  render: () => (
+    <DashboardViewportStory
+      width={1920}
+      height={1080}
+      playerState={topHudStoryPlayerState({
+        economyBalances: {
+          "ECON-LABOR": 5392.3,
+          "ECON-CREDITS": 13110,
+          "ECON-POPULATION": 125,
+          "ECON-RESEARCH": 1840000,
+          "ECON-PREMIUM-CRYSTALS": 42
+        }
+      })}
+    />
+  )
+};
+
+export const DashboardTopHudMissingIconFallback1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} missingIcon />
+};
+
+export const DashboardTopHudCanonical2560: Story = {
+  render: () => <DashboardViewportStory width={2560} height={1440} playerState={topHudStoryPlayerState()} />
+};
+
+export const DashboardTopHudCanonical3840: Story = {
+  render: () => <DashboardViewportStory width={3840} height={2160} playerState={topHudStoryPlayerState()} />
 };
 
 export const Production: Story = {

@@ -281,10 +281,17 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("roblox-top-hud")).toHaveAttribute("data-layout-mode", "fixed-rojo-coordinates");
     expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-art-key", "dashboard_top_hud");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-icon-key", "economy_labor");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-art-kind", "placeholder");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-source-art-key", "hud_civilization_energy_icon");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-fallback-used", "true");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).toContain("icon_civilization_energy_96x96.png");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveAttribute("data-icon-key", "economy_credits");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveAttribute("data-art-kind", "web-path");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveAttribute("data-source-art-key", "hud_credits_icon");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS").getAttribute("src")).toContain("icon_credits_coin_96x96.png");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-POPULATION").getAttribute("src")).toContain("icon_population_96x96.png");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-RESEARCH").getAttribute("src")).toContain("icon_research_flask_96x96.png");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-PREMIUM-CRYSTALS").getAttribute("src")).toContain("icon_civilization_points_crystal_96x96.png");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toBe(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS").getAttribute("src"));
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toContain("leaf");
     expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle({
       left: "190px",
       width: "355px"
@@ -297,6 +304,57 @@ describe("Roblox left column geometry", () => {
       left: "116px",
       top: "0px"
     });
+  });
+
+  it("swaps failed top HUD icon images to semantic fallback without broken-image chrome", async () => {
+    render(<GameShell data={await bundledRuntime()} />);
+
+    const creditsIcon = screen.getByTestId("top-hud-economy-icon-ECON-CREDITS");
+    fireEvent.error(creditsIcon);
+
+    const fallback = screen.getByTestId("top-hud-economy-icon-ECON-CREDITS");
+    expect(fallback.tagName.toLowerCase()).toBe("div");
+    expect(fallback).toHaveAttribute("data-image-status", "fallback");
+    expect(fallback).toHaveAttribute("data-failure-reason", "image-load-error");
+  });
+
+  it("keeps compact top HUD values inside fixed slot bounds", async () => {
+    const data = await bundledRuntime();
+    render(
+      <GameShell
+        data={data}
+        playerState={{
+          source: "player-runtime",
+          sourceLabel: "Large Value Test",
+          currentEraId: "survival",
+          economyBalances: {
+            "ECON-LABOR": 5392.3,
+            "ECON-CREDITS": 13110,
+            "ECON-POPULATION": 5,
+            "ECON-RESEARCH": 1840000,
+            "ECON-PREMIUM-CRYSTALS": 0
+          },
+          economyRates: {
+            "ECON-LABOR": 1,
+            "ECON-CREDITS": 0,
+            "ECON-POPULATION": 0,
+            "ECON-RESEARCH": 0,
+            "ECON-PREMIUM-CRYSTALS": 0
+          },
+          resourceInventory: {},
+          resourceRates: {},
+          upgradeLevels: {}
+        }}
+      />
+    );
+
+    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveTextContent("5.39K");
+    expect(screen.getByTestId("top-hud-economy-value-ECON-RESEARCH")).toHaveTextContent("1.84M");
+    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveTextContent("+1/s");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("h-[50px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[50px]");
+    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[30px]");
+    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[15px]");
   });
 
   it("does not introduce direct Roblox asset paths in JSX", () => {

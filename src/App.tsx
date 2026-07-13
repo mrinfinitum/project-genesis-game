@@ -167,7 +167,10 @@ function useRuntimeContent() {
 
 function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
   const service = useMemo(() => new PlayerRuntimeLocalSaveService(data), [data]);
+  const runtimeKey = `${data.metadata.contentVersion}:${data.metadata.checksum}`;
   const [playerRuntime, setPlayerRuntime] = useState<PlayerRuntimeState>(() => createNewPlayerRuntimeState(data));
+  const [loadedRuntimeKey, setLoadedRuntimeKey] = useState("");
+  const displayPlayerRuntime = loadedRuntimeKey === runtimeKey ? playerRuntime : createNewPlayerRuntimeState(data);
 
   useEffect(() => {
     if (!enabled) return;
@@ -180,13 +183,14 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
       const advanced = advanceSimulation(data, loaded);
       if (!cancelled) {
         setPlayerRuntime(service.save(advanced, false));
+        setLoadedRuntimeKey(runtimeKey);
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [data, enabled, service]);
+  }, [data, enabled, runtimeKey, service]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -259,7 +263,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
     [data, playerRuntime, service]
   );
 
-  return { playerRuntime, actions };
+  return { playerRuntime: displayPlayerRuntime, actions };
 }
 
 function RuntimeRouteShell() {

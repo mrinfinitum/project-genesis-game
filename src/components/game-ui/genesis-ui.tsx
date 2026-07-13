@@ -124,7 +124,7 @@ const navItems = [
 ];
 
 function compactNumber(value: number) {
-  return new Intl.NumberFormat("en", { notation: value > 9999 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
+  return new Intl.NumberFormat("en", { notation: Math.abs(value) >= 1000 ? "compact" : "standard", maximumFractionDigits: 2 }).format(value);
 }
 
 function findAsset(assets: AssetDefinition[], key?: string) {
@@ -1109,13 +1109,104 @@ function hudIconForResource(resource: { category: string; label: string }) {
   return Hexagon;
 }
 
+const topHudIconFallbacksByIconKey: Record<string, DashboardArtKey> = {
+  economy_labor: "hud_civilization_energy_icon",
+  economy_credits: "hud_credits_icon",
+  economy_population: "hud_population_icon",
+  economy_research: "hud_research_icon",
+  economy_premium_crystals: "hud_civilization_points_icon"
+};
+
+type TopHudIconResolution = {
+  iconKey?: string;
+  semanticArtKey?: DashboardArtKey;
+  path?: string;
+  sourceAssetId?: string;
+  platformWebPath?: string;
+  nativeWidth?: number | null;
+  nativeHeight?: number | null;
+  fallbackUsed: boolean;
+  failureReason?: string;
+  label: string;
+};
+
+function resolveTopHudIcon(resource: DashboardModel["hudResources"][number], assets: AssetDefinition[], art: DashboardArtMap): TopHudIconResolution {
+  const canonicalAsset = findCanonicalIconAsset(assets, resource.iconKey, resource.artKey);
+  const semanticArtKey = resource.iconKey ? topHudIconFallbacksByIconKey[resource.iconKey] : undefined;
+  const fallbackArt = semanticArtKey ? art[semanticArtKey] : undefined;
+  const canonicalWebPath = canonicalAsset?.platformMappings?.web?.path;
+  const canonicalWebPathIsExportPlaceholder = canonicalWebPath?.startsWith("/assets/roblox-art/") === true;
+  const path = !canonicalWebPathIsExportPlaceholder && canonicalWebPath ? canonicalWebPath : fallbackArt?.path;
+
+  return {
+    iconKey: resource.iconKey,
+    semanticArtKey,
+    path,
+    sourceAssetId: canonicalAsset?.id ?? fallbackArt?.canonicalAssetId,
+    platformWebPath: canonicalWebPath ?? fallbackArt?.platformWebPath,
+    nativeWidth: canonicalAsset?.width,
+    nativeHeight: canonicalAsset?.height,
+    fallbackUsed: !canonicalWebPath || canonicalWebPathIsExportPlaceholder || path === fallbackArt?.path,
+    failureReason: canonicalWebPathIsExportPlaceholder ? "canonical-web-path-not-built" : !path ? "missing-icon-mapping" : undefined,
+    label: resource.label
+  };
+}
+
+function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, className = "", style }: { resolution: TopHudIconResolution; fallback: typeof Hexagon; resourceId: string; className?: string; style?: CSSProperties }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(resolution.path) && !failed;
+
+  if (showImage) {
+    return (
+      <img
+        src={resolution.path}
+        alt={resolution.label}
+        data-testid={`top-hud-economy-icon-${resourceId}`}
+        data-icon-key={resolution.iconKey}
+        data-source-art-key={resolution.semanticArtKey}
+        data-source-asset-id={resolution.sourceAssetId}
+        data-resolved-url={resolution.path}
+        data-platform-web-path={resolution.platformWebPath}
+        data-native-size={resolution.nativeWidth && resolution.nativeHeight ? `${resolution.nativeWidth}x${resolution.nativeHeight}` : undefined}
+        data-fallback-used={resolution.fallbackUsed ? "true" : "false"}
+        data-failure-reason={resolution.failureReason}
+        data-image-status="loaded"
+        className={`absolute object-contain ${className}`}
+        style={style}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      role="img"
+      aria-label={resolution.label}
+      data-testid={`top-hud-economy-icon-${resourceId}`}
+      data-icon-key={resolution.iconKey}
+      data-source-art-key={resolution.semanticArtKey}
+      data-source-asset-id={resolution.sourceAssetId}
+      data-resolved-url={resolution.path}
+      data-platform-web-path={resolution.platformWebPath}
+      data-native-size={resolution.nativeWidth && resolution.nativeHeight ? `${resolution.nativeWidth}x${resolution.nativeHeight}` : undefined}
+      data-fallback-used="true"
+      data-failure-reason={failed ? "image-load-error" : resolution.failureReason ?? "semantic-fallback"}
+      data-image-status="fallback"
+      className={`absolute flex items-center justify-center rounded-sm border border-cyan-100/18 bg-black/25 text-cyan-100/78 shadow-[inset_0_0_14px_rgba(45,212,255,0.08)] ${className}`}
+      style={style}
+    >
+      <FallbackIcon className="h-[58%] w-[58%]" />
+    </div>
+  );
+}
+
 function RobloxTopHud({ model, assets, art, showDevWarnings = false }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean }) {
   const resourceSlots = [
-    { x: 515, w: 230, iconX: 27, valueX: 94, textW: 132 },
-    { x: 755, w: 230, iconX: 21, valueX: 88, textW: 132 },
-    { x: 995, w: 230, iconX: -8, valueX: 58, textW: 132 },
-    { x: 1215, w: 230, iconX: -8, valueX: 58, textW: 132 },
-    { x: 1445, w: 185, iconX: -8, valueX: 58, textW: 107 }
+    { x: 515, w: 230, iconX: 30, valueX: 92, textW: 128 },
+    { x: 755, w: 230, iconX: 24, valueX: 86, textW: 128 },
+    { x: 995, w: 230, iconX: -2, valueX: 60, textW: 128 },
+    { x: 1215, w: 230, iconX: -2, valueX: 60, textW: 128 },
+    { x: 1445, w: 185, iconX: -2, valueX: 58, textW: 112 }
   ];
   const hudResources = model.hudResources.slice(0, resourceSlots.length);
   const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
@@ -1147,31 +1238,17 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false }: { model: 
       {hudResources.map((resource, index) => {
         const slot = resourceSlots[index];
           const Icon = hudIconForResource(resource);
-          const iconArt = resolveRuntimeAsset(
-            {
-              name: resource.label,
-              displayName: resource.label,
-              iconKey: resource.iconKey,
-              artKey: resource.artKey
-            },
-            findCanonicalIconAsset(assets, resource.iconKey, resource.artKey)
-          );
+          const icon = resolveTopHudIcon(resource, assets, art);
           return (
           <div key={resource.resourceId} className="absolute top-0 h-full min-w-0" style={{ left: `${(slot.x / 1920) * 100}%`, width: `${(slot.w / 1920) * 100}%` }}>
-            {iconArt.path ? (
-              <img src={iconArt.path} alt="" data-testid={`top-hud-economy-icon-${resource.resourceId}`} data-icon-key={resource.iconKey} data-art-kind={iconArt.kind} className="absolute h-[58px] w-[58px] object-contain" style={{ left: slot.iconX, top: 23 }} />
-            ) : (
-              <div data-testid={`top-hud-economy-icon-${resource.resourceId}`} data-icon-key={resource.iconKey} data-art-kind={iconArt.kind} className={`absolute flex h-[58px] w-[58px] items-center justify-center rounded-full border border-cyan-100/24 bg-gradient-to-br ${iconArt.className} text-[0.7rem] font-black text-cyan-50/80 shadow-[inset_0_0_18px_rgba(255,255,255,0.08)]`} style={{ left: slot.iconX, top: 23 }}>
-                {iconArt.artworkNeeded ? iconArt.label : <Icon className="h-[1.45rem] w-[1.45rem]" />}
-              </div>
-            )}
-            <div className="absolute truncate text-[2.1rem] font-semibold leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.25)]" style={{ left: slot.valueX, top: 17, width: slot.textW }}>{compactNumber(resource.amount)}</div>
-            <div className="absolute truncate text-[1.08rem] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 58, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
+            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="h-[50px] w-[50px]" style={{ left: slot.iconX, top: 26 }} />
+            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate text-[30px] font-semibold leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={{ left: slot.valueX, top: 20, width: slot.textW }}>{compactNumber(resource.amount)}</div>
+            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate text-[15px] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 56, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
           </div>
           );
       })}
 
-      <button title="Add resources" className="absolute flex items-center justify-center" style={{ left: 1578, top: 26, width: 56, height: 56 }}>
+      <button title="Add resources" className="absolute flex items-center justify-center" style={{ left: 1582, top: 30, width: 46, height: 46 }}>
         {dashboardImagePath(art.topbar_plus_button) ? <img src={dashboardImagePath(art.topbar_plus_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.topbar_plus_button} className="h-full w-full" />}
       </button>
 
@@ -2400,6 +2477,15 @@ function DashboardDataArtInspector({
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const missing = artAudit.filter((item) => item.mappingStatus === "missing" || item.warnings.length);
   const demoValues = model.mode === "demo" ? dashboardDataAudit(model).filter((item) => item.source === "demo-fixture") : [];
+  const artAuditByKey = new Map(artAudit.map((item) => [item.key, item]));
+  const hudIconDiagnostics = model.hudResources.map((resource) => {
+    const fallbackKey = resource.iconKey ? topHudIconFallbacksByIconKey[resource.iconKey] : undefined;
+    const fallbackArt = fallbackKey ? artAuditByKey.get(fallbackKey) : undefined;
+    const asset = findCanonicalIconAsset(data.assets, resource.iconKey, resource.artKey);
+    const platformPath = asset?.platformMappings?.web?.path;
+    const resolvedPath = platformPath && !platformPath.startsWith("/assets/roblox-art/") ? platformPath : fallbackArt?.path;
+    return `${resource.resourceId}:${resource.iconKey ?? "missing"} -> ${resolvedPath ?? "missing"}${fallbackArt?.mappingStatus ? ` (${fallbackArt.mappingStatus})` : ""}`;
+  });
   const resolvedPrimaryEconomyId = playerRuntime ? resolvePrimaryEconomyIdForCurrentEra(data, playerRuntime.civilization.currentEraId) : undefined;
   const passiveTickTarget = resolvedPrimaryEconomyId && (playerRuntime?.economy.rates[resolvedPrimaryEconomyId] ?? 0) > 0 ? resolvedPrimaryEconomyId : "none";
   const autoClickTarget = playerRuntime?.production.automationEnabled && resolvedPrimaryEconomyId ? resolvedPrimaryEconomyId : "none";
@@ -2456,6 +2542,7 @@ function DashboardDataArtInspector({
             <div className="col-span-2 truncate">resolved primary {resolvedPrimaryEconomyId ?? "missing"}</div>
             <div className="col-span-2 truncate">targets manual {resolvedPrimaryEconomyId ?? "missing"} | passive {passiveTickTarget} | auto {autoClickTarget}</div>
             <div className="col-span-2 truncate">hud slots {hudSlotIds.join(", ")}</div>
+            <div className="col-span-2 max-h-16 overflow-auto border border-cyan-100/10 bg-black/20 p-1">icons {hudIconDiagnostics.join(" | ")}</div>
             <div className="col-span-2 truncate">objective {playerRuntime.objectives.activeObjectiveId ?? "none"}</div>
             <div className="col-span-2 truncate">event {playerRuntime.events.activeEventId ?? "none"}</div>
             <div>boosts {playerRuntime.boosts.active.length}</div>
