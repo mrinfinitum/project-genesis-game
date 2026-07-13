@@ -241,13 +241,75 @@ export const DASHBOARD_ART_REGISTRY = {
     sourceStatus: "source-missing",
     notes: "No web-compatible source file exists in the Rojo asset manifest. Layered ring assets remain the visual fallback."
   },
+  dashboard_click_ring: {
+    key: "dashboard_click_ring",
+    label: "Dashboard click ring",
+    viteUsage: "Click panel rotating ring",
+    artKey: "click_ring_outer",
+    robloxAssetId: "105751787246060",
+    localPath: "/roblox-assets/UI/click-interface-circle-outer.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_click_hand: {
+    key: "dashboard_click_hand",
+    label: "Dashboard click hand",
+    viteUsage: "Click panel stationary center icon",
+    artKey: "click_hand_icon",
+    robloxAssetId: "70836319761875",
+    localPath: "/roblox-assets/UI/click-interface-hand-256.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_auto_ring: {
+    key: "dashboard_auto_ring",
+    label: "Dashboard auto ring",
+    viteUsage: "Auto panel rotating robot ring",
+    artKey: "auto_robot_circle",
+    robloxAssetId: "117040601543803",
+    localPath: "/roblox-assets/UI/click-robot-circle-outer.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_auto_robot: {
+    key: "dashboard_auto_robot",
+    label: "Dashboard auto robot",
+    viteUsage: "Auto panel stationary center icon",
+    artKey: "auto_robot_icon",
+    robloxAssetId: "72298597001681",
+    localPath: "/roblox-assets/UI/click-robot-eyes-open.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_click_button: {
+    key: "dashboard_click_button",
+    label: "Dashboard click button",
+    viteUsage: "Click panel primary action",
+    artKey: "click_button",
+    robloxAssetId: "97243708870036",
+    localPath: "/roblox-assets/buttons/click_button-main.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_auto_button: {
+    key: "dashboard_auto_button",
+    label: "Dashboard auto button",
+    viteUsage: "Auto panel active toggle action",
+    artKey: "auto_button_on",
+    robloxAssetId: "139841618767256",
+    localPath: "/roblox-assets/buttons/click_auto_on.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_help_icon: {
+    key: "dashboard_help_icon",
+    label: "Dashboard help icon",
+    viteUsage: "Click and auto panel help affordance",
+    robloxAssetId: "0",
+    sourceStatus: "source-missing",
+    notes: "Roblox CityHud renders this affordance as a cyan TextLabel '?' instead of image art."
+  },
   click_hand_icon: {
     key: "click_hand_icon",
     label: "Click hand icon",
     viteUsage: "Click panel hand",
     artKey: "click_hand_icon",
     robloxAssetId: "70836319761875",
-    localPath: "/roblox-assets/UI/click-interface-hand-128.png",
+    localPath: "/roblox-assets/UI/click-interface-hand-256.png",
     sourceStatus: "mapped"
   },
   click_ring_inner: {

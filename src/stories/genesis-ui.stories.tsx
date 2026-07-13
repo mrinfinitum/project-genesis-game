@@ -1,9 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import type { ReactNode } from "react";
+import { createDashboardArtMap } from "@/lib/canonical-runtime";
+import { createDashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
 import {
   AlignmentPanel,
   ArtReviewGallery,
+  AutoClickPanel,
   BoostBar,
+  ClickPowerPanel,
   CriticalStatsPanel,
   EraCard,
   EraProgressRail,
@@ -50,6 +55,93 @@ function economyHudResources(data: ReturnType<typeof useGenesisStoryContent>["da
     artKey: resource.artKey,
     color: resource.color
   }));
+}
+
+function usePanelStoryModel(overrides: Partial<DashboardPlayerState> = {}) {
+  const { data } = useGenesisStoryContent();
+  const currentEraId = data.eras[0]?.id ?? "survival";
+  const playerState: DashboardPlayerState = {
+    source: "demo-fixture",
+    sourceLabel: "Story Fixture",
+    civilizationName: "Genesis",
+    currentEraId,
+    economyBalances: {},
+    economyRates: {},
+    resourceInventory: {},
+    resourceRates: {},
+    upgradeLevels: {},
+    clickOutput: {
+      resourceId: "ECON-CIVILIZATION-ENERGY",
+      label: "Civilization Energy",
+      amount: 1250000000,
+      perClickLabel: "Per Click"
+    },
+    automation: {
+      label: "Auto Click",
+      amountPerSecond: 25600000,
+      enabled: false
+    },
+    criticalStats: {
+      chancePercent: 12.5,
+      multiplier: 2.5
+    },
+    alignment: {
+      Industry: 45,
+      Technology: 61,
+      Cyber: 22,
+      Nature: 35,
+      Corporate: 18
+    },
+    ...overrides
+  };
+
+  return {
+    data,
+    art: createDashboardArtMap(data.assets),
+    model: createDashboardModel(data, {
+      playerState,
+      activeEraId: currentEraId,
+      activeCategoryId: data.upgradeCategories[0]?.id ?? "workforce"
+    })
+  };
+}
+
+function panelMissingArt(art: ReturnType<typeof createDashboardArtMap>) {
+  const warning = ["Story missing art"];
+
+  return {
+    ...art,
+    dashboard_click_ring: { ...art.dashboard_click_ring, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_click_hand: { ...art.dashboard_click_hand, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_auto_ring: { ...art.dashboard_auto_ring, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_auto_robot: { ...art.dashboard_auto_robot, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_click_button: { ...art.dashboard_click_button, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_auto_button: { ...art.dashboard_auto_button, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    auto_button_off: { ...art.auto_button_off, path: undefined, mappingStatus: "missing" as const, warnings: warning }
+  };
+}
+
+function ClickPanelStoryFrame({ children }: { children: ReactNode }) {
+  return (
+    <StoryCanvas>
+      <div className="relative h-[320px] w-[350px] overflow-hidden bg-slate-950/80">
+        {children}
+      </div>
+    </StoryCanvas>
+  );
+}
+
+function AutoPanelStoryFrame({ children, reducedMotion = false }: { children: ReactNode; reducedMotion?: boolean }) {
+  return (
+    <StoryCanvas>
+      {reducedMotion ? <style>{".genesis-control-ring,.genesis-control-ring-reverse{animation:none!important}"}</style> : null}
+      <div className="relative h-[270px] w-[350px] overflow-hidden bg-slate-950/80">
+        <div className="relative h-[614px] w-[350px] -translate-y-[344px]">
+          {children}
+        </div>
+      </div>
+    </StoryCanvas>
+  );
 }
 
 export const TopResourceHudStartingState: Story = {
@@ -406,6 +498,148 @@ export const ResourceDetailView: Story = {
     return (
       <StoryCanvas>
         <ResourceDetail resource={data.resources[0]} assets={data.assets} />
+      </StoryCanvas>
+    );
+  }
+};
+
+export const ClickPowerDefault: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel();
+    return <ClickPanelStoryFrame><ClickPowerPanel data={data} model={model} art={art} /></ClickPanelStoryFrame>;
+  }
+};
+
+export const ClickPowerHighValue: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel({
+      clickOutput: {
+        resourceId: "ECON-CIVILIZATION-ENERGY",
+        label: "Civilization Energy",
+        amount: 987500000000,
+        perClickLabel: "Per Click"
+      }
+    });
+    return <ClickPanelStoryFrame><ClickPowerPanel data={data} model={model} art={art} /></ClickPanelStoryFrame>;
+  }
+};
+
+export const ClickPowerClickedPressed: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel();
+    return <ClickPanelStoryFrame><ClickPowerPanel data={data} model={model} art={art} pressed pulseKey={1} /></ClickPanelStoryFrame>;
+  }
+};
+
+export const ClickPowerCriticalPulse: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel({
+      clickOutput: {
+        resourceId: "ECON-CIVILIZATION-ENERGY",
+        label: "Civilization Energy",
+        amount: 2500000000,
+        perClickLabel: "Critical Click"
+      }
+    });
+    return <ClickPanelStoryFrame><ClickPowerPanel data={data} model={model} art={art} pressed pulseKey={2} /></ClickPanelStoryFrame>;
+  }
+};
+
+export const ClickPowerMissingArt: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel();
+    return <ClickPanelStoryFrame><ClickPowerPanel data={data} model={model} art={panelMissingArt(art)} /></ClickPanelStoryFrame>;
+  }
+};
+
+export const ClickPowerMissingPlayerState: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel({ clickOutput: undefined });
+    return <ClickPanelStoryFrame><ClickPowerPanel data={data} model={model} art={art} /></ClickPanelStoryFrame>;
+  }
+};
+
+export const AutoClickDefaultOff: Story = {
+  render: () => {
+    const { model, art } = usePanelStoryModel();
+    return <AutoPanelStoryFrame><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const AutoClickActiveOn: Story = {
+  render: () => {
+    const { model, art } = usePanelStoryModel({
+      automation: {
+        label: "Auto Click",
+        amountPerSecond: 25600000,
+        enabled: true
+      }
+    });
+    return <AutoPanelStoryFrame><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const AutoClickHighProduction: Story = {
+  render: () => {
+    const { model, art } = usePanelStoryModel({
+      automation: {
+        label: "Auto Click",
+        amountPerSecond: 785000000000,
+        enabled: true
+      }
+    });
+    return <AutoPanelStoryFrame><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const AutoClickMissingArt: Story = {
+  render: () => {
+    const { model, art } = usePanelStoryModel({
+      automation: {
+        label: "Auto Click",
+        amountPerSecond: 25600000,
+        enabled: true
+      }
+    });
+    return <AutoPanelStoryFrame><AutoClickPanel model={model} art={panelMissingArt(art)} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const AutoClickMissingPlayerState: Story = {
+  render: () => {
+    const { model, art } = usePanelStoryModel({ automation: undefined });
+    return <AutoPanelStoryFrame><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const AutoClickReducedMotion: Story = {
+  render: () => {
+    const { model, art } = usePanelStoryModel({
+      automation: {
+        label: "Auto Click",
+        amountPerSecond: 25600000,
+        enabled: true
+      }
+    });
+    return <AutoPanelStoryFrame reducedMotion><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const ClickAndAutoStackedRobloxReference: Story = {
+  render: () => {
+    const { data, model, art } = usePanelStoryModel({
+      automation: {
+        label: "Auto Click",
+        amountPerSecond: 25600000,
+        enabled: true
+      }
+    });
+    return (
+      <StoryCanvas>
+        <div className="relative h-[614px] w-[350px] overflow-hidden bg-slate-950/80">
+          <ClickPowerPanel data={data} model={model} art={art} />
+          <AutoClickPanel model={model} art={art} />
+        </div>
       </StoryCanvas>
     );
   }

@@ -80,3 +80,50 @@ button:disabled {
 ::selection {
   background: rgba(45, 212, 191, 0.35);
 }
+
+@keyframes genesis-control-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes genesis-control-ring-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes genesis-control-pulse {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(45, 212, 255, 0));
+  }
+  40% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 18px rgba(45, 212, 255, 0.72));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(45, 212, 255, 0));
+  }
+}
+
+.genesis-control-ring {
+  animation: genesis-control-ring-spin var(--genesis-ring-duration, 11s) linear infinite;
+}
+
+.genesis-control-ring-reverse {
+  animation: genesis-control-ring-spin-reverse var(--genesis-ring-duration, 13s) linear infinite;
+}
+
+.genesis-control-pulse {
+  animation: genesis-control-pulse 0.28s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genesis-control-ring,
+  .genesis-control-ring-reverse,
+  .genesis-control-pulse {
+    animation: none !important;
+  }
+}

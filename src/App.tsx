@@ -53,6 +53,7 @@ type PlayerRuntimeActions = {
   advanceSimulation: (seconds?: number) => void;
   grantTestResources: () => void;
   click: () => void;
+  toggleAutomation: () => void;
 };
 
 function payloadFromState(state: RuntimeContentState): GameRuntimeData {
@@ -214,6 +215,15 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
       },
       click() {
         setPlayerRuntime((current) => service.save(applyClickReward(data, current)));
+      },
+      toggleAutomation() {
+        setPlayerRuntime((current) => service.save({
+          ...current,
+          production: {
+            ...current.production,
+            automationEnabled: !current.production.automationEnabled
+          }
+        }));
       }
     }),
     [data, playerRuntime, service]

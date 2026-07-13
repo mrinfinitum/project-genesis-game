@@ -68,6 +68,7 @@ type PlayerRuntimeDashboardActions = {
   advanceSimulation: (seconds?: number) => void;
   grantTestResources: () => void;
   click: () => void;
+  toggleAutomation: () => void;
 };
 
 type TopHudResource = {
@@ -673,6 +674,242 @@ function DashboardMissingArt({ art, className = "" }: { art: DashboardArtResolut
   );
 }
 
+function helpText(art: DashboardArtResolution) {
+  return art.mappingStatus === "missing" ? "Help" : art.label;
+}
+
+export function HelpIconButton({ art, className = "" }: { art: DashboardArtResolution; className?: string }) {
+  const path = dashboardImagePath(art);
+
+  return (
+    <button
+      type="button"
+      aria-label={helpText(art)}
+      title={helpText(art)}
+      className={`flex items-center justify-center text-cyan-100/70 drop-shadow-[0_0_8px_rgba(45,212,255,0.22)] transition hover:text-cyan-50 ${className}`}
+    >
+      {path ? <img src={path} alt="" className="h-full w-full object-contain" /> : <CircleHelp className="h-full w-full" />}
+    </button>
+  );
+}
+
+type BeveledActionButtonProps = {
+  art: DashboardArtResolution;
+  label: string;
+  tone: "cyan" | "green" | "muted";
+  disabled?: boolean;
+  active?: boolean;
+  pressed?: boolean;
+  onClick?: () => void;
+  className?: string;
+};
+
+export function BeveledActionButton({ art, label, tone, disabled = false, active = false, pressed = false, onClick, className = "" }: BeveledActionButtonProps) {
+  const path = dashboardImagePath(art);
+  const toneClasses = {
+    cyan: "border-cyan-200/40 bg-[linear-gradient(180deg,rgba(20,124,168,0.9),rgba(4,48,86,0.95))] text-white shadow-[0_0_24px_rgba(45,212,255,0.18)]",
+    green: "border-emerald-200/45 bg-[linear-gradient(180deg,rgba(28,146,78,0.92),rgba(7,79,48,0.96))] text-white shadow-[0_0_26px_rgba(52,245,106,0.24)]",
+    muted: "border-cyan-200/18 bg-[linear-gradient(180deg,rgba(22,56,74,0.62),rgba(5,22,35,0.86))] text-cyan-100/62 shadow-none"
+  }[tone];
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`relative overflow-hidden ${bevel} border text-[23px] font-black uppercase tracking-normal transition hover:brightness-125 active:scale-[0.97] disabled:opacity-50 ${toneClasses} ${active ? "brightness-110" : ""} ${pressed ? "scale-[0.97] brightness-125" : ""} ${className}`}
+    >
+      {path ? <img src={path} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
+      {!path ? <span className="relative z-10 [text-shadow:0_2px_6px_rgba(0,0,0,0.72)]">{label}</span> : null}
+      <span className="sr-only">{label}</span>
+    </button>
+  );
+}
+
+type RotatingControlRingProps = {
+  outerArt: DashboardArtResolution;
+  centerArt: DashboardArtResolution;
+  middleArt?: DashboardArtResolution;
+  innerArt?: DashboardArtResolution;
+  variant: "click" | "auto";
+  active?: boolean;
+  disabled?: boolean;
+  pulseKey?: number;
+  onActivate?: () => void;
+  className?: string;
+};
+
+function ringDurationStyle(seconds: number): CSSProperties {
+  return { "--genesis-ring-duration": `${seconds}s` } as CSSProperties;
+}
+
+export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, variant, active = true, disabled = false, pulseKey = 0, onActivate, className = "" }: RotatingControlRingProps) {
+  const outerPath = dashboardImagePath(outerArt);
+  const middlePath = middleArt ? dashboardImagePath(middleArt) : undefined;
+  const innerPath = innerArt ? dashboardImagePath(innerArt) : undefined;
+  const centerPath = dashboardImagePath(centerArt);
+  const glow = variant === "auto" ? "rgba(52,245,106,0.42)" : "rgba(45,212,255,0.48)";
+  const FallbackIcon = variant === "auto" ? Bot : MousePointerClick;
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onActivate}
+      className={`group absolute flex items-center justify-center rounded-full transition active:scale-[0.96] disabled:opacity-50 ${className}`}
+      aria-label={variant === "auto" ? "Toggle auto click" : "Click power"}
+    >
+      <span key={pulseKey} className={`absolute inset-0 rounded-full ${pulseKey > 0 ? "genesis-control-pulse" : ""}`} style={{ boxShadow: `0 0 30px ${active ? glow : "rgba(125,249,255,0.12)"}` }} />
+      {outerPath ? (
+        <img
+          src={outerPath}
+          alt=""
+          className={`genesis-control-ring absolute inset-0 h-full w-full object-contain ${active ? "opacity-75" : "opacity-36"} transition-opacity`}
+          style={ringDurationStyle(variant === "auto" ? 12 : 11)}
+        />
+      ) : (
+        <DashboardMissingArt art={outerArt} className="absolute inset-0 rounded-full" />
+      )}
+      {middlePath ? (
+        <img
+          src={middlePath}
+          alt=""
+          className={`genesis-control-ring-reverse absolute inset-0 h-full w-full object-contain ${active ? "opacity-62" : "opacity-28"} transition-opacity`}
+          style={ringDurationStyle(13)}
+        />
+      ) : null}
+      {innerPath ? (
+        <img
+          src={innerPath}
+          alt=""
+          className={`genesis-control-ring absolute inset-0 h-full w-full object-contain ${active ? "opacity-82" : "opacity-34"} transition-opacity`}
+          style={ringDurationStyle(8)}
+        />
+      ) : null}
+      {centerPath ? (
+        <img
+          src={centerPath}
+          alt=""
+          className={`relative h-[31%] w-[31%] object-contain transition-transform group-active:scale-90 ${variant === "auto" ? "drop-shadow-[0_0_14px_rgba(52,245,106,0.45)]" : "drop-shadow-[0_0_14px_rgba(125,249,255,0.52)]"}`}
+        />
+      ) : (
+        <FallbackIcon className={`relative h-[31%] w-[31%] ${variant === "auto" ? "text-emerald-100" : "text-cyan-100"}`} />
+      )}
+    </button>
+  );
+}
+
+function formattedClickLabel(label: string) {
+  const normalized = label.trim().toUpperCase();
+  if (normalized.length <= 14) return normalized;
+  return normalized.replace(/\s+/, "\n");
+}
+
+export function ClickPowerPanel({
+  data,
+  model,
+  art,
+  showDevWarnings = false,
+  onClick,
+  pressed = false,
+  pulseKey = 0
+}: {
+  data: GameRuntimeData;
+  model: DashboardModel;
+  art: DashboardArtMap;
+  showDevWarnings?: boolean;
+  onClick?: () => void;
+  pressed?: boolean;
+  pulseKey?: number;
+}) {
+  const clickResource = model.playerState.clickOutput?.resourceId ? data.resources.find((resource) => resource.id === model.playerState.clickOutput?.resourceId) : undefined;
+  const clickResourceLabel = model.playerState.clickOutput?.label ?? clickResource?.displayName ?? "Civilization Energy";
+  const hasClickState = Boolean(model.playerState.clickOutput);
+  const lastClick = model.playerState.clickOutput?.amount ?? 0;
+
+  return (
+    <section className="absolute left-0 top-0 h-[320px] w-full">
+      {showDevWarnings && art.dashboard_click_interface.mappingStatus === "missing" ? (
+        <div className="absolute right-5 top-11 z-10 rounded-sm border border-amber-200/45 bg-amber-950/80 px-2 py-1 text-[10px] font-black uppercase text-amber-100">
+          click_interface_circle source missing
+        </div>
+      ) : null}
+      <h2 className="absolute left-[35px] top-[18px] h-[32px] w-[245px] text-[18px] font-black uppercase leading-8 text-cyan-100/90">Click Power</h2>
+      <HelpIconButton art={art.dashboard_help_icon} className="absolute left-[315px] top-[22px] h-[22px] w-[22px]" />
+      <RotatingControlRing
+        outerArt={art.dashboard_click_ring}
+        middleArt={art.click_ring_middle}
+        innerArt={art.click_ring_inner}
+        centerArt={art.dashboard_click_hand}
+        variant="click"
+        disabled={!hasClickState}
+        pulseKey={pulseKey}
+        onActivate={hasClickState ? onClick : undefined}
+        className="left-[49px] top-[70px] h-[182px] w-[182px]"
+      />
+      <div className="absolute left-[182px] top-[76px] h-[134px] w-[133px] text-center">
+        <div className="whitespace-pre-line text-[13px] font-black uppercase leading-[1.12] text-cyan-100/58">{formattedClickLabel(clickResourceLabel)}</div>
+        <div className="mt-[10px] text-[28px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "Missing"}</div>
+        <div className="mt-[10px] text-[12px] font-black uppercase leading-none text-cyan-100/80">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
+        <div className={`mt-[11px] text-[15px] font-black uppercase leading-none text-cyan-200 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
+      </div>
+      <BeveledActionButton
+        art={art.dashboard_click_button}
+        label="CLICK!"
+        tone="cyan"
+        disabled={!hasClickState}
+        pressed={pressed}
+        onClick={hasClickState ? onClick : undefined}
+        className="absolute bottom-[10px] left-[19px] h-[66px] w-[312px]"
+      />
+    </section>
+  );
+}
+
+export function AutoClickPanel({
+  model,
+  art,
+  onToggle
+}: {
+  model: DashboardModel;
+  art: DashboardArtMap;
+  onToggle?: () => void;
+}) {
+  const hasAutomation = Boolean(model.playerState.automation);
+  const autoEnabled = model.playerState.automation?.enabled === true;
+  const autoArt = autoEnabled ? art.dashboard_auto_button : art.auto_button_off;
+
+  return (
+    <section className="absolute left-0 top-[344px] h-[270px] w-full">
+      <h2 className="absolute left-[35px] top-[21px] h-[35px] w-[245px] text-[18px] font-black uppercase leading-9 text-cyan-100/90">Auto Click</h2>
+      <HelpIconButton art={art.dashboard_help_icon} className="absolute left-[315px] top-[25px] h-[22px] w-[22px]" />
+      <RotatingControlRing
+        outerArt={art.dashboard_auto_ring}
+        centerArt={art.dashboard_auto_robot}
+        variant="auto"
+        active={autoEnabled}
+        disabled={!hasAutomation}
+        onActivate={hasAutomation ? onToggle : undefined}
+        className="left-[56px] top-[62px] h-[182px] w-[182px]"
+      />
+      <div className="absolute left-[196px] top-[62px] h-[108px] w-[119px] text-center">
+        <div className="text-[11px] font-black uppercase leading-tight text-cyan-100/58">Auto Click<br />Power</div>
+        <div className="mt-[12px] text-[28px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "Missing"}</div>
+        <div className="mt-[13px] text-[12px] font-black uppercase leading-none text-cyan-100/80">Per/S</div>
+      </div>
+      <BeveledActionButton
+        art={autoArt}
+        label={autoEnabled ? "AUTO: ON" : "AUTO: OFF"}
+        tone={hasAutomation ? (autoEnabled ? "green" : "muted") : "muted"}
+        active={autoEnabled}
+        disabled={!hasAutomation}
+        onClick={hasAutomation ? onToggle : undefined}
+        className={`absolute bottom-[9px] left-[19px] h-[55px] w-[312px] ${autoEnabled ? "shadow-[0_0_30px_rgba(52,245,106,0.32)]" : ""}`}
+      />
+    </section>
+  );
+}
+
 function robloxRect(x: number, y: number, width: number, height: number): CSSProperties {
   return {
     position: "absolute",
@@ -835,64 +1072,43 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
   );
 }
 
-function RobloxLeftColumn({ data, model, art, showDevWarnings }: { data: GameRuntimeData; model: DashboardModel; art: DashboardArtMap; showDevWarnings: boolean }) {
-  const clickResource = model.playerState.clickOutput?.resourceId ? data.resources.find((resource) => resource.id === model.playerState.clickOutput?.resourceId) : undefined;
-  const clickResourceLabel = model.playerState.clickOutput?.label ?? clickResource?.displayName ?? "Civilization Energy";
+function RobloxLeftColumn({
+  data,
+  model,
+  art,
+  showDevWarnings,
+  playerRuntimeActions
+}: {
+  data: GameRuntimeData;
+  model: DashboardModel;
+  art: DashboardArtMap;
+  showDevWarnings: boolean;
+  playerRuntimeActions?: PlayerRuntimeDashboardActions;
+}) {
+  const [clickPulseKey, setClickPulseKey] = useState(0);
+  const [clickPressed, setClickPressed] = useState(false);
+  const critical = model.playerState.criticalStats;
   const hasClickState = Boolean(model.playerState.clickOutput);
   const hasAutomation = Boolean(model.playerState.automation);
-  const critical = model.playerState.criticalStats;
+
+  function handleClickPower() {
+    if (!hasClickState) return;
+    playerRuntimeActions?.click();
+    setClickPulseKey((current) => current + 1);
+    setClickPressed(true);
+    window.setTimeout(() => setClickPressed(false), 140);
+  }
+
+  function handleAutoToggle() {
+    if (!hasAutomation) return;
+    playerRuntimeActions?.toggleAutomation();
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden">
       {dashboardImagePath(art.clicker_hud_background) ? <img src={dashboardImagePath(art.clicker_hud_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.clicker_hud_background} className="absolute inset-0" />}
-      <section className="absolute left-0 top-0 h-[320px] w-full p-7">
-        {showDevWarnings && art.dashboard_click_interface.mappingStatus === "missing" ? (
-          <div className="absolute right-5 top-11 z-10 rounded-sm border border-amber-200/45 bg-amber-950/80 px-2 py-1 text-[10px] font-black uppercase text-amber-100">
-            click_interface_circle source missing
-          </div>
-        ) : null}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-[1.1rem] font-black uppercase text-cyan-100/90">Click Power</h2>
-          </div>
-          <CircleHelp className="h-5 w-5 text-cyan-100/55" />
-        </div>
-        <div className="absolute left-[74px] top-[128px] h-[50px] w-[55px]">
-          {dashboardImagePath(art.click_ring_outer) ? <img src={dashboardImagePath(art.click_ring_outer)} alt="" className="absolute inset-[-31px] h-[112px] w-[112px] animate-spin object-contain opacity-45 [animation-duration:11s]" /> : null}
-          {dashboardImagePath(art.click_ring_middle) ? <img src={dashboardImagePath(art.click_ring_middle)} alt="" className="absolute inset-[-22px] h-[94px] w-[94px] animate-spin object-contain opacity-55 [animation-direction:reverse] [animation-duration:9s]" /> : null}
-          {dashboardImagePath(art.click_ring_inner) ? <img src={dashboardImagePath(art.click_ring_inner)} alt="" className="absolute inset-[-13px] h-[76px] w-[76px] animate-spin object-contain opacity-75 [animation-duration:7s]" /> : null}
-          {dashboardImagePath(art.click_hand_icon) ? <img src={dashboardImagePath(art.click_hand_icon)} alt="" className="relative h-full w-full object-contain drop-shadow-[0_0_14px_rgba(125,249,255,0.5)]" /> : <MousePointerClick className="relative h-full w-full text-cyan-100" />}
-        </div>
-        <div className="absolute left-[193px] top-[76px] w-[126px] text-center">
-          <div className="text-[0.78rem] font-black uppercase leading-tight text-cyan-100/58">{clickResourceLabel}</div>
-          <div className="mt-2 text-[1.75rem] font-black leading-none text-white">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "Missing"}</div>
-          <div className="mt-2 text-[0.72rem] font-black uppercase text-cyan-100/80">Per Click</div>
-        </div>
-        <button disabled={!hasClickState} className="absolute bottom-[10px] left-[19px] h-[66px] w-[312px] transition hover:brightness-125 active:scale-[0.99] disabled:opacity-50">
-          {dashboardImagePath(art.click_button) ? <img src={dashboardImagePath(art.click_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.click_button} className="h-full w-full" />}
-          <span className="sr-only">{hasClickState ? "Click" : "No Player State"}</span>
-        </button>
-      </section>
-
-      <section className="absolute left-0 top-[344px] h-[270px] w-full p-7">
-        <div className="flex items-start justify-between">
-          <h2 className="text-[1.1rem] font-black uppercase text-cyan-100/90">Auto Click</h2>
-          <CircleHelp className="h-5 w-5 text-cyan-100/55" />
-        </div>
-        <div className="absolute left-[72px] top-[84px] h-[88px] w-[88px]">
-          {dashboardImagePath(art.auto_robot_circle) ? <img src={dashboardImagePath(art.auto_robot_circle)} alt="" className={`absolute inset-0 h-full w-full object-contain opacity-70 ${model.playerState.automation?.enabled ? "animate-spin [animation-duration:8s]" : ""}`} /> : null}
-          {dashboardImagePath(art.auto_robot_icon) ? <img src={dashboardImagePath(art.auto_robot_icon)} alt="" className="absolute inset-[18px] h-[52px] w-[52px] object-contain drop-shadow-[0_0_12px_rgba(52,245,106,0.4)]" /> : <Bot className="absolute inset-[18px] h-[52px] w-[52px] text-emerald-100" />}
-        </div>
-        <div className="absolute left-[196px] top-[62px] w-[120px] text-center">
-          <div className="text-[0.72rem] font-black uppercase leading-tight text-cyan-100/58">Auto Click<br />Power</div>
-          <div className="mt-2 text-[1.75rem] font-black leading-none text-white">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "Missing"}</div>
-          <div className="mt-2 text-[0.72rem] font-black uppercase text-cyan-100/80">Per/S</div>
-        </div>
-        <button disabled={!hasAutomation} className="absolute bottom-[9px] left-[19px] h-[55px] w-[312px] transition hover:brightness-125 active:scale-[0.99] disabled:opacity-50">
-          {dashboardImagePath(model.playerState.automation?.enabled ? art.auto_button_on : art.auto_button_off) ? <img src={dashboardImagePath(model.playerState.automation?.enabled ? art.auto_button_on : art.auto_button_off)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={model.playerState.automation?.enabled ? art.auto_button_on : art.auto_button_off} className="h-full w-full" />}
-          <span className="sr-only">{hasAutomation ? (model.playerState.automation?.enabled ? "Auto On" : "Auto Off") : "No Automation State"}</span>
-        </button>
-      </section>
+      <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} pressed={clickPressed} pulseKey={clickPulseKey} />
+      <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
 
       <section className="absolute left-0 top-[638px] h-[185px] w-full">
         {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[28px] top-[13px] h-[89px] w-[112px] object-contain drop-shadow-[0_0_18px_rgba(255,216,77,0.28)]" /> : <Star className="absolute left-[28px] top-[13px] h-[89px] w-[112px] text-amber-100" />}
@@ -1300,7 +1516,7 @@ export function GameShell({
           <RobloxNavigation active={activeScreen} art={dashboardArt} />
         </div>
         <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
-          <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} />
+          <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} />
         </div>
         <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.hero)}>
           <RobloxHero data={data} model={model} art={dashboardArt} />
