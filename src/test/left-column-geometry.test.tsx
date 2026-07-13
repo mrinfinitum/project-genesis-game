@@ -48,6 +48,13 @@ describe("Roblox left column geometry", () => {
     expect(background).toHaveAttribute("data-repeat", "no-repeat");
     expect(background).toHaveClass("object-fill");
     expect(container.querySelectorAll("[data-testid='nav-css-divider']")).toHaveLength(0);
+    const masks = screen.getAllByTestId(/roblox-nav-baked-separator-mask-/);
+    expect(masks).toHaveLength(6);
+    expect(masks[0]).toHaveStyle({
+      left: "24px",
+      top: "127.5px",
+      width: "112px"
+    });
     const separators = screen.getAllByTestId(/roblox-nav-separator-/);
     expect(separators).toHaveLength(7);
     expect(separators[0]).toHaveStyle({
