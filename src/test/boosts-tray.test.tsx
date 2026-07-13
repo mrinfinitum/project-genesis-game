@@ -44,6 +44,21 @@ const fixtureSlots: BoostTraySlot[] = [
 afterEach(() => cleanup());
 
 describe("dashboard boosts tray", () => {
+  it("mounts inside the clipped 1920 by 1080 game overlay root", async () => {
+    render(<GameShell data={await bundledRuntime()} />);
+
+    const overlayRoot = screen.getByTestId("game-overlay-root");
+    const overlay = screen.getByTestId("boosts-overlay-layer");
+
+    expect(overlayRoot).toHaveAttribute("id", "game-overlay-root");
+    expect(overlayRoot).toHaveStyle({
+      width: "1920px",
+      height: "1080px"
+    });
+    expect(overlayRoot).toHaveClass("overflow-hidden");
+    expect(overlayRoot).toContainElement(overlay);
+  });
+
   it("shows the compact BOOSTS launcher while closed", async () => {
     render(<GameShell data={await bundledRuntime()} />);
 
@@ -66,6 +81,7 @@ describe("dashboard boosts tray", () => {
     expect(trigger).toHaveAttribute("aria-hidden", "true");
     expect(trigger).toHaveAttribute("tabindex", "-1");
     expect(screen.queryByRole("button", { name: /toggle boosts tray/i })).not.toBeInTheDocument();
+    expect(trigger.closest("div")).toHaveStyle({ position: "absolute" });
 
     await user.click(screen.getByRole("button", { name: /close boosts tray/i }));
     await waitFor(() => expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed"));
@@ -141,14 +157,15 @@ describe("dashboard boosts tray", () => {
     const closedTray = screen.getByTestId("boosts-tray");
 
     expect(closedTray).toHaveAttribute("data-state", "closed");
-    expect(closedTray).toHaveAttribute("data-open-position", "12,859");
-    expect(closedTray).toHaveAttribute("data-closed-position", "12,1166");
+    expect(closedTray).toHaveAttribute("data-open-position", "left:12,right:12,bottom:8");
+    expect(closedTray).toHaveAttribute("data-closed-position", "translateY(calc(100% + 24px))");
+    expect(closedTray).toHaveAttribute("data-bottom-offset", "8");
     expect(closedTray).toHaveStyle({
       left: "12px",
-      top: "859px",
-      width: "1897px",
-      height: "157px",
-      transform: "translateY(307px)",
+      right: "12px",
+      bottom: "8px",
+      height: "170px",
+      transform: "translateY(calc(100% + 24px))",
       opacity: "0"
     });
 
@@ -163,14 +180,16 @@ describe("dashboard boosts tray", () => {
     render(<BoostsTray open slots={fixtureSlots} onClose={() => undefined} />);
     const tray = screen.getByTestId("boosts-tray");
     const left = Number.parseFloat(tray.style.left);
-    const top = Number.parseFloat(tray.style.top);
-    const width = Number.parseFloat(tray.style.width);
+    const right = Number.parseFloat(tray.style.right);
+    const bottom = Number.parseFloat(tray.style.bottom);
     const height = Number.parseFloat(tray.style.height);
 
     expect(left).toBeGreaterThanOrEqual(0);
-    expect(top).toBeGreaterThanOrEqual(0);
-    expect(left + width).toBeLessThanOrEqual(1920);
-    expect(top + height).toBeLessThanOrEqual(1080);
+    expect(right).toBeGreaterThanOrEqual(0);
+    expect(bottom).toBeGreaterThanOrEqual(8);
+    expect(left + right).toBeLessThan(1920);
+    expect(bottom + height).toBeLessThanOrEqual(1080);
+    expect(tray.style.top).toBe("");
   });
 
   it("exposes a dedicated overlay layer so the tray is not clipped by dashboard panels", () => {
@@ -182,6 +201,35 @@ describe("dashboard boosts tray", () => {
     expect(overlay).toBeInTheDocument();
     expect(overlay).toHaveStyle({ zIndex: "80" });
     expect(tray).toHaveClass("absolute");
+    expect(overlay).toHaveClass("overflow-hidden");
+  });
+
+  it("opening the drawer does not change document scroll height or create a vertical scrollbar", async () => {
+    const user = userEvent.setup();
+    render(<GameShell data={await bundledRuntime()} />);
+
+    const beforeHeight = document.documentElement.scrollHeight;
+    const beforeBodyHeight = document.body.scrollHeight;
+    await user.click(screen.getByRole("button", { name: /toggle boosts tray/i }));
+
+    expect(document.documentElement.scrollHeight).toBe(beforeHeight);
+    expect(document.body.scrollHeight).toBe(beforeBodyHeight);
+    expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
+  });
+
+  it("keeps the drawer aligned in design space when the stage is scaled for 4K", async () => {
+    render(<GameShell data={await bundledRuntime()} embedded frameScale={2} />);
+
+    expect(screen.getByTestId("game-overlay-root")).toHaveStyle({
+      width: "1920px",
+      height: "1080px"
+    });
+    expect(document.querySelector("[data-game-viewport]")).toHaveAttribute("data-game-scale", "2.0000");
+    expect(screen.getByTestId("boosts-tray")).toHaveStyle({
+      left: "12px",
+      right: "12px",
+      bottom: "8px"
+    });
   });
 
   it("disables the transition when reduced motion is requested", () => {

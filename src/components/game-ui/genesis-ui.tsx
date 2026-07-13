@@ -1293,6 +1293,10 @@ function RobloxLeftColumn({
   );
 }
 
+function restoreBoostLauncherFocus(triggerRef?: RefObject<HTMLButtonElement | null>) {
+  window.requestAnimationFrame(() => triggerRef?.current?.focus());
+}
+
 function HeroCityScene({ art, fallbackArt }: { art: RuntimeAssetResolution; fallbackArt: DashboardArtResolution }) {
   if (dashboardImagePath(fallbackArt)) {
     return <img src={dashboardImagePath(fallbackArt)} alt="" className="absolute inset-0 h-full w-full object-fill" />;
@@ -1977,17 +1981,29 @@ export function BoostsTray({
   const visibleSlots = slots.length ? slots : runtimeSlots;
   const activeCount = visibleSlots.filter((slot) => slot.state === "active").length;
   const availableCount = visibleSlots.filter((slot) => slot.state === "available").length;
+  function closeAndRestore() {
+    onClose();
+    restoreBoostLauncherFocus(triggerRef);
+  }
   const trayStyle: CSSProperties = {
     left: 12,
-    top: 859,
-    width: 1897,
-    height: 157,
-    transform: open ? "translateY(0)" : "translateY(307px)",
+    right: 12,
+    bottom: 8,
+    height: 170,
+    transform: open ? "translateY(0)" : "translateY(calc(100% + 24px))",
     opacity: open ? 1 : 0,
     transition: prefersReducedMotion ? "none" : "transform 220ms cubic-bezier(.25,.46,.45,.94), opacity 220ms cubic-bezier(.25,.46,.45,.94)"
   };
   const tray = (
-    <div className="absolute inset-0 pointer-events-none" data-dashboard-overlay="boosts" style={{ zIndex: DASHBOARD_OVERLAY_Z_INDEX }}>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" data-dashboard-overlay="boosts" data-testid="boosts-overlay-layer" style={{ zIndex: DASHBOARD_OVERLAY_Z_INDEX }}>
+      <div
+        aria-hidden="true"
+        data-testid="boosts-overlay-backdrop"
+        className={`absolute inset-0 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        onPointerDown={(event) => {
+          if (event.target === event.currentTarget) closeAndRestore();
+        }}
+      />
       <section
         id="dashboard-boosts-tray"
         ref={trayRef}
@@ -1997,8 +2013,9 @@ export function BoostsTray({
         aria-labelledby="dashboard-boosts-tray-title"
         data-testid="boosts-tray"
         data-state={open ? "open" : "closed"}
-        data-open-position="12,859"
-        data-closed-position="12,1166"
+        data-open-position="left:12,right:12,bottom:8"
+        data-closed-position="translateY(calc(100% + 24px))"
+        data-bottom-offset="8"
         data-transition={prefersReducedMotion ? "none" : "transform-opacity"}
         className={`absolute overflow-hidden rounded-md border border-cyan-100/30 bg-[linear-gradient(180deg,rgba(9,22,45,0.96),rgba(3,8,18,0.98))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.34),0_0_26px_rgba(45,212,255,0.12),inset_0_0_24px_rgba(45,212,255,0.055)] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         style={trayStyle}
@@ -2012,7 +2029,7 @@ export function BoostsTray({
             <button
               ref={closeButtonRef}
               type="button"
-              onClick={() => { onClose(); window.requestAnimationFrame(() => triggerRef?.current?.focus()); }}
+              onClick={closeAndRestore}
               className="inline-flex h-7 w-7 items-center justify-center rounded-sm border border-cyan-100/24 bg-cyan-300/10 text-cyan-50 transition hover:bg-cyan-300/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50"
               aria-label="Close boosts tray"
             >
@@ -2281,7 +2298,7 @@ function GameViewportScaler({
   return (
     <div
       ref={viewportRef}
-      className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} relative flex items-center justify-center overflow-auto`}
+      className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} relative flex items-center justify-center overflow-hidden`}
       data-game-viewport
       data-display-mode={preferences.displayMode}
       data-game-scale={scale.scale.toFixed(4)}
@@ -2512,7 +2529,17 @@ export function GameShell({
               onToggle={() => setBoostsTrayOpen((open) => !open)}
             />
           </div>
-          <div ref={setBoostOverlayRoot} className="pointer-events-none absolute inset-0" style={{ zIndex: DASHBOARD_OVERLAY_Z_INDEX }} />
+          <div
+            id="game-overlay-root"
+            ref={setBoostOverlayRoot}
+            data-testid="game-overlay-root"
+            className="pointer-events-none absolute left-0 top-0 overflow-hidden"
+            style={{
+              zIndex: DASHBOARD_OVERLAY_Z_INDEX,
+              width: ROBLOX_DASHBOARD_REFERENCE.width,
+              height: ROBLOX_DASHBOARD_REFERENCE.height
+            }}
+          />
           <BoostsTray
             open={boostsTrayOpen}
             activeBoosts={activeRuntimeBoosts}

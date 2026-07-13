@@ -314,16 +314,18 @@ function BoostTrayStoryFrame({
   const scale = scaleOverride ?? (compact ? 0.52 : 0.72);
   return (
     <StoryCanvas>
-      <div className="h-[720px] w-full overflow-auto bg-slate-950 p-4">
-        <div
-          className="relative overflow-hidden border border-cyan-200/20 bg-[#06111f]"
-          style={{ width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: "top left" }}
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.12),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)]" />
-          <button className={`absolute left-[866px] top-[1010px] h-[58px] w-[230px] rounded-md border border-cyan-100/30 bg-black/50 text-xl font-black uppercase text-white transition duration-[220ms] ${launcherHidden ? "pointer-events-none opacity-0" : ""}`} type="button" aria-hidden={launcherHidden}>
-            Boosts <span className="text-cyan-100">0</span>
-          </button>
-          {children}
+      <div className="w-full overflow-hidden bg-slate-950 p-4">
+        <div className="relative overflow-hidden" style={{ width: 1920 * scale, height: 1080 * scale }}>
+          <div
+            className="relative overflow-hidden border border-cyan-200/20 bg-[#06111f]"
+            style={{ width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: "top left" }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.12),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)]" />
+            <button className={`absolute left-[866px] top-[1010px] h-[58px] w-[230px] rounded-md border border-cyan-100/30 bg-black/50 text-xl font-black uppercase text-white transition duration-[220ms] ${launcherHidden ? "pointer-events-none opacity-0" : ""}`} type="button" aria-hidden={launcherHidden}>
+              Boosts <span className="text-cyan-100">0</span>
+            </button>
+            {children}
+          </div>
         </div>
       </div>
     </StoryCanvas>
@@ -1260,6 +1262,30 @@ export const BoostsTrayReducedMotion: Story = {
 export const BoostsTrayScaled4KViewport: Story = {
   render: () => (
     <BoostTrayStoryFrame launcherHidden scaleOverride={0.42}>
+      <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayViewport1920x1080: Story = {
+  render: () => (
+    <BoostTrayStoryFrame launcherHidden scaleOverride={0.58}>
+      <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayViewport2560x1440: Story = {
+  render: () => (
+    <BoostTrayStoryFrame launcherHidden scaleOverride={0.48}>
+      <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayViewport3840x2160: Story = {
+  render: () => (
+    <BoostTrayStoryFrame launcherHidden scaleOverride={0.36}>
       <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
     </BoostTrayStoryFrame>
   )
