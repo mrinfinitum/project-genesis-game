@@ -34,11 +34,10 @@ export function getCanonicalStartingEconomyBalance(content: GameRuntimeData, eco
   }
 }
 
-export function getCanonicalStartingEconomyRate(content: GameRuntimeData, economyId: string) {
+export function getCanonicalStartingEconomyRate(_content: GameRuntimeData, economyId: string) {
   switch (economyId) {
-    case CREDITS_ECONOMY_ID:
-      return balanceNumber(content, "creditsPerSecond") ?? balanceNumber(content, "incomePerSecond") ?? 1;
     case POPULATION_ECONOMY_ID:
+    case CREDITS_ECONOMY_ID:
     case LABOR_ECONOMY_ID:
     case RESEARCH_ECONOMY_ID:
     case CIVILIZATION_POINTS_ECONOMY_ID:
@@ -196,6 +195,32 @@ export function getPrimaryHudResources(content: GameRuntimeData, currentEraId?: 
 
 export function getPrimaryHudResourceIds(content: GameRuntimeData, currentEraId?: string) {
   return getPrimaryHudResources(content, currentEraId).map((resource) => resource.id);
+}
+
+function stringField(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return undefined;
+}
+
+export function resolvePrimaryEconomyIdForCurrentEra(content: GameRuntimeData, currentEraId?: string) {
+  const profile = resolveEraEconomyProfile(content, currentEraId);
+  const explicitPrimary = stringField(profile, ["primaryEconomyId", "primaryEconomyResourceId", "manualClickEconomyId", "primaryResourceId"]);
+  const ids = new Set(getEconomyResourceIds(content));
+  if (explicitPrimary && ids.has(explicitPrimary)) return explicitPrimary;
+
+  const configuredIds = new Set(getPrimaryHudResources(content, currentEraId).map((resource) => resource.id));
+  const manualClickDefinition = getEconomyDefinitions(content).find((definition) => {
+    const manualClickTarget = (definition as unknown as Record<string, unknown>).manualClickTarget;
+    return manualClickTarget === true && (!configuredIds.size || configuredIds.has(definition.id));
+  });
+  if (manualClickDefinition) return manualClickDefinition.id;
+
+  if (ids.has(LABOR_ECONOMY_ID)) return LABOR_ECONOMY_ID;
+  if (ids.has(LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID)) return LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID;
+  return undefined;
 }
 
 export function getEconomyResourceIds(content: GameRuntimeData) {

@@ -40,6 +40,7 @@ import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
+import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
 import robloxReferenceManifest from "../../design-reference/roblox/reference-manifest.json";
 
@@ -72,7 +73,7 @@ type PlayerRuntimeDashboardActions = {
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
   grantTestResources: () => void;
-  grantTestCredits: () => void;
+  grantTestPrimaryEconomy: () => void;
   grantTestResearch: () => void;
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
@@ -2366,11 +2367,13 @@ function GameViewportScaler({
 }
 
 function DashboardDataArtInspector({
+  data,
   model,
   artAudit,
   playerRuntime,
   playerRuntimeActions
 }: {
+  data: GameRuntimeData;
   model: DashboardModel;
   artAudit: DashboardArtResolution[];
   playerRuntime?: PlayerRuntimeState;
@@ -2379,6 +2382,10 @@ function DashboardDataArtInspector({
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const missing = artAudit.filter((item) => item.mappingStatus === "missing" || item.warnings.length);
   const demoValues = model.mode === "demo" ? dashboardDataAudit(model).filter((item) => item.source === "demo-fixture") : [];
+  const resolvedPrimaryEconomyId = playerRuntime ? resolvePrimaryEconomyIdForCurrentEra(data, playerRuntime.civilization.currentEraId) : undefined;
+  const passiveTickTarget = resolvedPrimaryEconomyId && (playerRuntime?.economy.rates[resolvedPrimaryEconomyId] ?? 0) > 0 ? resolvedPrimaryEconomyId : "none";
+  const autoClickTarget = playerRuntime?.production.automationEnabled && resolvedPrimaryEconomyId ? resolvedPrimaryEconomyId : "none";
+  const hudSlotIds = model.hudResources.map((resource) => resource.resourceId);
 
   function exportSave() {
     if (!playerRuntimeActions) return;
@@ -2428,11 +2435,16 @@ function DashboardDataArtInspector({
             <div className="col-span-2 truncate">last save {playerRuntime.updatedAt}</div>
             <div className="col-span-2 truncate">last sim {playerRuntime.lastSimulationAt}</div>
             <div className="col-span-2 truncate">economy profile {playerRuntime.civilization.currentEraId}: {model.hudResources.map((resource) => resource.label).join(", ")}</div>
+            <div className="col-span-2 truncate">resolved primary {resolvedPrimaryEconomyId ?? "missing"}</div>
+            <div className="col-span-2 truncate">targets manual {resolvedPrimaryEconomyId ?? "missing"} | passive {passiveTickTarget} | auto {autoClickTarget}</div>
+            <div className="col-span-2 truncate">hud slots {hudSlotIds.join(", ")}</div>
             <div className="col-span-2 truncate">objective {playerRuntime.objectives.activeObjectiveId ?? "none"}</div>
             <div className="col-span-2 truncate">event {playerRuntime.events.activeEventId ?? "none"}</div>
             <div>boosts {playerRuntime.boosts.active.length}</div>
             <div>unresolved {Object.keys(playerRuntime.unresolved.resources).length + Object.keys(playerRuntime.unresolved.upgradeLevels).length}</div>
             <div>population {compactNumber(playerRuntime.economy.balances["ECON-POPULATION"] ?? playerRuntime.civilization.population)}</div>
+            <div>labor {compactNumber(playerRuntime.economy.balances[LABOR_ECONOMY_ID] ?? 0)}</div>
+            <div>credits {compactNumber(playerRuntime.economy.balances[CREDITS_ECONOMY_ID] ?? 0)}</div>
             <div>last +{compactNumber(playerRuntime.production.lastClickGain)}{playerRuntime.production.lastClickWasCritical ? " crit" : ""}</div>
             <div>manual clicks {compactNumber(playerRuntime.production.totalManualClicks)}</div>
             <div>labor lifetime {compactNumber(playerRuntime.production.lifetimeLaborGenerated)}</div>
@@ -2455,7 +2467,7 @@ function DashboardDataArtInspector({
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.saveNow}>Save Now</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => playerRuntimeActions.advanceSimulation(1)}>Advance 1s</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => playerRuntimeActions.advanceSimulation(60)}>Advance 60s</button>
-              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestCredits}>Grant Credits</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestPrimaryEconomy}>Grant Primary</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResearch}>Grant Research</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResources}>Grant All</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.performManualLaborClick}>Manual Labor</button>
@@ -2593,7 +2605,7 @@ export function GameShell({
             onClose={() => setBoostsTrayOpen(false)}
             onActivate={playerRuntimeActions?.activateBoost}
           />
-          {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
+          {dashboardDevToolsEnabled ? <DashboardDataArtInspector data={data} model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
       </GameViewportScaler>
     </main>
   );

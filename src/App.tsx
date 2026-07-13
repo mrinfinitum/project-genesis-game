@@ -24,7 +24,7 @@ import {
   performManualLaborClick,
   type PlayerRuntimeState
 } from "@/lib/player-runtime";
-import { CREDITS_ECONOMY_ID, RESEARCH_ECONOMY_ID } from "@/lib/player-runtime/economy";
+import { RESEARCH_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
 
 const ProductionRoute = lazy(() => import("@/routes/production-route"));
 const ResearchRoute = lazy(() => import("@/routes/research-route"));
@@ -55,7 +55,7 @@ type PlayerRuntimeActions = {
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
   grantTestResources: () => void;
-  grantTestCredits: () => void;
+  grantTestPrimaryEconomy: () => void;
   grantTestResearch: () => void;
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
@@ -234,8 +234,11 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
       grantTestResources() {
         setPlayerRuntime((current) => service.save(grantTestResources(data, current)));
       },
-      grantTestCredits() {
-        setPlayerRuntime((current) => service.save(grantTestEconomy(data, current, [CREDITS_ECONOMY_ID])));
+      grantTestPrimaryEconomy() {
+        setPlayerRuntime((current) => {
+          const primaryEconomyId = resolvePrimaryEconomyIdForCurrentEra(data, current.civilization.currentEraId);
+          return primaryEconomyId ? service.save(grantTestEconomy(data, current, [primaryEconomyId])) : current;
+        });
       },
       grantTestResearch() {
         setPlayerRuntime((current) => service.save(grantTestEconomy(data, current, [RESEARCH_ECONOMY_ID])));

@@ -1,5 +1,5 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
-import { getEconomyResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID } from "./economy";
+import { CREDITS_ECONOMY_ID, getEconomyResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { createNewPlayerRuntimeState } from "./initializer";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
@@ -205,6 +205,28 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.economy.balances[POPULATION_ECONOMY_ID] = seedPopulation;
       next.civilization.population = seedPopulation;
       next.unresolved.migrationNotes.push(`Migrated untouched starter ${POPULATION_ECONOMY_ID} from 125 to ${seedPopulation}.`);
+    }
+  }
+  if (previousSaveVersion < 6) {
+    const primaryEconomyId = resolvePrimaryEconomyIdForCurrentEra(content, next.civilization.currentEraId);
+    const seedCredits = seed.economy.balances[CREDITS_ECONOMY_ID] ?? 0;
+    const seedLabor = seed.economy.balances[LABOR_ECONOMY_ID] ?? 0;
+    const currentCredits = next.economy.balances[CREDITS_ECONOMY_ID] ?? seedCredits;
+    const currentLabor = next.economy.balances[LABOR_ECONOMY_ID] ?? seedLabor;
+    const generatedLaborHistory = Math.max(0, next.production.lifetimeLaborGenerated ?? 0, next.production.totalAutoLaborGenerated ?? 0);
+    const creditDelta = currentCredits - seedCredits;
+    const mistakenCreditsClickBucket =
+      primaryEconomyId === LABOR_ECONOMY_ID &&
+      next.civilization.currentEraId === "survival" &&
+      currentLabor <= seedLabor &&
+      creditDelta > 0 &&
+      generatedLaborHistory > 0;
+
+    if (mistakenCreditsClickBucket) {
+      const migratedAmount = Number(Math.min(creditDelta, generatedLaborHistory).toFixed(3));
+      next.economy.balances[LABOR_ECONOMY_ID] = Number((currentLabor + migratedAmount).toFixed(3));
+      next.economy.balances[CREDITS_ECONOMY_ID] = Number((currentCredits - migratedAmount).toFixed(3));
+      next.unresolved.migrationNotes.push(`Migrated ${migratedAmount} mistaken Survival click ${CREDITS_ECONOMY_ID} into ${LABOR_ECONOMY_ID}.`);
     }
   }
 

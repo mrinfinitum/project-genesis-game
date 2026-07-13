@@ -233,7 +233,7 @@ describe("Roblox left column geometry", () => {
           importSave: () => true,
           advanceSimulation: vi.fn(),
           grantTestResources: vi.fn(),
-          grantTestCredits: vi.fn(),
+          grantTestPrimaryEconomy: vi.fn(),
           grantTestResearch: vi.fn(),
           performManualLaborClick,
           toggleAutomation: vi.fn()

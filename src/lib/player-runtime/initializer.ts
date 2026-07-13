@@ -2,7 +2,7 @@ import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
 import { getEconomyResourceIds, getInventoryResources, getStartingEconomyBalances, getStartingEconomyRates, POPULATION_ECONOMY_ID } from "./economy";
 
-export { getEconomyDefinitions, getEconomyResourceIds, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources } from "./economy";
+export { getEconomyDefinitions, getEconomyResourceIds, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 
 export function getStartingEraId(content: GameRuntimeData) {
   return (content.eras.find((era) => era.unlockRequirements?.start) ?? [...content.eras].sort((a, b) => a.index - b.index)[0])?.id ?? "survival";

@@ -1,5 +1,5 @@
 import type { GameRuntimeData, UpgradeDefinition } from "@/lib/canonical-runtime";
-import { getEconomyResourceIds, getPrimaryHudResources, getStartingEconomyRates, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID } from "./economy";
+import { getEconomyResourceIds, getStartingEconomyRates, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { getPrimaryHudResourceIds } from "./initializer";
 import type { PlayerRuntimeState } from "./types";
 
@@ -21,16 +21,6 @@ function secondsBetween(a: string, b: Date) {
 function balanceNumber(content: GameRuntimeData, key: string, fallback: number) {
   const value = (content.balance as unknown as Record<string, unknown>)[key];
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function activeLaborEconomyId(content: GameRuntimeData, currentEraId?: string) {
-  const economyDefinitions = getPrimaryHudResources(content, currentEraId);
-  const laborDefinition = economyDefinitions.find((definition) => {
-    const label = `${definition.id} ${definition.name ?? ""} ${definition.displayName ?? ""} ${definition.label ?? ""}`.toLowerCase();
-    return label.includes("labor");
-  });
-  const ids = getEconomyResourceIds(content);
-  return laborDefinition?.id ?? (ids.includes(LABOR_ECONOMY_ID) ? LABOR_ECONOMY_ID : ids.includes(LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID) ? LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID : undefined);
 }
 
 function resolveEraMultiplier(content: GameRuntimeData, state: PlayerRuntimeState) {
@@ -93,14 +83,14 @@ function addEconomy(state: PlayerRuntimeState, economyId: string, amount: number
 
 export function performManualLaborClick(content: GameRuntimeData, state: PlayerRuntimeState, options: { now?: Date; forceCritical?: boolean } = {}) {
   const next = recomputeProduction(content, state);
-  const laborEconomyId = activeLaborEconomyId(content, next.civilization.currentEraId);
-  if (!laborEconomyId) return next;
+  const primaryEconomyId = resolvePrimaryEconomyIdForCurrentEra(content, next.civilization.currentEraId);
+  if (!primaryEconomyId) return next;
 
   const critical = options.forceCritical || Math.random() < normalizeCriticalChance(next.production.criticalChance);
   const criticalMultiplier = critical ? next.production.criticalMultiplier : 1;
   const rawAmount = next.production.clickPower * resolveEraMultiplier(content, next) * next.production.comboMultiplier * criticalMultiplier;
   const amount = Math.max(1, Math.floor(rawAmount));
-  addEconomy(next, laborEconomyId, amount);
+  addEconomy(next, primaryEconomyId, amount);
   next.production.lastClickGain = amount;
   next.production.lastClickWasCritical = critical;
   next.production.totalManualClicks += 1;
@@ -118,25 +108,33 @@ export function advanceSimulation(content: GameRuntimeData, state: PlayerRuntime
   const elapsedSeconds = options.seconds ?? secondsBetween(state.lastSimulationAt, now);
   const next = recomputeProduction(content, state);
   const economyIds = getEconomyResourceIds(content);
-  const laborEconomyId = activeLaborEconomyId(content, next.civilization.currentEraId);
+  const primaryEconomyId = resolvePrimaryEconomyIdForCurrentEra(content, next.civilization.currentEraId);
   const canonicalRates = getStartingEconomyRates(content);
 
   for (const economyId of economyIds) {
-    const rate = economyId === laborEconomyId ? 0 : canonicalRates[economyId] ?? 0;
+    const rate = economyId === primaryEconomyId ? 0 : canonicalRates[economyId] ?? 0;
     next.economy.rates[economyId] = rate;
     if (rate > 0 && elapsedSeconds > 0) addEconomy(next, economyId, rate * elapsedSeconds);
   }
 
-  if (laborEconomyId && next.production.automationEnabled) {
-    const autoLaborPerSecond = Math.max(1, Math.floor(Math.max(1, next.production.autoClickPower) * Math.max(0, next.production.autoClickRate)));
-    if (elapsedSeconds > 0) {
-      const amount = autoLaborPerSecond * elapsedSeconds;
-      addEconomy(next, laborEconomyId, amount);
+  if (primaryEconomyId) {
+    const passivePerSecond = Math.max(0, canonicalRates[primaryEconomyId] ?? 0);
+    const autoPerSecond = next.production.automationEnabled ? Math.max(0, Math.floor(next.production.autoClickPower * Math.max(0, next.production.autoClickRate))) : 0;
+    const totalPrimaryPerSecond = passivePerSecond + autoPerSecond;
+
+    if (elapsedSeconds > 0 && passivePerSecond > 0) {
+      addEconomy(next, primaryEconomyId, passivePerSecond * elapsedSeconds);
+      next.production.lifetimeLaborGenerated = Number((next.production.lifetimeLaborGenerated + passivePerSecond * elapsedSeconds).toFixed(3));
+    }
+
+    if (elapsedSeconds > 0 && autoPerSecond > 0) {
+      const amount = autoPerSecond * elapsedSeconds;
+      addEconomy(next, primaryEconomyId, amount);
       next.production.totalAutoClicks += Math.floor(elapsedSeconds);
       next.production.totalAutoLaborGenerated = Number((next.production.totalAutoLaborGenerated + amount).toFixed(3));
       next.production.lifetimeLaborGenerated = Number((next.production.lifetimeLaborGenerated + amount).toFixed(3));
     }
-    next.economy.rates[laborEconomyId] = autoLaborPerSecond;
+    next.economy.rates[primaryEconomyId] = totalPrimaryPerSecond;
   }
 
   next.civilization.eraProgress = Math.min(100, Number((next.civilization.eraProgress + elapsedSeconds * 0.005).toFixed(3)));

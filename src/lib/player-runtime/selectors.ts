@@ -1,6 +1,6 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
-import { LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID } from "./economy";
+import { POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { getPrimaryHudResources } from "./initializer";
 import { resolveUpgradeCost, resolveUpgradeEffect } from "./simulation";
 import type { PlayerRuntimeState } from "./types";
@@ -88,7 +88,8 @@ export function getUpgradeViewState(content: GameRuntimeData, state: PlayerRunti
 
 export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, state: PlayerRuntimeState): DashboardPlayerState {
   const primaryHudResources = selectHudEconomySlots(content, state.civilization.currentEraId);
-  const clickResource = primaryHudResources.find((resource) => resource.id === LABOR_ECONOMY_ID) ?? primaryHudResources[0];
+  const primaryEconomyId = resolvePrimaryEconomyIdForCurrentEra(content, state.civilization.currentEraId);
+  const clickResource = primaryHudResources.find((resource) => resource.id === primaryEconomyId);
   const now = Date.now();
   const activeBoosts = state.boosts.active.filter((boost) => Date.parse(boost.endsAt) > now);
   const economyBalances = { ...state.economy.balances, [POPULATION_ECONOMY_ID]: selectPopulation(state) };
