@@ -26,17 +26,19 @@ export function preserveUnresolvedPlayerRuntimeIds(state: PlayerRuntimeState, co
   const upgradeIds = new Set(content.upgrades.map((upgrade) => upgrade.id));
   const eraIds = new Set(content.eras.map((era) => era.id));
 
-  for (const [economyId, amount] of Object.entries(next.economy.balances)) {
-    if (!economyIds.has(economyId)) {
-      next.unresolved.economy[economyId] = amount;
-      delete next.economy.balances[economyId];
+  if (economyIds.size) {
+    for (const [economyId, amount] of Object.entries(next.economy.balances)) {
+      if (!economyIds.has(economyId)) {
+        next.unresolved.economy[economyId] = amount;
+        delete next.economy.balances[economyId];
+      }
     }
-  }
 
-  for (const [economyId, rate] of Object.entries(next.economy.rates)) {
-    if (!economyIds.has(economyId)) {
-      next.unresolved.economyRates[economyId] = rate;
-      delete next.economy.rates[economyId];
+    for (const [economyId, rate] of Object.entries(next.economy.rates)) {
+      if (!economyIds.has(economyId)) {
+        next.unresolved.economyRates[economyId] = rate;
+        delete next.economy.rates[economyId];
+      }
     }
   }
 

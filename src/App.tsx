@@ -71,7 +71,9 @@ function payloadFromState(state: RuntimeContentState): GameRuntimeData {
     upgrades: state.upgrades,
     assets: state.assets,
     balance: state.balance,
-    clientProfiles: state.clientProfiles
+    clientProfiles: state.clientProfiles,
+    economy: state.economy,
+    economyDefinitions: state.economyDefinitions
   };
 }
 
@@ -93,6 +95,8 @@ function initialState(): RuntimeContentState {
     assets: mockRuntimeData.assets,
     balance: mockRuntimeData.balance,
     clientProfiles: mockRuntimeData.clientProfiles,
+    economy: mockRuntimeData.economy,
+    economyDefinitions: mockRuntimeData.economyDefinitions,
     validationErrors: [],
     validationWarnings: [],
     isUsingFallback: true,

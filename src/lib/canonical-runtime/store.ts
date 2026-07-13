@@ -38,7 +38,9 @@ export class RuntimeContentStore {
       upgrades: this.state.upgrades,
       assets: this.state.assets,
       balance: this.state.balance,
-      clientProfiles: this.state.clientProfiles
+      clientProfiles: this.state.clientProfiles,
+      economy: this.state.economy,
+      economyDefinitions: this.state.economyDefinitions
     };
   }
 

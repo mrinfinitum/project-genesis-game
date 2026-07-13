@@ -1,6 +1,2091 @@
 {
   "assets": [
     {
+      "artKey": "active_event_panel",
+      "aspectRatio": 1.9705882352941178,
+      "category": "event_visual",
+      "height": 510,
+      "id": "asset_active_event_panel",
+      "name": "Active Event Panel",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://88733035792020"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_active_event_panel/asset_active_event_panel.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 1005
+    },
+    {
+      "artKey": "active_event_sub_layer",
+      "aspectRatio": 2.61744966442953,
+      "category": "event_visual",
+      "height": 149,
+      "id": "asset_active_event_sub_layer",
+      "name": "Active Event Sub Layer",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://75304753948939"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_active_event_sub_layer/asset_active_event_sub_layer.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 390
+    },
+    {
+      "artKey": "advanced_infrastructure",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_advanced_infrastructure",
+      "name": "Advanced Infrastructure",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://77794096019474"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_advanced_infrastructure/asset_advanced_infrastructure.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "advanced_logistics",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_advanced_logistics",
+      "name": "Advanced Logistics",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://125829145516762"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_advanced_logistics/asset_advanced_logistics.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "aiassistant_icon",
+      "aspectRatio": 1.1666666666666667,
+      "category": "upgrade_icon",
+      "height": 96,
+      "id": "asset_aiassistant_icon",
+      "name": "Aiassistant Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://139063281430574"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_aiassistant_icon/asset_aiassistant_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 112
+    },
+    {
+      "artKey": "alignment_panel",
+      "aspectRatio": 1.0764262648008611,
+      "category": "alignment_visual",
+      "height": 929,
+      "id": "asset_alignment_panel",
+      "name": "Alignment Panel",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://133827934088512"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_alignment_panel/asset_alignment_panel.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 1000
+    },
+    {
+      "artKey": "auto_button_off",
+      "aspectRatio": 5.306451612903226,
+      "category": "automation_visual",
+      "height": 62,
+      "id": "asset_auto_button_off",
+      "name": "Auto Button Off",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://106944699002340"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_auto_button_off/asset_auto_button_off.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 329
+    },
+    {
+      "artKey": "auto_button_on",
+      "aspectRatio": 5.306451612903226,
+      "category": "automation_visual",
+      "height": 62,
+      "id": "asset_auto_button_on",
+      "name": "Auto Button On",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://139841618767256"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_auto_button_on/asset_auto_button_on.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 329
+    },
+    {
+      "artKey": "auto_robot_blink_icon",
+      "aspectRatio": 1,
+      "category": "automation_visual",
+      "height": 432,
+      "id": "asset_auto_robot_blink_icon",
+      "name": "Auto Robot Blink Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://76501991568176"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_auto_robot_blink_icon/asset_auto_robot_blink_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 432
+    },
+    {
+      "artKey": "auto_robot_circle",
+      "aspectRatio": 1,
+      "category": "automation_visual",
+      "height": 432,
+      "id": "asset_auto_robot_circle",
+      "name": "Auto Robot Circle",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://117040601543803"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_auto_robot_circle/asset_auto_robot_circle.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 432
+    },
+    {
+      "artKey": "auto_robot_icon",
+      "aspectRatio": 1,
+      "category": "automation_visual",
+      "height": 432,
+      "id": "asset_auto_robot_icon",
+      "name": "Auto Robot Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://72298597001681"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_auto_robot_icon/asset_auto_robot_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 432
+    },
+    {
+      "artKey": "basic_administration",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_basic_administration",
+      "name": "Basic Administration",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://118805963317609"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_basic_administration/asset_basic_administration.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "basic_commerce",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_basic_commerce",
+      "name": "Basic Commerce",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://105007343380224"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_basic_commerce/asset_basic_commerce.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "buildings_icon",
+      "aspectRatio": 1,
+      "category": "navigation_icon",
+      "height": 96,
+      "id": "asset_buildings_icon",
+      "name": "Buildings Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://82915516332061"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_buildings_icon/asset_buildings_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "calendar_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 80,
+      "id": "asset_calendar_icon",
+      "name": "Calendar Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://124831656845168"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_calendar_icon/asset_calendar_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 80
+    },
+    {
+      "artKey": "city_preview",
+      "aspectRatio": 1.760154738878143,
+      "category": "panel_texture",
+      "height": 517,
+      "id": "asset_city_preview",
+      "name": "City Preview",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://140425686512251"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_city_preview/asset_city_preview.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 910
+    },
+    {
+      "artKey": "civilization_energy_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 96,
+      "id": "asset_civilization_energy_icon",
+      "name": "Civilization Energy Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://117874545529859"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_civilization_energy_icon/asset_civilization_energy_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "civilization_points_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 96,
+      "id": "asset_civilization_points_icon",
+      "name": "Civilization Points Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://85260889782155"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_civilization_points_icon/asset_civilization_points_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "clean_energy",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_clean_energy",
+      "name": "Clean Energy",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://70824446972015"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_clean_energy/asset_clean_energy.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "click_button",
+      "aspectRatio": 4.061728395061729,
+      "category": "manual_click_visual",
+      "height": 81,
+      "id": "asset_click_button",
+      "name": "Click Button",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://97243708870036"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_click_button/asset_click_button.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 329
+    },
+    {
+      "artKey": "click_button_tapped",
+      "aspectRatio": 4.061728395061729,
+      "category": "manual_click_visual",
+      "height": 81,
+      "id": "asset_click_button_tapped",
+      "name": "Click Button Tapped",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://119403047246277"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_click_button_tapped/asset_click_button_tapped.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 329
+    },
+    {
+      "artKey": "click_hand_icon",
+      "aspectRatio": 1,
+      "category": "manual_click_visual",
+      "height": 256,
+      "id": "asset_click_hand_icon",
+      "name": "Click Hand Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://70836319761875"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_click_hand_icon/asset_click_hand_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 256
+    },
+    {
+      "artKey": "click_interface_circle",
+      "aspectRatio": null,
+      "category": "manual_click_visual",
+      "height": null,
+      "id": "asset_click_interface_circle",
+      "name": "Click Interface Circle",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://109831483704097"
+        }
+      },
+      "status": "source_missing",
+      "type": "image",
+      "width": null
+    },
+    {
+      "artKey": "click_ring_inner",
+      "aspectRatio": 1,
+      "category": "manual_click_visual",
+      "height": 432,
+      "id": "asset_click_ring_inner",
+      "name": "Click Ring Inner",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://111306940360008"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_click_ring_inner/asset_click_ring_inner.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 432
+    },
+    {
+      "artKey": "click_ring_middle",
+      "aspectRatio": 1,
+      "category": "manual_click_visual",
+      "height": 432,
+      "id": "asset_click_ring_middle",
+      "name": "Click Ring Middle",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://101968959721215"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_click_ring_middle/asset_click_ring_middle.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 432
+    },
+    {
+      "artKey": "click_ring_outer",
+      "aspectRatio": 1,
+      "category": "manual_click_visual",
+      "height": 432,
+      "id": "asset_click_ring_outer",
+      "name": "Click Ring Outer",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://105751787246060"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_click_ring_outer/asset_click_ring_outer.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 432
+    },
+    {
+      "artKey": "clicker_hud_background",
+      "aspectRatio": 0.44871794871794873,
+      "category": "manual_click_visual",
+      "height": 780,
+      "id": "asset_clicker_hud_background",
+      "name": "Clicker Hud Background",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://76675288800216"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_clicker_hud_background/asset_clicker_hud_background.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 350
+    },
+    {
+      "artKey": "cloud_infrastructure",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_cloud_infrastructure",
+      "name": "Cloud Infrastructure",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://75314042027150"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_cloud_infrastructure/asset_cloud_infrastructure.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "commercial_infrastructure",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_commercial_infrastructure",
+      "name": "Commercial Infrastructure",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://89906330006902"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_commercial_infrastructure/asset_commercial_infrastructure.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "communication_networks",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_communication_networks",
+      "name": "Communication Networks",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://123931333481718"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_communication_networks/asset_communication_networks.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "construction_methods",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_construction_methods",
+      "name": "Construction Methods",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://102411316315556"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_construction_methods/asset_construction_methods.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "corporate_investment",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_corporate_investment",
+      "name": "Corporate Investment",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://99086220865577"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_corporate_investment/asset_corporate_investment.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "cpuchip_icon",
+      "aspectRatio": 1.1666666666666667,
+      "category": "upgrade_icon",
+      "height": 96,
+      "id": "asset_cpuchip_icon",
+      "name": "Cpuchip Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://137440372153768"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_cpuchip_icon/asset_cpuchip_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 112
+    },
+    {
+      "artKey": "credits_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 96,
+      "id": "asset_credits_icon",
+      "name": "Credits Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://87083558682098"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_credits_icon/asset_credits_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "critical_star_icon",
+      "aspectRatio": 1,
+      "category": "critical_visual",
+      "height": 96,
+      "id": "asset_critical_star_icon",
+      "name": "Critical Star Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://84002014642489"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_critical_star_icon/asset_critical_star_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "cyber_security",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_cyber_security",
+      "name": "Cyber Security",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://138274774662038"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_cyber_security/asset_cyber_security.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "dashboard_background",
+      "aspectRatio": 1.7777777777777777,
+      "category": "panel_texture",
+      "height": 1080,
+      "id": "asset_dashboard_background",
+      "name": "Dashboard Background",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://120850482047860"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_dashboard_background/asset_dashboard_background.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 1920
+    },
+    {
+      "artKey": "digital_commerce",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_digital_commerce",
+      "name": "Digital Commerce",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://104717454384162"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_digital_commerce/asset_digital_commerce.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "digital_government",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_digital_government",
+      "name": "Digital Government",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://104309497191373"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_digital_government/asset_digital_government.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "economic_growth",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_economic_growth",
+      "name": "Economic Growth",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://90840547181684"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_economic_growth/asset_economic_growth.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "entertainment",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_entertainment",
+      "name": "Entertainment",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://132303144769447"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_entertainment/asset_entertainment.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "environmental_protection",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_environmental_protection",
+      "name": "Environmental Protection",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://93497038448066"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_environmental_protection/asset_environmental_protection.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "era_progression_hex",
+      "aspectRatio": 1,
+      "category": "era_progression",
+      "height": 58,
+      "id": "asset_era_progression_hex",
+      "name": "Era Progression Hex",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://134713324945792"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_era_progression_hex/asset_era_progression_hex.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 58
+    },
+    {
+      "artKey": "event_activate_button",
+      "aspectRatio": 6.754716981132075,
+      "category": "event_visual",
+      "height": 53,
+      "id": "asset_event_activate_button",
+      "name": "Event Activate Button",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://136020107961949"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_event_activate_button/asset_event_activate_button.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 358
+    },
+    {
+      "artKey": "events_icon",
+      "aspectRatio": 1,
+      "category": "navigation_icon",
+      "height": 96,
+      "id": "asset_events_icon",
+      "name": "Events Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://109412483529666"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_events_icon/asset_events_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "financial_planning",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_financial_planning",
+      "name": "Financial Planning",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://83547638582175"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_financial_planning/asset_financial_planning.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "galaxy_icon",
+      "aspectRatio": 1,
+      "category": "navigation_icon",
+      "height": 96,
+      "id": "asset_galaxy_icon",
+      "name": "Galaxy Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://92678951819674"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_galaxy_icon/asset_galaxy_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "global_commerce",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_global_commerce",
+      "name": "Global Commerce",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://131250396616167"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_global_commerce/asset_global_commerce.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "global_finance",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_global_finance",
+      "name": "Global Finance",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://120384757449319"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_global_finance/asset_global_finance.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "government_administration",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_government_administration",
+      "name": "Government Administration",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://98576635416101"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_government_administration/asset_government_administration.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "healthcare_systems",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_healthcare_systems",
+      "name": "Healthcare Systems",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://108726917401449"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_healthcare_systems/asset_healthcare_systems.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "housing_expansion",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_housing_expansion",
+      "name": "Housing Expansion",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://84631615141565"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_housing_expansion/asset_housing_expansion.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "industrial_management",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_industrial_management",
+      "name": "Industrial Management",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://104134111956286"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_industrial_management/asset_industrial_management.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "infrastructure_expansion",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_infrastructure_expansion",
+      "name": "Infrastructure Expansion",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://75101836183786"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_infrastructure_expansion/asset_infrastructure_expansion.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "infrastructure_planning",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_infrastructure_planning",
+      "name": "Infrastructure Planning",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://126532334627395"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_infrastructure_planning/asset_infrastructure_planning.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "innovation_economy",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_innovation_economy",
+      "name": "Innovation Economy",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://83834775278107"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_innovation_economy/asset_innovation_economy.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "leaderboard_panel",
+      "aspectRatio": 1.4059405940594059,
+      "category": "leaderboard_panel",
+      "height": 606,
+      "id": "asset_leaderboard_panel",
+      "name": "Leaderboard Panel",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://130675384010731"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_leaderboard_panel/asset_leaderboard_panel.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 852
+    },
+    {
+      "artKey": "leadership",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_leadership",
+      "name": "Leadership",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://127230194744643"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_leadership/asset_leadership.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "mass_transit",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_mass_transit",
+      "name": "Mass Transit",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://111806218755421"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_mass_transit/asset_mass_transit.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "merchant_economy",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_merchant_economy",
+      "name": "Merchant Economy",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://131564402562271"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_merchant_economy/asset_merchant_economy.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "national_banking",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_national_banking",
+      "name": "National Banking",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://133469573754562"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_national_banking/asset_national_banking.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "national_projects",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_national_projects",
+      "name": "National Projects",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://85219866228006"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_national_projects/asset_national_projects.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "objective_panel",
+      "aspectRatio": 3.342857142857143,
+      "category": "panel_texture",
+      "height": 105,
+      "id": "asset_objective_panel",
+      "name": "Objective Panel",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://139560217216021"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_objective_panel/asset_objective_panel.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 351
+    },
+    {
+      "artKey": "organization",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_organization",
+      "name": "Organization",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://97325323858284"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_organization/asset_organization.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "overview_icon",
+      "aspectRatio": 1,
+      "category": "navigation_icon",
+      "height": 100,
+      "id": "asset_overview_icon",
+      "name": "Overview Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://79397960883593"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_overview_icon/asset_overview_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 100
+    },
+    {
+      "artKey": "population_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 96,
+      "id": "asset_population_icon",
+      "name": "Population Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://85080367725697"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_population_icon/asset_population_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "power_grid",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_power_grid",
+      "name": "Power Grid",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://87944610525351"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_power_grid/asset_power_grid.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "public_services",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_public_services",
+      "name": "Public Services",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://71291561916561"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_public_services/asset_public_services.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "public_transportation",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_public_transportation",
+      "name": "Public Transportation",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://138496074113455"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_public_transportation/asset_public_transportation.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "quantum_processor_icon",
+      "aspectRatio": 1.1666666666666667,
+      "category": "upgrade_icon",
+      "height": 96,
+      "id": "asset_quantum_processor_icon",
+      "name": "Quantum Processor Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://83729850570707"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_quantum_processor_icon/asset_quantum_processor_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 112
+    },
+    {
+      "artKey": "regional_development",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 238,
+      "id": "asset_regional_development",
+      "name": "Regional Development",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://106005399969785"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_regional_development/asset_regional_development.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 238
+    },
+    {
+      "artKey": "research_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 96,
+      "id": "asset_research_icon",
+      "name": "Research Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://111861373961333"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_research_icon/asset_research_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "resource_management",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_resource_management",
+      "name": "Resource Management",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://71161540355608"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_resource_management/asset_resource_management.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "road_systems",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_road_systems",
+      "name": "Road Systems",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://130489632888756"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_road_systems/asset_road_systems.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "settings_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 80,
+      "id": "asset_settings_icon",
+      "name": "Settings Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://134568742596537"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_settings_icon/asset_settings_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 80
+    },
+    {
+      "artKey": "settlement_planning",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_settlement_planning",
+      "name": "Settlement Planning",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://72998323173395"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_settlement_planning/asset_settlement_planning.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "sidebar_frame",
+      "aspectRatio": 0.20253164556962025,
+      "category": "panel_texture",
+      "height": 790,
+      "id": "asset_sidebar_frame",
+      "name": "Sidebar Frame",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://133332255744133"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_sidebar_frame/asset_sidebar_frame.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 160
+    },
+    {
+      "artKey": "singularity_core_icon",
+      "aspectRatio": 1.1666666666666667,
+      "category": "upgrade_icon",
+      "height": 96,
+      "id": "asset_singularity_core_icon",
+      "name": "Singularity Core Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://84534528591144"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_singularity_core_icon/asset_singularity_core_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 112
+    },
+    {
+      "artKey": "smart_cities",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_smart_cities",
+      "name": "Smart Cities",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://129537784382945"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_smart_cities/asset_smart_cities.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "spaceport_icon",
+      "aspectRatio": 1,
+      "category": "navigation_icon",
+      "height": 96,
+      "id": "asset_spaceport_icon",
+      "name": "Spaceport Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://105730152289089"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_spaceport_icon/asset_spaceport_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "storage_systems",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_storage_systems",
+      "name": "Storage Systems",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://100606187619905"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_storage_systems/asset_storage_systems.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "supply_organization",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_supply_organization",
+      "name": "Supply Organization",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://122042085477203"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_supply_organization/asset_supply_organization.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "tax_collection",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_tax_collection",
+      "name": "Tax Collection",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://89908673111529"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_tax_collection/asset_tax_collection.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "technology_parks",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_technology_parks",
+      "name": "Technology Parks",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://131907904739587"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_technology_parks/asset_technology_parks.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "top_bar_hex_button",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 96,
+      "id": "asset_top_bar_hex_button",
+      "name": "Top Bar Hex Button",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://120486747670611"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_top_bar_hex_button/asset_top_bar_hex_button.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "top_bar_plus_button",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 56,
+      "id": "asset_top_bar_plus_button",
+      "name": "Top Bar Plus Button",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://82799868570489"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_top_bar_plus_button/asset_top_bar_plus_button.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 56
+    },
+    {
+      "artKey": "top_bar_resource_panel_strip",
+      "aspectRatio": 18.46153846153846,
+      "category": "resource_icon",
+      "height": 104,
+      "id": "asset_top_bar_resource_panel_strip",
+      "name": "Top Bar Resource Panel Strip",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://81516206378414"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_top_bar_resource_panel_strip/asset_top_bar_resource_panel_strip.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 1920
+    },
+    {
+      "artKey": "town_planning",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_town_planning",
+      "name": "Town Planning",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://91748088891408"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_town_planning/asset_town_planning.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "trophy_icon",
+      "aspectRatio": 1,
+      "category": "resource_icon",
+      "height": 80,
+      "id": "asset_trophy_icon",
+      "name": "Trophy Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://136305496385375"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_trophy_icon/asset_trophy_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 80
+    },
+    {
+      "artKey": "upgrade_button",
+      "aspectRatio": 3.297872340425532,
+      "category": "upgrade_icon",
+      "height": 94,
+      "id": "asset_upgrade_button",
+      "name": "Upgrade Button",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://118768043950365"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_upgrade_button/asset_upgrade_button.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 310
+    },
+    {
+      "artKey": "upgrade_panel_structure",
+      "aspectRatio": 2.1904761904761907,
+      "category": "upgrade_icon",
+      "height": 420,
+      "id": "asset_upgrade_panel_structure",
+      "name": "Upgrade Panel Structure",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://137465475952770"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_upgrade_panel_structure/asset_upgrade_panel_structure.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 920
+    },
+    {
+      "artKey": "upgrades_icon",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 96,
+      "id": "asset_upgrades_icon",
+      "name": "Upgrades Icon",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://128289681864521"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_upgrades_icon/asset_upgrades_icon.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 96
+    },
+    {
+      "artKey": "urban_ai",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_urban_ai",
+      "name": "Urban Ai",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://125663802888322"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_urban_ai/asset_urban_ai.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "village_administration",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_village_administration",
+      "name": "Village Administration",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://79740861850613"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_village_administration/asset_village_administration.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
+      "artKey": "village_records",
+      "aspectRatio": 1,
+      "category": "upgrade_icon",
+      "height": 230,
+      "id": "asset_village_records",
+      "name": "Village Records",
+      "notes": "",
+      "platformMappings": {
+        "roblox": {
+          "assetId": "rbxassetid://83673803316095"
+        },
+        "web": {
+          "path": "/assets/roblox-art/asset_village_records/asset_village_records.png",
+          "publishedAt": "2026-07-12T23:52:05.114Z",
+          "status": "published"
+        }
+      },
+      "status": "web_published",
+      "type": "image",
+      "width": 230
+    },
+    {
       "artKey": "2026-06-30t21-51-54-544z-genesis-local-asset-test",
       "aspectRatio": null,
       "category": "Asset",
@@ -8,7 +2093,11 @@
       "id": "asset-smoke-local-png",
       "name": "2026 06 30T21 51 54 544Z genesis local asset test",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-smoke-local-png/exports/2026-06-30T21-51-54-544Z-genesis-local-asset-test.png"
+        }
+      },
       "status": "Uploaded",
       "type": "Image",
       "width": null
@@ -34,7 +2123,11 @@
       "id": "asset-source-1782864909082-icon_survival_science_03_agriculture",
       "name": "icon_survival_science_03_agriculture",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-source-1782864909082-icon_survival_science_03_agriculture/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -47,7 +2140,11 @@
       "id": "asset-source-1782865014527-icon_village_science_03_surveying",
       "name": "icon_village_science_03_surveying",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-source-1782865014527-icon_village_science_03_surveying/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -60,7 +2157,11 @@
       "id": "asset-source-1782865146173-icon_village_science_12_irrigation",
       "name": "icon_village_science_12_irrigation",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-source-1782865146173-icon_village_science_12_irrigation/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -73,7 +2174,11 @@
       "id": "asset-source-1782865165427-icon_town_science_02_electricity",
       "name": "icon_town_science_02_electricity",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-source-1782865165427-icon_town_science_02_electricity/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -86,7 +2191,11 @@
       "id": "asset-upgrades-U0001",
       "name": "2026 06 30T21 50 04 613Z genesis test",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0001/exports/2026-06-30T21-50-04-610Z-genesis-test.png"
+        }
+      },
       "status": "Uploaded",
       "type": "PSD Source",
       "width": null
@@ -99,7 +2208,11 @@
       "id": "asset-upgrades-U0139",
       "name": "icon_survival_science_01_storytelling",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0139/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -112,7 +2225,11 @@
       "id": "asset-upgrades-U0140",
       "name": "icon_survival_science_02_primitive_mathematics",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0140/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -125,7 +2242,11 @@
       "id": "asset-upgrades-U0141",
       "name": "icon_survival_science_03_agriculture",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0141/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -138,7 +2259,11 @@
       "id": "asset-upgrades-U0142",
       "name": "icon_survival_science_04_animal_husbandry",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0142/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -151,7 +2276,11 @@
       "id": "asset-upgrades-U0143",
       "name": "icon_survival_science_05_mining",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0143/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -164,7 +2293,11 @@
       "id": "asset-upgrades-U0144",
       "name": "icon_survival_science_06_construction",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0144/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -177,7 +2310,11 @@
       "id": "asset-upgrades-U0145",
       "name": "icon_survival_science_07_fire_engineering",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0145/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -190,7 +2327,11 @@
       "id": "asset-upgrades-U0146",
       "name": "icon_survival_science_08_basic_medicine",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0146/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -203,7 +2344,11 @@
       "id": "asset-upgrades-U0147",
       "name": "icon_survival_science_09_toolmaking",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0147/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -216,7 +2361,11 @@
       "id": "asset-upgrades-U0148",
       "name": "icon_survival_science_10_early_science",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0148/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -229,7 +2378,11 @@
       "id": "asset-upgrades-U0149",
       "name": "icon_survival_science_11_primitive_navigation",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0149/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -242,7 +2395,11 @@
       "id": "asset-upgrades-U0150",
       "name": "icon_survival_science_12_natural_observation",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0150/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -255,7 +2412,11 @@
       "id": "asset-upgrades-U0151",
       "name": "icon_village_science_01_writing",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0151/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -268,7 +2429,11 @@
       "id": "asset-upgrades-U0152",
       "name": "icon_village_science_02_libraries",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0152/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -281,7 +2446,11 @@
       "id": "asset-upgrades-U0153",
       "name": "icon_village_science_03_surveying",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0153/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -294,7 +2463,11 @@
       "id": "asset-upgrades-U0154",
       "name": "icon_village_science_04_architecture",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0154/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -307,7 +2480,11 @@
       "id": "asset-upgrades-U0155",
       "name": "icon_village_science_05_early_engineering",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0155/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -320,7 +2497,11 @@
       "id": "asset-upgrades-U0156",
       "name": "icon_village_science_06_navigation",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0156/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -333,7 +2514,11 @@
       "id": "asset-upgrades-U0157",
       "name": "icon_village_science_07_education",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0157/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -346,7 +2531,11 @@
       "id": "asset-upgrades-U0158",
       "name": "icon_village_science_08_crop_science",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0158/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -359,7 +2548,11 @@
       "id": "asset-upgrades-U0159",
       "name": "icon_village_science_09_metallurgy",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0159/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -372,7 +2565,11 @@
       "id": "asset-upgrades-U0160",
       "name": "icon_village_science_10_water_systems",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0160/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -385,7 +2582,11 @@
       "id": "asset-upgrades-U0161",
       "name": "icon_village_science_11_cartography",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0161/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -398,7 +2599,11 @@
       "id": "asset-upgrades-U0162",
       "name": "icon_village_science_12_irrigation",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0162/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -411,7 +2616,11 @@
       "id": "asset-upgrades-U0163",
       "name": "icon_town_science_01_scientific_method",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0163/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -424,7 +2633,11 @@
       "id": "asset-upgrades-U0210",
       "name": "icon_survival_technology_01_resource_management",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0210/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -437,7 +2650,11 @@
       "id": "asset-upgrades-U0211",
       "name": "icon_survival_technology_02_storage_systems",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0211/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -450,7 +2667,11 @@
       "id": "asset-upgrades-U0212",
       "name": "icon_survival_technology_03_basic_commerce",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0212/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -463,7 +2684,11 @@
       "id": "asset-upgrades-U0213",
       "name": "icon_survival_technology_04_leadership",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0213/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -476,7 +2701,11 @@
       "id": "asset-upgrades-U0214",
       "name": "icon_survival_technology_05_organization",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0214/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -489,7 +2718,11 @@
       "id": "asset-upgrades-U0215",
       "name": "icon_survival_technology_06_settlement_planning",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0215/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -502,7 +2735,11 @@
       "id": "asset-upgrades-U0216",
       "name": "icon_survival_technology_07_basic_administration",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0216/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -515,7 +2752,11 @@
       "id": "asset-upgrades-U0217",
       "name": "icon_survival_technology_08_construction_methods",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0217/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -528,7 +2769,11 @@
       "id": "asset-upgrades-U0218",
       "name": "icon_survival_technology_09_village_records",
       "notes": "",
-      "platformMappings": {},
+      "platformMappings": {
+        "web": {
+          "path": "https://hlbmvkmkqnhpcllzlgjm.supabase.co/storage/v1/object/public/project-genesis-assets/asset-upgrades-U0218/exports/256x256.png"
+        }
+      },
       "status": "Generated",
       "type": "PSD Source",
       "width": null
@@ -551,47 +2796,6 @@
     "default": {
       "availableGlowEnabled": true,
       "defaultUpgradeRowsVisible": 4,
-      "primaryHudResources": [
-        {
-          "artKey": "hud_civilization_energy_icon",
-          "balanceKey": "startingCivilizationEnergy",
-          "color": "#67e8f9",
-          "iconKey": "hud_civilization_energy_icon",
-          "id": "ECON-CIVILIZATION-ENERGY",
-          "label": "Energy"
-        },
-        {
-          "artKey": "hud_credits_icon",
-          "balanceKey": "startingCoins",
-          "color": "#facc15",
-          "iconKey": "hud_credits_icon",
-          "id": "ECON-CREDITS",
-          "label": "Credits"
-        },
-        {
-          "artKey": "hud_research_icon",
-          "balanceKey": "startingResearch",
-          "color": "#a78bfa",
-          "iconKey": "hud_research_icon",
-          "id": "ECON-RESEARCH",
-          "label": "Research"
-        },
-        {
-          "artKey": "hud_population_icon",
-          "balanceKey": "startingPopulation",
-          "color": "#34d399",
-          "iconKey": "hud_population_icon",
-          "id": "ECON-POPULATION",
-          "label": "Population"
-        },
-        {
-          "artKey": "hud_civilization_points_icon",
-          "color": "#fb7185",
-          "iconKey": "hud_civilization_points_icon",
-          "id": "ECON-CIVILIZATION-POINTS",
-          "label": "Civ Points"
-        }
-      ],
       "eraNavigation": {
         "allowPrimaryHorizontalScroll": false,
         "dashboardMode": "current_journey",
@@ -834,8 +3038,8 @@
   ],
   "metadata": {
     "accessLevel": "public-published",
-    "checksum": "eca1dccd7219a04a46e25628295991174b38464769151da8f5100b0490071f62",
-    "contentVersion": 3,
+    "checksum": "aa10cdcdf6a1f40b1df4d78497b0ac8a8124b684137b18640b2d3ee46e9844e9",
+    "contentVersion": 4,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

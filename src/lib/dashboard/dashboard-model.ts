@@ -1,6 +1,6 @@
 import type { GameRuntimeData, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { dashboardDemoPlayerState } from "@/content/mock/dashboard-demo-state";
-import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
+import { getEconomyWarnings, getPrimaryHudResources } from "@/lib/player-runtime/economy";
 
 export type DashboardPlayerStateSource = "player-runtime" | "default-player-state" | "demo-fixture";
 export type DashboardMode = "canonical" | "demo";
@@ -93,6 +93,7 @@ export type DashboardModel = {
   alignment: Record<AlignmentAxis, number>;
   alignmentLabel: string;
   civilizationPrediction: string;
+  economyWarnings: string[];
   missingSystems: {
     civilizationName: boolean;
     playerResources: boolean;
@@ -181,7 +182,7 @@ function buildHudResources(content: GameRuntimeData, player: DashboardPlayerStat
 
       return {
         resourceId: resource.id,
-        label: resource.label,
+        label: resource.label ?? resource.displayName ?? resource.id,
         iconKey: resource.iconKey,
         artKey: resource.artKey,
         category: "Economy",
@@ -266,6 +267,7 @@ export function createDashboardModel(
   const currentEra = content.eras.find((era) => era.id === fallbackEraId) ?? content.eras[0];
   const activeCategoryId = options.activeCategoryId ?? content.upgradeCategories[0]?.id ?? "";
   const alignment = resolveAlignment(playerState);
+  const economyWarnings = getEconomyWarnings(content);
 
   return {
     mode,
@@ -279,6 +281,7 @@ export function createDashboardModel(
     alignment: alignment.alignment,
     alignmentLabel: alignment.label,
     civilizationPrediction: alignment.prediction,
+    economyWarnings,
     missingSystems: {
       civilizationName: !playerState.civilizationName,
       playerResources: Object.keys(playerState.resourceInventory).length === 0,

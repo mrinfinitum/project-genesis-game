@@ -2,8 +2,19 @@ import { z } from "zod";
 import type { GameRuntimeData, RuntimeValidationResult } from "./types";
 
 const id = z.string().trim().min(1);
-const finiteNumber = z.number().finite();
-const optionalFiniteNumber = z.number().finite().nullable().optional();
+const finiteNumber = z.coerce.number().finite();
+const optionalFiniteNumber = z
+  .preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const ratioParts = trimmed.split(":").map((part) => Number(part));
+    if (ratioParts.length === 2 && ratioParts.every((part) => Number.isFinite(part)) && ratioParts[1] !== 0) {
+      return ratioParts[0] / ratioParts[1];
+    }
+    return Number(trimmed);
+  }, z.number().finite().nullable())
+  .optional();
 const stringArray = z.array(z.string());
 const unknownRecord = z.record(z.string(), z.unknown());
 
@@ -162,6 +173,32 @@ export const clientProfilesSchema = z
   })
   .catchall(clientProfileSchema.optional());
 
+export const economyDefinitionSchema = z
+  .object({
+    id,
+    name: z.string().optional(),
+    label: z.string().optional(),
+    displayName: z.string().optional(),
+    iconKey: z.string().optional(),
+    artKey: z.string().optional(),
+    color: z.string().optional(),
+    balanceKey: z.string().optional(),
+    startingValue: finiteNumber.optional(),
+    startingAmount: finiteNumber.optional(),
+    defaultValue: finiteNumber.optional(),
+    startingRate: finiteNumber.optional(),
+    rate: finiteNumber.optional()
+  })
+  .catchall(z.unknown());
+
+export const economyRuntimeSchema = z
+  .object({
+    definitions: z.array(economyDefinitionSchema).optional(),
+    resources: z.array(economyDefinitionSchema).optional(),
+    primaryHudResources: z.array(z.union([z.string(), economyDefinitionSchema])).optional()
+  })
+  .catchall(z.unknown());
+
 export const gameRuntimeDataSchema = z.object({
   metadata: runtimeMetadataSchema,
   eras: z.array(eraDefinitionSchema),
@@ -170,7 +207,9 @@ export const gameRuntimeDataSchema = z.object({
   upgrades: z.array(upgradeDefinitionSchema),
   assets: z.array(assetDefinitionSchema),
   balance: balanceDefinitionSchema,
-  clientProfiles: clientProfilesSchema
+  clientProfiles: clientProfilesSchema,
+  economy: economyRuntimeSchema.optional(),
+  economyDefinitions: z.array(economyDefinitionSchema).optional()
 });
 
 function requireUnique(values: string[], label: string, errors: string[]) {
@@ -296,7 +335,7 @@ export function validateGameRuntimeData(input: unknown): RuntimeValidationResult
   for (const asset of payload.assets) {
     const webPath = asset.platformMappings?.web?.path;
 
-    if (webPath && typeof webPath === "string" && !webPath.startsWith("/")) {
+    if (webPath && typeof webPath === "string" && !webPath.startsWith("/") && !webPath.startsWith("https://")) {
       errors.push(`asset "${asset.id}" has invalid web path "${webPath}".`);
     }
 

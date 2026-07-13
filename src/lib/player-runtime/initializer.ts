@@ -1,8 +1,8 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
-import { getInventoryResources, getPrimaryHudResourceIds, getStartingEconomyBalances } from "./economy";
+import { getInventoryResources, getPrimaryHudResourceIds, getStartingEconomyBalances, getStartingEconomyRates } from "./economy";
 
-export { DEFAULT_PRIMARY_HUD_RESOURCES, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources } from "./economy";
+export { getEconomyDefinitions, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources } from "./economy";
 
 export function getStartingEraId(content: GameRuntimeData) {
   return (content.eras.find((era) => era.unlockRequirements?.start) ?? [...content.eras].sort((a, b) => a.index - b.index)[0])?.id ?? "survival";
@@ -31,7 +31,7 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
   const economyIds = getPrimaryHudResourceIds(content);
   const inventoryResourceIds = getInventoryResources(content).map((resource) => resource.id);
   const economyBalances = getStartingEconomyBalances(content);
-  const economyRates = Object.fromEntries(economyIds.map((id) => [id, 0]));
+  const economyRates = { ...Object.fromEntries(economyIds.map((id) => [id, 0])), ...getStartingEconomyRates(content) };
   const inventory = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
   const productionRates = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
   const storageLimits = Object.fromEntries(inventoryResourceIds.map((id) => [id, Number.MAX_SAFE_INTEGER]));

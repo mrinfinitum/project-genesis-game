@@ -69,6 +69,8 @@ function stateFromPayload(
     assets: payload.assets,
     balance: payload.balance,
     clientProfiles: payload.clientProfiles,
+    economy: payload.economy,
+    economyDefinitions: payload.economyDefinitions,
     validationErrors: options?.validationErrors ?? [],
     validationWarnings: options?.validationWarnings ?? [],
     lastCheckedAt: options?.lastCheckedAt,
@@ -267,7 +269,9 @@ export class CanonicalRuntimeContentManager {
       upgrades: state.upgrades,
       assets: state.assets,
       balance: state.balance,
-      clientProfiles: state.clientProfiles
+      clientProfiles: state.clientProfiles,
+      economy: state.economy,
+      economyDefinitions: state.economyDefinitions
     };
   }
 }

@@ -148,11 +148,19 @@ export interface BalanceDefinition {
 
 export interface PrimaryHudResourceDefinition {
   id: string;
-  label: string;
+  label?: string;
+  displayName?: string;
+  name?: string;
   iconKey?: string;
   artKey?: string;
   color?: string;
   balanceKey?: keyof BalanceDefinition | string;
+  startingValue?: number;
+  startingAmount?: number;
+  defaultValue?: number;
+  startingRate?: number;
+  rate?: number;
+  missingDefinition?: boolean;
 }
 
 export interface ClientProfile {
@@ -184,6 +192,13 @@ export interface GameRuntimeData {
   assets: AssetDefinition[];
   balance: BalanceDefinition;
   clientProfiles: ClientProfiles;
+  economy?: {
+    definitions?: PrimaryHudResourceDefinition[];
+    resources?: PrimaryHudResourceDefinition[];
+    primaryHudResources?: Array<string | PrimaryHudResourceDefinition>;
+    [key: string]: unknown;
+  };
+  economyDefinitions?: PrimaryHudResourceDefinition[];
 }
 
 export interface RuntimeValidationResult {
@@ -225,6 +240,8 @@ export interface RuntimeContentState {
   assets: AssetDefinition[];
   balance: BalanceDefinition;
   clientProfiles: ClientProfiles;
+  economy?: GameRuntimeData["economy"];
+  economyDefinitions?: PrimaryHudResourceDefinition[];
   validationErrors: string[];
   validationWarnings: string[];
   lastCheckedAt?: string;

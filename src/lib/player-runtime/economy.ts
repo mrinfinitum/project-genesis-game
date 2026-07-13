@@ -1,52 +1,9 @@
 import type { GameRuntimeData, PrimaryHudResourceDefinition } from "@/lib/canonical-runtime";
 
-export const DEFAULT_PRIMARY_HUD_RESOURCES: PrimaryHudResourceDefinition[] = [
-  {
-    id: "ECON-CIVILIZATION-ENERGY",
-    label: "Energy",
-    iconKey: "hud_civilization_energy_icon",
-    artKey: "hud_civilization_energy_icon",
-    balanceKey: "startingCivilizationEnergy",
-    color: "#67e8f9"
-  },
-  {
-    id: "ECON-CREDITS",
-    label: "Credits",
-    iconKey: "hud_credits_icon",
-    artKey: "hud_credits_icon",
-    balanceKey: "startingCoins",
-    color: "#facc15"
-  },
-  {
-    id: "ECON-RESEARCH",
-    label: "Research",
-    iconKey: "hud_research_icon",
-    artKey: "hud_research_icon",
-    balanceKey: "startingResearch",
-    color: "#a78bfa"
-  },
-  {
-    id: "ECON-POPULATION",
-    label: "Population",
-    iconKey: "hud_population_icon",
-    artKey: "hud_population_icon",
-    balanceKey: "startingPopulation",
-    color: "#34d399"
-  },
-  {
-    id: "ECON-CIVILIZATION-POINTS",
-    label: "Civ Points",
-    iconKey: "hud_civilization_points_icon",
-    artKey: "hud_civilization_points_icon",
-    color: "#fb7185"
-  }
-];
+const STARTING_VALUE_KEYS = ["startingValue", "startingAmount", "defaultValue"] as const;
+const STARTING_RATE_KEYS = ["startingRate", "rate"] as const;
 
-function normalizeHudResource(input: unknown): PrimaryHudResourceDefinition | undefined {
-  if (typeof input === "string" && input.trim()) {
-    return { id: input, label: input };
-  }
-
+function normalizeEconomyDefinition(input: unknown): PrimaryHudResourceDefinition | undefined {
   if (!input || typeof input !== "object") return undefined;
   const record = input as Record<string, unknown>;
   const id = typeof record.id === "string" ? record.id : typeof record.resourceId === "string" ? record.resourceId : undefined;
@@ -54,20 +11,52 @@ function normalizeHudResource(input: unknown): PrimaryHudResourceDefinition | un
 
   return {
     id,
-    label: typeof record.label === "string" ? record.label : typeof record.displayName === "string" ? record.displayName : id,
+    name: typeof record.name === "string" ? record.name : undefined,
+    displayName: typeof record.displayName === "string" ? record.displayName : undefined,
+    label: typeof record.label === "string" ? record.label : typeof record.displayName === "string" ? record.displayName : typeof record.name === "string" ? record.name : undefined,
     iconKey: typeof record.iconKey === "string" ? record.iconKey : undefined,
     artKey: typeof record.artKey === "string" ? record.artKey : undefined,
     color: typeof record.color === "string" ? record.color : undefined,
-    balanceKey: typeof record.balanceKey === "string" ? record.balanceKey : undefined
+    balanceKey: typeof record.balanceKey === "string" ? record.balanceKey : undefined,
+    startingValue: typeof record.startingValue === "number" ? record.startingValue : undefined,
+    startingAmount: typeof record.startingAmount === "number" ? record.startingAmount : undefined,
+    defaultValue: typeof record.defaultValue === "number" ? record.defaultValue : undefined,
+    startingRate: typeof record.startingRate === "number" ? record.startingRate : undefined,
+    rate: typeof record.rate === "number" ? record.rate : undefined
   };
 }
 
-export function getPrimaryHudResources(content: GameRuntimeData): PrimaryHudResourceDefinition[] {
-  const configured = content.clientProfiles.default.primaryHudResources
-    ?.map(normalizeHudResource)
-    .filter((resource): resource is PrimaryHudResourceDefinition => Boolean(resource));
+function normalizeHudSlot(input: unknown): PrimaryHudResourceDefinition | undefined {
+  if (typeof input === "string" && input.trim()) {
+    return { id: input };
+  }
+  return normalizeEconomyDefinition(input);
+}
 
-  return configured?.length ? configured : DEFAULT_PRIMARY_HUD_RESOURCES;
+export function getEconomyDefinitions(content: GameRuntimeData): PrimaryHudResourceDefinition[] {
+  return [
+    ...(content.economyDefinitions ?? []),
+    ...(content.economy?.definitions ?? []),
+    ...(content.economy?.resources ?? []),
+    ...(content.economy?.primaryHudResources ?? []).map(normalizeEconomyDefinition).filter((definition): definition is PrimaryHudResourceDefinition => Boolean(definition))
+  ];
+}
+
+export function getPrimaryHudResources(content: GameRuntimeData): PrimaryHudResourceDefinition[] {
+  const definitions = new Map(getEconomyDefinitions(content).map((definition) => [definition.id, definition]));
+  const configuredSlots = [
+    ...(content.clientProfiles.default.primaryHudResources ?? []),
+    ...(content.economy?.primaryHudResources ?? [])
+  ];
+
+  return configuredSlots
+    .map(normalizeHudSlot)
+    .filter((slot): slot is PrimaryHudResourceDefinition => Boolean(slot))
+    .map((slot) => {
+      const canonical = definitions.get(slot.id);
+      if (canonical) return { ...slot, ...canonical };
+      return { ...slot, missingDefinition: true };
+    });
 }
 
 export function getPrimaryHudResourceIds(content: GameRuntimeData) {
@@ -79,11 +68,50 @@ export function getInventoryResources(content: GameRuntimeData) {
   return content.resources.filter((resource) => !hudIds.has(resource.id));
 }
 
+function numericField(resource: PrimaryHudResourceDefinition, keys: readonly string[]) {
+  const record = resource as unknown as Record<string, unknown>;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return undefined;
+}
+
 export function getStartingEconomyBalances(content: GameRuntimeData) {
   return Object.fromEntries(
     getPrimaryHudResources(content).map((resource) => {
-      const raw = resource.balanceKey ? content.balance[resource.balanceKey] : 0;
-      return [resource.id, typeof raw === "number" && Number.isFinite(raw) ? raw : 0];
+      const canonicalValue = numericField(resource, STARTING_VALUE_KEYS);
+      const balanceValue = resource.balanceKey ? content.balance[resource.balanceKey] : undefined;
+      const amount = canonicalValue ?? (typeof balanceValue === "number" && Number.isFinite(balanceValue) ? balanceValue : 0);
+      return [resource.id, amount];
     })
   );
+}
+
+export function getStartingEconomyRates(content: GameRuntimeData) {
+  return Object.fromEntries(
+    getPrimaryHudResources(content).map((resource) => [resource.id, numericField(resource, STARTING_RATE_KEYS) ?? 0])
+  );
+}
+
+export function getEconomyWarnings(content: GameRuntimeData) {
+  const warnings: string[] = [];
+  const definitions = getEconomyDefinitions(content);
+  const slots = getPrimaryHudResources(content);
+
+  if (!slots.length) {
+    warnings.push("Canonical HUD economy configuration is missing.");
+  }
+
+  if (!definitions.length) {
+    warnings.push("Canonical economy definitions are missing.");
+  }
+
+  for (const slot of slots) {
+    if (slot.missingDefinition) {
+      warnings.push(`Canonical economy definition missing for ${slot.id}.`);
+    }
+  }
+
+  return warnings;
 }

@@ -43,8 +43,8 @@ function selectedResource(category: string, fallbackIndex = 0) {
 function economyHudResources(data: ReturnType<typeof useGenesisStoryContent>["data"]) {
   return getPrimaryHudResources(data).map((resource) => ({
     id: resource.id,
-    name: resource.label,
-    displayName: resource.label,
+    name: resource.label ?? resource.displayName ?? resource.name ?? resource.id,
+    displayName: resource.label ?? resource.displayName ?? resource.name ?? resource.id,
     category: "Economy",
     iconKey: resource.iconKey,
     artKey: resource.artKey,

@@ -746,6 +746,12 @@ function RobloxTopHud({ model, art }: { model: DashboardModel; art: DashboardArt
         </div>
       </div>
 
+      {model.economyWarnings.length ? (
+        <div className="absolute left-[515px] top-[28px] max-w-[690px] truncate rounded-sm border border-amber-200/45 bg-amber-950/88 px-3 py-2 text-[0.65rem] font-black uppercase text-amber-100">
+          {model.economyWarnings[0]}
+        </div>
+      ) : null}
+
       {hudResources.map((resource, index) => {
         const slot = resourceSlots[index];
           const Icon = hudIconForResource(resource);
@@ -1132,6 +1138,7 @@ function dashboardDataAudit(model: DashboardModel) {
     { label: "civilization name", source: model.playerState.civilizationName ? model.playerState.source : "missing source", value: model.playerState.civilizationName ?? "missing" },
     { label: "current era", source: "canonical Studio definition", value: model.currentEra.displayName },
     { label: "HUD definitions", source: "clientProfiles.default.primaryHudResources", value: `${model.hudResources.length} economy resources` },
+    { label: "economy warnings", source: model.economyWarnings.length ? "canonical runtime validation" : "canonical runtime", value: model.economyWarnings.length ? model.economyWarnings.join("; ") : "none" },
     { label: "economy amounts/rates", source: model.hudResources.length ? model.playerState.source : "missing source/default zero", value: model.hudResources.length ? model.playerState.sourceLabel : "default zero" },
     { label: "click power", source: model.playerState.clickOutput ? model.playerState.source : "missing source", value: model.playerState.clickOutput ? compactNumber(model.playerState.clickOutput.amount) : "missing" },
     { label: "auto-click power", source: model.playerState.automation ? model.playerState.source : "missing source", value: model.playerState.automation ? compactNumber(model.playerState.automation.amountPerSecond) : "missing" },

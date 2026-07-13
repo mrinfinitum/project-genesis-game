@@ -30,7 +30,7 @@ describe("canonical runtime", () => {
 
     expect(validation.ok).toBe(true);
     expect(runtime.metadata.schemaVersion).toBe("game-runtime-v1");
-    expect(runtime.metadata.contentVersion).toBe(3);
+    expect(runtime.metadata.contentVersion).toBe(4);
     expect(runtime.eras).toHaveLength(9);
     expect(runtime.eras.map((era) => era.id)).toEqual([
       "survival",
@@ -46,6 +46,7 @@ describe("canonical runtime", () => {
     expect(runtime.resources).toHaveLength(282);
     expect(runtime.upgradeCategories).toHaveLength(4);
     expect(runtime.upgrades).toHaveLength(556);
+    expect(runtime.assets).toHaveLength(136);
   });
 
   it("rejects invalid runtime shape and references", async () => {
@@ -81,7 +82,7 @@ describe("canonical runtime", () => {
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("cache");
-    expect(state.contentVersion).toBe(3);
+    expect(state.contentVersion).toBe(4);
     expect(state.cacheStatus).toBe("valid");
   });
 
@@ -95,7 +96,7 @@ describe("canonical runtime", () => {
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("bundled-snapshot");
-    expect(state.contentVersion).toBe(3);
+    expect(state.contentVersion).toBe(4);
     expect(state.eras[3].id).toBe("renaissance");
     expect(await cache.read()).toBeNull();
   });
