@@ -72,7 +72,9 @@ type PlayerRuntimeDashboardActions = {
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
   grantTestResources: () => void;
-  click: () => void;
+  grantTestCredits: () => void;
+  grantTestResearch: () => void;
+  performManualLaborClick: () => void;
   toggleAutomation: () => void;
   activateBoost?: (definitionId: string) => void;
 };
@@ -910,7 +912,7 @@ export function ClickPowerPanel({
   const clickResource = model.playerState.clickOutput?.resourceId ? data.resources.find((resource) => resource.id === model.playerState.clickOutput?.resourceId) : undefined;
   const clickResourceLabel = model.playerState.clickOutput?.label ?? clickResource?.displayName ?? "Civilization Energy";
   const hasClickState = Boolean(model.playerState.clickOutput);
-  const lastClick = model.playerState.clickOutput?.amount ?? 0;
+  const lastClick = model.playerState.clickOutput?.lastGain ?? 0;
 
   return (
     <section className="absolute left-0 top-0 h-[344px] w-full">
@@ -948,8 +950,8 @@ export function ClickPowerPanel({
         pressed={pressed}
         onClick={hasClickState ? onClick : undefined}
         data-testid="click-power-button"
-        data-rojo-rect="39,260,272,50"
-        className="absolute left-[39px] top-[260px] h-[50px] w-[272px]"
+        data-rojo-rect="32,250,294,66"
+        className="absolute left-[32px] top-[250px] h-[66px] w-[294px]"
       />
     </section>
   );
@@ -1310,7 +1312,7 @@ function RobloxLeftColumn({
 
   function handleClickPower() {
     if (!hasClickState) return;
-    playerRuntimeActions?.click();
+    playerRuntimeActions?.performManualLaborClick();
     setClickPulseKey((current) => current + 1);
     setClickPressed(true);
     window.setTimeout(() => setClickPressed(false), 140);
@@ -2429,16 +2431,37 @@ function DashboardDataArtInspector({
             <div className="col-span-2 truncate">event {playerRuntime.events.activeEventId ?? "none"}</div>
             <div>boosts {playerRuntime.boosts.active.length}</div>
             <div>unresolved {Object.keys(playerRuntime.unresolved.resources).length + Object.keys(playerRuntime.unresolved.upgradeLevels).length}</div>
+            <div>population {compactNumber(playerRuntime.economy.balances["ECON-POPULATION"] ?? playerRuntime.civilization.population)}</div>
+            <div>last +{compactNumber(playerRuntime.production.lastClickGain)}{playerRuntime.production.lastClickWasCritical ? " crit" : ""}</div>
+            <div>manual clicks {compactNumber(playerRuntime.production.totalManualClicks)}</div>
+            <div>labor lifetime {compactNumber(playerRuntime.production.lifetimeLaborGenerated)}</div>
+            <div className="col-span-2">click {compactNumber(playerRuntime.production.clickPower)} x combo {compactNumber(playerRuntime.production.comboMultiplier)} x crit {compactNumber(playerRuntime.production.criticalMultiplier)}</div>
+            <div className="col-span-2">auto {compactNumber(playerRuntime.production.autoClickPower)} x rate {compactNumber(playerRuntime.production.autoClickRate)} {playerRuntime.production.automationEnabled ? "on" : "off"}</div>
+            <div className="col-span-2 truncate">migration {playerRuntime.unresolved.migrationNotes.length ? playerRuntime.unresolved.migrationNotes.join(" | ") : "none"}</div>
+          </div>
+          <div className="mt-2 max-h-28 overflow-auto border-t border-cyan-200/10 pt-2">
+            <div className="font-black uppercase text-cyan-100/60">Economy</div>
+            {Object.entries(playerRuntime.economy.balances).map(([economyId, amount]) => (
+              <div key={economyId} className="grid grid-cols-[1fr_auto_auto] gap-2">
+                <span className="truncate">{economyId}</span>
+                <span>{compactNumber(amount)}</span>
+                <span className="text-cyan-100/60">{compactNumber(playerRuntime.economy.rates[economyId] ?? 0)}/s</span>
+              </div>
+            ))}
           </div>
           {playerRuntimeActions ? (
             <div className="mt-2 grid grid-cols-3 gap-1">
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.saveNow}>Save Now</button>
-              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => playerRuntimeActions.advanceSimulation(60)}>Advance</button>
-              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResources}>Grant</button>
-              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.click}>Click</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => playerRuntimeActions.advanceSimulation(1)}>Advance 1s</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => playerRuntimeActions.advanceSimulation(60)}>Advance 60s</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestCredits}>Grant Credits</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResearch}>Grant Research</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResources}>Grant All</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.performManualLaborClick}>Manual Labor</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.toggleAutomation}>Toggle Auto</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={exportSave}>Export</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => importInputRef.current?.click()}>Import</button>
-              <button className="col-span-3 rounded-sm border border-rose-200/30 bg-rose-300/10 px-2 py-1 font-black uppercase text-rose-100" onClick={playerRuntimeActions.resetSave}>Reset Save</button>
+              <button className="col-span-3 rounded-sm border border-rose-200/30 bg-rose-300/10 px-2 py-1 font-black uppercase text-rose-100" onClick={playerRuntimeActions.resetSave}>Reset to Canonical New Game</button>
               <input ref={importInputRef} className="hidden" type="file" accept="application/json" onChange={(event) => void importSave(event.currentTarget.files?.[0])} />
             </div>
           ) : null}

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import {
   advanceSimulation,
-  applyClickReward,
   createNewPlayerRuntimeState,
   getInventoryResources,
   getPrimaryHudResourceIds,
@@ -10,10 +9,17 @@ import {
   getUpgradeViewState,
   grantTestResources,
   migratePlayerRuntimeState,
+  performManualLaborClick,
   PlayerRuntimeLocalSaveService,
   playerRuntimeToDashboardPlayerState,
   PLAYER_RUNTIME_SAVE_VERSION,
   resolveAlignmentIdentity,
+  selectClickPower,
+  selectEconomyBalance,
+  selectEconomyRate,
+  selectHudEconomySlots,
+  selectLastClickGain,
+  selectPopulation,
   type PlayerRuntimeState
 } from "@/lib/player-runtime";
 import { PLAYER_RUNTIME_SAVE_KEY } from "@/lib/player-runtime/local-save";
@@ -31,10 +37,10 @@ function fixedDate() {
 
 function withCanonicalEconomy(runtime: GameRuntimeData): GameRuntimeData {
   const primaryHudResources = [
-    "ECON-CIVILIZATION-ENERGY",
     "ECON-CREDITS",
-    "ECON-RESEARCH",
     "ECON-POPULATION",
+    "ECON-CIVILIZATION-ENERGY",
+    "ECON-RESEARCH",
     "ECON-CIVILIZATION-POINTS",
     "ECON-PREMIUM-CRYSTALS"
   ];
@@ -49,7 +55,7 @@ function withCanonicalEconomy(runtime: GameRuntimeData): GameRuntimeData {
       }
     },
     economyDefinitions: [
-      { id: "ECON-CIVILIZATION-ENERGY", label: "Civilization Energy", iconKey: "economy-energy", artKey: "economy-energy", color: "#11cdef", startingValue: 10, startingRate: 1 },
+      { id: "ECON-CIVILIZATION-ENERGY", label: "Civilization Energy", iconKey: "economy-energy", artKey: "economy-energy", color: "#11cdef", startingValue: 10, startingRate: 0 },
       { id: "ECON-CREDITS", label: "Credits", iconKey: "economy-credits", artKey: "economy-credits", color: "#f5c542", startingValue: 20 },
       { id: "ECON-RESEARCH", label: "Research", iconKey: "economy-research", artKey: "economy-research", color: "#a78bfa", startingValue: 30 },
       { id: "ECON-POPULATION", label: "Population", iconKey: "economy-population", artKey: "economy-population", color: "#34d399", startingValue: 125 },
@@ -84,13 +90,18 @@ describe("canonical player runtime", () => {
       production: {
         clickPower: runtime.balance.baseClickPower,
         autoClickPower: runtime.balance.baseAutoClickPower,
-        automationEnabled: false
+        autoClickRate: 1,
+        criticalMultiplier: 2,
+        automationEnabled: true,
+        totalManualClicks: 0,
+        lifetimeLaborGenerated: 0
       }
     });
     expect(getStartingEraId(runtime)).toBe("survival");
     expect(Object.keys(state.economy.balances)).toEqual(getPrimaryHudResourceIds(runtime));
     expect(state.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBe(10);
-    expect(state.economy.rates["ECON-CIVILIZATION-ENERGY"]).toBe(1);
+    expect(state.economy.rates["ECON-CREDITS"]).toBe(1);
+    expect(state.economy.rates["ECON-CIVILIZATION-ENERGY"]).toBe(0);
     expect(state.economy.balances["ECON-PREMIUM-CRYSTALS"]).toBe(5);
     expect(Object.keys(state.resources.inventory)).toEqual(getInventoryResources(runtime).map((resource) => resource.id));
     expect(Object.keys(state.resources.inventory)).not.toContain("ECON-CIVILIZATION-ENERGY");
@@ -129,7 +140,7 @@ describe("canonical player runtime", () => {
       contentVersion: 1,
       civilization: { ...state.civilization, currentEraId: "lost-era" },
       economy: {
-        balances: { ...state.economy.balances, "ECON-LOST": 42 },
+        balances: { ...state.economy.balances, "ECON-POPULATION": 0, "ECON-LOST": 42 },
         rates: { ...state.economy.rates, "ECON-LOST": 3 }
       },
       resources: {
@@ -150,6 +161,8 @@ describe("canonical player runtime", () => {
     expect(migrated.contentVersion).toBe(runtime.metadata.contentVersion);
     expect(migrated.unresolved.currentEraId).toBe("lost-era");
     expect(migrated.civilization.currentEraId).toBe("survival");
+    expect(migrated.economy.balances["ECON-POPULATION"]).toBe(runtime.balance.startingPopulation);
+    expect(migrated.unresolved.migrationNotes).toContain("Migrated ECON-POPULATION from civilization.population.");
     expect(migrated.unresolved.economy["ECON-LOST"]).toBe(42);
     expect(migrated.unresolved.economyRates["ECON-LOST"]).toBe(3);
     expect(migrated.unresolved.resources["RES-LOST"]).toBe(99);
@@ -163,11 +176,10 @@ describe("canonical player runtime", () => {
     expect(migrated.upgrades.levels["UPG-LOST"]).toBeUndefined();
   });
 
-  it("applies click rewards and deterministic auto simulation from canonical upgrades", async () => {
+  it("routes manual and auto labor to Civilization Energy instead of the first HUD slot", async () => {
     const runtime = withCanonicalEconomy(await bundledRuntime());
     const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
-    const [primaryEconomyId] = getPrimaryHudResourceIds(runtime);
-    const clicked = applyClickReward(runtime, state, { now: fixedDate() });
+    const clicked = performManualLaborClick(runtime, state, { now: fixedDate() });
     const autoUpgrade = runtime.upgrades.find((upgrade) => upgrade.effectType.toLowerCase().includes("auto"));
     expect(autoUpgrade).toBeDefined();
 
@@ -183,12 +195,30 @@ describe("canonical player runtime", () => {
     };
     const advanced = advanceSimulation(runtime, autoState, { seconds: 10, now: new Date("2026-01-02T03:04:15.000Z") });
 
-    expect(clicked.economy.balances[primaryEconomyId]).toBeGreaterThan(state.economy.balances[primaryEconomyId] ?? 0);
+    expect(clicked.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBeGreaterThan(state.economy.balances["ECON-CIVILIZATION-ENERGY"] ?? 0);
+    expect(clicked.economy.balances["ECON-CREDITS"]).toBe(state.economy.balances["ECON-CREDITS"]);
+    expect(clicked.production.lastClickGain).toBe(1);
+    expect(clicked.production.totalManualClicks).toBe(1);
     expect(clicked.civilization.discoveryPoints).toBeGreaterThanOrEqual(1);
     expect(advanced.production.autoClickPower).toBeGreaterThan(0);
-    expect(advanced.economy.rates[primaryEconomyId]).toBe(advanced.production.autoClickPower);
-    expect(advanced.economy.balances[primaryEconomyId]).toBeGreaterThan(clicked.economy.balances[primaryEconomyId]);
+    expect(advanced.economy.rates["ECON-CIVILIZATION-ENERGY"]).toBeGreaterThanOrEqual(1);
+    expect(advanced.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBeGreaterThan(clicked.economy.balances["ECON-CIVILIZATION-ENERGY"]);
+    expect(advanced.economy.rates["ECON-CREDITS"]).toBe(1);
+    expect(advanced.economy.balances["ECON-CREDITS"]).toBeGreaterThan(clicked.economy.balances["ECON-CREDITS"]);
+    expect(advanced.economy.rates["ECON-PREMIUM-CRYSTALS"]).toBe(0);
     expect(advanced.civilization.eraProgress).toBeGreaterThan(state.civilization.eraProgress);
+  });
+
+  it("exposes canonical runtime selectors for HUD economy and labor stats", async () => {
+    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const clicked = performManualLaborClick(runtime, createNewPlayerRuntimeState(runtime, { now: fixedDate() }), { now: fixedDate() });
+
+    expect(selectHudEconomySlots(runtime).map((slot) => slot.id)).toEqual(getPrimaryHudResourceIds(runtime));
+    expect(selectEconomyBalance(clicked, "ECON-CIVILIZATION-ENERGY")).toBe(11);
+    expect(selectEconomyRate(clicked, "ECON-CREDITS")).toBe(1);
+    expect(selectClickPower(clicked)).toBe(1);
+    expect(selectLastClickGain(clicked)).toBe(1);
+    expect(selectPopulation(clicked)).toBe(125);
   });
 
   it("derives dashboard selectors without live objective, event, or fabricated boost fallbacks", async () => {
@@ -198,6 +228,8 @@ describe("canonical player runtime", () => {
 
     expect(playerState.source).toBe("player-runtime");
     expect(playerState.currentEraId).toBe("survival");
+    expect(playerState.clickOutput?.resourceId).toBe("ECON-CIVILIZATION-ENERGY");
+    expect(playerState.economyBalances?.["ECON-POPULATION"]).toBe(125);
     expect(playerState.objective).toBeUndefined();
     expect(playerState.activeEvent).toBeUndefined();
     expect(playerState.leaderboard).toBeUndefined();

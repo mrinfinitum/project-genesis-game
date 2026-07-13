@@ -194,9 +194,10 @@ describe("Roblox left column geometry", () => {
     render(<ClickPowerPanel data={data} model={model} art={createDashboardArtMap(data.assets)} />);
 
     expectInside("0,0,350,344", screen.getByTestId("click-power-ring").getAttribute("data-rojo-rect") ?? "");
+    expectInside("0,0,350,344", screen.getByTestId("click-power-button").getAttribute("data-rojo-rect") ?? "");
     expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "31,80,162,162");
     expect(screen.getByTestId("click-power-stat-block")).toHaveAttribute("data-rojo-rect", "196,82,126,145");
-    expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "39,260,272,50");
+    expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "32,250,294,66");
   });
 
   it("keeps Auto Click controls inside the canonical panel bounds", async () => {

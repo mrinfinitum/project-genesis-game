@@ -1,4 +1,5 @@
 import type { GameRuntimeData, UpgradeDefinition } from "@/lib/canonical-runtime";
+import { CREDITS_ECONOMY_ID, getCanonicalStartingEconomyRate, LABOR_ECONOMY_ID } from "./economy";
 import { getPrimaryHudResourceIds } from "./initializer";
 import type { PlayerRuntimeState } from "./types";
 
@@ -17,6 +18,33 @@ function secondsBetween(a: string, b: Date) {
   return Math.max(0, (end - start) / 1000);
 }
 
+function balanceNumber(content: GameRuntimeData, key: string, fallback: number) {
+  const value = (content.balance as unknown as Record<string, unknown>)[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function activeLaborEconomyId(content: GameRuntimeData) {
+  const hudIds = getPrimaryHudResourceIds(content);
+  return hudIds.includes(LABOR_ECONOMY_ID) ? LABOR_ECONOMY_ID : hudIds[0];
+}
+
+function activeCreditsEconomyId(content: GameRuntimeData) {
+  const hudIds = getPrimaryHudResourceIds(content);
+  return hudIds.includes(CREDITS_ECONOMY_ID) ? CREDITS_ECONOMY_ID : undefined;
+}
+
+function resolveEraMultiplier(content: GameRuntimeData, state: PlayerRuntimeState) {
+  const explicitMultipliers = [1, 2, 5, 12, 30, 75, 150];
+  const ordered = [...content.eras].sort((a, b) => a.index - b.index);
+  const eraIndex = Math.max(0, ordered.findIndex((era) => era.id === state.civilization.currentEraId));
+  return explicitMultipliers[Math.min(eraIndex, explicitMultipliers.length - 1)] ?? 1;
+}
+
+function normalizeCriticalChance(value: number) {
+  const asProbability = value > 1 ? value / 100 : value;
+  return Math.min(0.5, Math.max(0, asProbability));
+}
+
 export function resolveUpgradeCost(upgrade: UpgradeDefinition, level: number) {
   return Math.round(upgrade.baseCost * upgrade.costGrowthRate ** Math.max(0, level));
 }
@@ -27,10 +55,11 @@ export function resolveUpgradeEffect(upgrade: UpgradeDefinition, level: number) 
 
 export function recomputeProduction(content: GameRuntimeData, state: PlayerRuntimeState): PlayerRuntimeState {
   const next = clone(state);
-  let clickPower = content.balance.baseClickPower;
-  let autoClickPower = content.balance.baseAutoClickPower;
-  let criticalChance = 0;
-  let criticalMultiplier = 1;
+  let clickPower = balanceNumber(content, "baseClickPower", 1);
+  let autoClickPower = balanceNumber(content, "baseAutoClickPower", 0);
+  const autoClickRate = balanceNumber(content, "baseAutoClickRate", 1);
+  let criticalChance = balanceNumber(content, "baseCriticalChance", 0);
+  let criticalMultiplier = balanceNumber(content, "baseCriticalMultiplier", 2);
 
   for (const upgrade of content.upgrades) {
     const level = next.upgrades.levels[upgrade.id] ?? upgrade.defaultLevel ?? 0;
@@ -45,6 +74,7 @@ export function recomputeProduction(content: GameRuntimeData, state: PlayerRunti
 
   next.production.clickPower = Number(clickPower.toFixed(2));
   next.production.autoClickPower = Number(autoClickPower.toFixed(2));
+  next.production.autoClickRate = Number(Math.max(0, autoClickRate).toFixed(2));
   next.production.criticalChance = Number(Math.max(0, criticalChance).toFixed(2));
   next.production.criticalMultiplier = Number(Math.max(1, criticalMultiplier).toFixed(2));
   return next;
@@ -61,36 +91,58 @@ function addEconomy(state: PlayerRuntimeState, economyId: string, amount: number
   state.economy.balances[economyId] = Number((current + amount).toFixed(3));
 }
 
-export function applyClickReward(content: GameRuntimeData, state: PlayerRuntimeState, options: { now?: Date; forceCritical?: boolean } = {}) {
+export function performManualLaborClick(content: GameRuntimeData, state: PlayerRuntimeState, options: { now?: Date; forceCritical?: boolean } = {}) {
   const next = recomputeProduction(content, state);
-  const [primaryEconomyId] = getPrimaryHudResourceIds(content);
-  if (!primaryEconomyId) return next;
+  const laborEconomyId = activeLaborEconomyId(content);
+  if (!laborEconomyId) return next;
 
-  const critical = options.forceCritical || (next.production.criticalChance >= 100);
+  const critical = options.forceCritical || Math.random() < normalizeCriticalChance(next.production.criticalChance);
   const criticalMultiplier = critical ? next.production.criticalMultiplier : 1;
-  const amount = next.production.clickPower * next.production.comboMultiplier * criticalMultiplier;
-  addEconomy(next, primaryEconomyId, amount);
+  const rawAmount = next.production.clickPower * resolveEraMultiplier(content, next) * next.production.comboMultiplier * criticalMultiplier;
+  const amount = Math.max(1, Math.floor(rawAmount));
+  addEconomy(next, laborEconomyId, amount);
+  next.production.lastClickGain = amount;
+  next.production.lastClickWasCritical = critical;
+  next.production.totalManualClicks += 1;
+  next.production.lifetimeLaborGenerated = Number((next.production.lifetimeLaborGenerated + amount).toFixed(3));
   next.civilization.discoveryPoints += Math.max(1, Math.floor(amount / 10));
   next.updatedAt = nowIso(options.now);
   next.revision += 1;
   return next;
 }
 
+export const applyClickReward = performManualLaborClick;
+
 export function advanceSimulation(content: GameRuntimeData, state: PlayerRuntimeState, options: { now?: Date; seconds?: number } = {}) {
   const now = options.now ?? new Date();
   const elapsedSeconds = options.seconds ?? secondsBetween(state.lastSimulationAt, now);
   const next = recomputeProduction(content, state);
   const primaryHudIds = getPrimaryHudResourceIds(content);
-  const [primaryEconomyId] = primaryHudIds;
+  const laborEconomyId = activeLaborEconomyId(content);
+  const creditsEconomyId = activeCreditsEconomyId(content);
 
   for (const economyId of primaryHudIds) {
     next.economy.rates[economyId] = 0;
   }
 
-  if (primaryEconomyId && next.production.automationEnabled && next.production.autoClickPower > 0) {
-    const amount = next.production.autoClickPower * elapsedSeconds;
-    addEconomy(next, primaryEconomyId, amount);
-    next.economy.rates[primaryEconomyId] = next.production.autoClickPower;
+  if (creditsEconomyId) {
+    const creditsPerSecond = getCanonicalStartingEconomyRate(content, creditsEconomyId) ?? 0;
+    if (creditsPerSecond > 0) {
+      addEconomy(next, creditsEconomyId, creditsPerSecond * elapsedSeconds);
+    }
+    next.economy.rates[creditsEconomyId] = creditsPerSecond;
+  }
+
+  if (laborEconomyId && next.production.automationEnabled) {
+    const autoLaborPerSecond = Math.max(1, Math.floor(Math.max(1, next.production.autoClickPower) * Math.max(0, next.production.autoClickRate)));
+    if (elapsedSeconds > 0) {
+      const amount = autoLaborPerSecond * elapsedSeconds;
+      addEconomy(next, laborEconomyId, amount);
+      next.production.totalAutoClicks += Math.floor(elapsedSeconds);
+      next.production.totalAutoLaborGenerated = Number((next.production.totalAutoLaborGenerated + amount).toFixed(3));
+      next.production.lifetimeLaborGenerated = Number((next.production.lifetimeLaborGenerated + amount).toFixed(3));
+    }
+    next.economy.rates[laborEconomyId] = autoLaborPerSecond;
   }
 
   next.civilization.eraProgress = Math.min(100, Number((next.civilization.eraProgress + elapsedSeconds * 0.005).toFixed(3)));
@@ -108,6 +160,17 @@ export function grantTestResources(content: GameRuntimeData, state: PlayerRuntim
   }
   for (const resource of content.resources) {
     addResource(next, resource.id, amount);
+  }
+  next.updatedAt = nowIso();
+  next.revision += 1;
+  return next;
+}
+
+export function grantTestEconomy(content: GameRuntimeData, state: PlayerRuntimeState, economyIds: string[], amount = 1000) {
+  const next = clone(state);
+  const hudIds = new Set(getPrimaryHudResourceIds(content));
+  for (const economyId of economyIds) {
+    if (hudIds.has(economyId)) addEconomy(next, economyId, amount);
   }
   next.updatedAt = nowIso();
   next.revision += 1;

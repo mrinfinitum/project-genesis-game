@@ -21,6 +21,8 @@ export type DashboardPlayerState = {
     resourceId?: string;
     label?: string;
     amount: number;
+    lastGain?: number;
+    wasCritical?: boolean;
     perClickLabel: string;
   };
   automation?: {

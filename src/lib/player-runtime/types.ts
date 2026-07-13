@@ -1,4 +1,4 @@
-export const PLAYER_RUNTIME_SAVE_VERSION = 1;
+export const PLAYER_RUNTIME_SAVE_VERSION = 2;
 
 export type AlignmentKey = "industry" | "technology" | "cyber" | "nature" | "corporate";
 
@@ -24,6 +24,7 @@ export type UnresolvedPlayerRuntimeIds = {
   activeObjectiveId?: string;
   activeEventId?: string;
   boostDefinitionIds: string[];
+  migrationNotes: string[];
 };
 
 export type PlayerRuntimeState = {
@@ -54,10 +55,17 @@ export type PlayerRuntimeState = {
   production: {
     clickPower: number;
     autoClickPower: number;
+    autoClickRate: number;
+    lastClickGain: number;
+    lastClickWasCritical: boolean;
     criticalChance: number;
     criticalMultiplier: number;
     comboMultiplier: number;
     automationEnabled: boolean;
+    totalManualClicks: number;
+    totalAutoClicks: number;
+    lifetimeLaborGenerated: number;
+    totalAutoLaborGenerated: number;
   };
   upgrades: {
     levels: Record<string, number>;

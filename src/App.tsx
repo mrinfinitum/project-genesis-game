@@ -16,13 +16,15 @@ import {
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import {
   advanceSimulation,
-  applyClickReward,
   createNewPlayerRuntimeState,
+  grantTestEconomy,
   grantTestResources,
   PlayerRuntimeLocalSaveService,
   playerRuntimeToDashboardPlayerState,
+  performManualLaborClick,
   type PlayerRuntimeState
 } from "@/lib/player-runtime";
+import { CREDITS_ECONOMY_ID, RESEARCH_ECONOMY_ID } from "@/lib/player-runtime/economy";
 
 const ProductionRoute = lazy(() => import("@/routes/production-route"));
 const ResearchRoute = lazy(() => import("@/routes/research-route"));
@@ -53,7 +55,9 @@ type PlayerRuntimeActions = {
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
   grantTestResources: () => void;
-  click: () => void;
+  grantTestCredits: () => void;
+  grantTestResearch: () => void;
+  performManualLaborClick: () => void;
   toggleAutomation: () => void;
 };
 
@@ -187,6 +191,16 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
 
+    const id = window.setInterval(() => {
+      setPlayerRuntime((current) => advanceSimulation(data, current, { seconds: 1 }));
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [data, enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
     const autosaveSeconds = Math.max(5, data.balance.autosaveSeconds || 30);
     const id = window.setInterval(() => {
       setPlayerRuntime((current) => service.autosave(current));
@@ -220,8 +234,14 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
       grantTestResources() {
         setPlayerRuntime((current) => service.save(grantTestResources(data, current)));
       },
-      click() {
-        setPlayerRuntime((current) => service.save(applyClickReward(data, current)));
+      grantTestCredits() {
+        setPlayerRuntime((current) => service.save(grantTestEconomy(data, current, [CREDITS_ECONOMY_ID])));
+      },
+      grantTestResearch() {
+        setPlayerRuntime((current) => service.save(grantTestEconomy(data, current, [RESEARCH_ECONOMY_ID])));
+      },
+      performManualLaborClick() {
+        setPlayerRuntime((current) => service.save(performManualLaborClick(data, current)));
       },
       toggleAutomation() {
         setPlayerRuntime((current) => service.save({

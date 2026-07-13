@@ -26,6 +26,11 @@ function defaultAlignment(): Record<AlignmentKey, number> {
   };
 }
 
+function balanceNumber(content: GameRuntimeData, key: string, fallback: number) {
+  const value = (content.balance as unknown as Record<string, unknown>)[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
 export function createNewPlayerRuntimeState(content: GameRuntimeData, options: { now?: Date; playerId?: string; civilizationName?: string } = {}): PlayerRuntimeState {
   const timestamp = nowIso(options.now);
   const economyIds = getPrimaryHudResourceIds(content);
@@ -63,12 +68,19 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       storageLimits
     },
     production: {
-      clickPower: content.balance.baseClickPower,
-      autoClickPower: content.balance.baseAutoClickPower,
+      clickPower: balanceNumber(content, "baseClickPower", 1),
+      autoClickPower: balanceNumber(content, "baseAutoClickPower", 0),
+      autoClickRate: balanceNumber(content, "baseAutoClickRate", 1),
+      lastClickGain: 0,
+      lastClickWasCritical: false,
       criticalChance: 0,
-      criticalMultiplier: 1,
+      criticalMultiplier: balanceNumber(content, "baseCriticalMultiplier", 2),
       comboMultiplier: 1,
-      automationEnabled: false
+      automationEnabled: true,
+      totalManualClicks: 0,
+      totalAutoClicks: 0,
+      lifetimeLaborGenerated: 0,
+      totalAutoLaborGenerated: 0
     },
     upgrades: {
       levels: Object.fromEntries(content.upgrades.filter((upgrade) => upgrade.defaultLevel > 0).map((upgrade) => [upgrade.id, upgrade.defaultLevel])),
@@ -96,7 +108,8 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       upgradeLevels: {},
       unlockedUpgradeIds: [],
       discoveredUpgradeIds: [],
-      boostDefinitionIds: []
+      boostDefinitionIds: [],
+      migrationNotes: []
     }
   };
 }

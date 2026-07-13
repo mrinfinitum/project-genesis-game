@@ -1,4 +1,5 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
+import { LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID } from "./economy";
 import { createNewPlayerRuntimeState, getPrimaryHudResourceIds } from "./initializer";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
@@ -164,9 +165,23 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       currentEraId: typeof record.unresolved?.currentEraId === "string" ? record.unresolved.currentEraId : undefined,
       activeObjectiveId: typeof record.unresolved?.activeObjectiveId === "string" ? record.unresolved.activeObjectiveId : undefined,
       activeEventId: typeof record.unresolved?.activeEventId === "string" ? record.unresolved.activeEventId : undefined,
-      boostDefinitionIds: normalizeStringArray(record.unresolved?.boostDefinitionIds)
+      boostDefinitionIds: normalizeStringArray(record.unresolved?.boostDefinitionIds),
+      migrationNotes: normalizeStringArray(record.unresolved?.migrationNotes)
     }
   };
+
+  const previousSaveVersion = typeof record.saveVersion === "number" ? record.saveVersion : 0;
+  if (previousSaveVersion < 2) {
+    const legacyPopulation = normalizeNumberMap(record.economy?.balances)[POPULATION_ECONOMY_ID];
+    const savedCivilizationPopulation = typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.population;
+    if ((legacyPopulation === undefined || legacyPopulation === 0) && savedCivilizationPopulation > 0) {
+      next.economy.balances[POPULATION_ECONOMY_ID] = savedCivilizationPopulation;
+      next.unresolved.migrationNotes.push(`Migrated ${POPULATION_ECONOMY_ID} from civilization.population.`);
+    }
+    if (next.economy.balances[LABOR_ECONOMY_ID] === undefined) {
+      next.economy.balances[LABOR_ECONOMY_ID] = seed.economy.balances[LABOR_ECONOMY_ID] ?? 0;
+    }
+  }
 
   return preserveUnresolvedPlayerRuntimeIds(next, content);
 }

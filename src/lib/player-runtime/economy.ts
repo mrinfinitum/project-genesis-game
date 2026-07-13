@@ -1,7 +1,52 @@
 import type { GameRuntimeData, PrimaryHudResourceDefinition } from "@/lib/canonical-runtime";
 
+export const CREDITS_ECONOMY_ID = "ECON-CREDITS";
+export const POPULATION_ECONOMY_ID = "ECON-POPULATION";
+export const LABOR_ECONOMY_ID = "ECON-CIVILIZATION-ENERGY";
+export const RESEARCH_ECONOMY_ID = "ECON-RESEARCH";
+export const CIVILIZATION_POINTS_ECONOMY_ID = "ECON-CIVILIZATION-POINTS";
+export const PREMIUM_CRYSTALS_ECONOMY_ID = "ECON-PREMIUM-CRYSTALS";
+
 const STARTING_VALUE_KEYS = ["startingValue", "startingAmount", "defaultValue"] as const;
 const STARTING_RATE_KEYS = ["startingRate", "rate"] as const;
+
+function balanceNumber(content: GameRuntimeData, key: string) {
+  const value = (content.balance as unknown as Record<string, unknown>)[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+export function getCanonicalStartingEconomyBalance(content: GameRuntimeData, economyId: string) {
+  switch (economyId) {
+    case CREDITS_ECONOMY_ID:
+      return balanceNumber(content, "startingCredits") ?? balanceNumber(content, "startingCoins") ?? 0;
+    case POPULATION_ECONOMY_ID:
+      return balanceNumber(content, "startingPopulation") ?? 0;
+    case LABOR_ECONOMY_ID:
+      return balanceNumber(content, "startingCivilizationEnergy") ?? 0;
+    case RESEARCH_ECONOMY_ID:
+      return balanceNumber(content, "startingResearch") ?? 0;
+    case CIVILIZATION_POINTS_ECONOMY_ID:
+    case PREMIUM_CRYSTALS_ECONOMY_ID:
+      return 0;
+    default:
+      return undefined;
+  }
+}
+
+export function getCanonicalStartingEconomyRate(content: GameRuntimeData, economyId: string) {
+  switch (economyId) {
+    case CREDITS_ECONOMY_ID:
+      return balanceNumber(content, "creditsPerSecond") ?? balanceNumber(content, "incomePerSecond") ?? 1;
+    case POPULATION_ECONOMY_ID:
+    case LABOR_ECONOMY_ID:
+    case RESEARCH_ECONOMY_ID:
+    case CIVILIZATION_POINTS_ECONOMY_ID:
+    case PREMIUM_CRYSTALS_ECONOMY_ID:
+      return 0;
+    default:
+      return undefined;
+  }
+}
 
 function normalizeEconomyDefinition(input: unknown): PrimaryHudResourceDefinition | undefined {
   if (!input || typeof input !== "object") return undefined;
@@ -82,7 +127,7 @@ export function getStartingEconomyBalances(content: GameRuntimeData) {
     getPrimaryHudResources(content).map((resource) => {
       const canonicalValue = numericField(resource, STARTING_VALUE_KEYS);
       const balanceValue = resource.balanceKey ? content.balance[resource.balanceKey] : undefined;
-      const amount = canonicalValue ?? (typeof balanceValue === "number" && Number.isFinite(balanceValue) ? balanceValue : 0);
+      const amount = canonicalValue ?? (typeof balanceValue === "number" && Number.isFinite(balanceValue) ? balanceValue : getCanonicalStartingEconomyBalance(content, resource.id) ?? 0);
       return [resource.id, amount];
     })
   );
@@ -90,7 +135,7 @@ export function getStartingEconomyBalances(content: GameRuntimeData) {
 
 export function getStartingEconomyRates(content: GameRuntimeData) {
   return Object.fromEntries(
-    getPrimaryHudResources(content).map((resource) => [resource.id, numericField(resource, STARTING_RATE_KEYS) ?? 0])
+    getPrimaryHudResources(content).map((resource) => [resource.id, numericField(resource, STARTING_RATE_KEYS) ?? getCanonicalStartingEconomyRate(content, resource.id) ?? 0])
   );
 }
 

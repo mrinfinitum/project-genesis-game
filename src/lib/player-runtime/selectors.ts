@@ -1,8 +1,49 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import { LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID } from "./economy";
 import { getPrimaryHudResources } from "./initializer";
 import { resolveUpgradeCost, resolveUpgradeEffect } from "./simulation";
 import type { PlayerRuntimeState } from "./types";
+
+export function selectHudEconomySlots(content: GameRuntimeData) {
+  return getPrimaryHudResources(content);
+}
+
+export function selectEconomyBalance(state: PlayerRuntimeState, economyId: string) {
+  return state.economy.balances[economyId] ?? 0;
+}
+
+export function selectEconomyRate(state: PlayerRuntimeState, economyId: string) {
+  return state.economy.rates[economyId] ?? 0;
+}
+
+export function selectClickPower(state: PlayerRuntimeState) {
+  return state.production.clickPower;
+}
+
+export function selectAutoClickPower(state: PlayerRuntimeState) {
+  return state.production.autoClickPower;
+}
+
+export function selectLastClickGain(state: PlayerRuntimeState) {
+  return state.production.lastClickGain;
+}
+
+export function selectPopulation(state: PlayerRuntimeState) {
+  return state.economy.balances[POPULATION_ECONOMY_ID] ?? state.civilization.population;
+}
+
+export function selectCriticalChance(state: PlayerRuntimeState) {
+  return state.production.criticalChance;
+}
+
+export function selectCriticalMultiplier(state: PlayerRuntimeState) {
+  return state.production.criticalMultiplier;
+}
+
+export function selectComboMultiplier(state: PlayerRuntimeState) {
+  return state.production.comboMultiplier;
+}
 
 export function resolveAlignmentIdentity(content: GameRuntimeData, state: PlayerRuntimeState) {
   const values = state.alignment;
@@ -46,38 +87,41 @@ export function getUpgradeViewState(content: GameRuntimeData, state: PlayerRunti
 }
 
 export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, state: PlayerRuntimeState): DashboardPlayerState {
-  const primaryHudResources = getPrimaryHudResources(content);
-  const firstResource = primaryHudResources[0];
+  const primaryHudResources = selectHudEconomySlots(content);
+  const clickResource = primaryHudResources.find((resource) => resource.id === LABOR_ECONOMY_ID) ?? primaryHudResources[0];
   const now = Date.now();
   const activeBoosts = state.boosts.active.filter((boost) => Date.parse(boost.endsAt) > now);
+  const economyBalances = { ...state.economy.balances, [POPULATION_ECONOMY_ID]: selectPopulation(state) };
 
   return {
     source: "player-runtime",
     sourceLabel: "Local Player Runtime",
     civilizationName: state.civilization.civilizationName,
     currentEraId: state.civilization.currentEraId,
-    economyBalances: state.economy.balances,
+    economyBalances,
     economyRates: state.economy.rates,
     resourceInventory: state.resources.inventory,
     resourceRates: state.resources.productionRates,
     resourceStorageLimits: state.resources.storageLimits,
     upgradeLevels: state.upgrades.levels,
-    clickOutput: firstResource
+    clickOutput: clickResource
       ? {
-          resourceId: firstResource.id,
-          label: firstResource.label,
-          amount: state.production.clickPower,
+          resourceId: clickResource.id,
+          label: clickResource.label ?? clickResource.displayName ?? "Civilization Energy",
+          amount: selectClickPower(state),
+          lastGain: selectLastClickGain(state),
+          wasCritical: state.production.lastClickWasCritical,
           perClickLabel: "per click"
         }
       : undefined,
     automation: {
       label: "Auto Click",
-      amountPerSecond: state.production.autoClickPower,
+      amountPerSecond: selectAutoClickPower(state),
       enabled: state.production.automationEnabled
     },
     criticalStats: {
-      chancePercent: state.production.criticalChance,
-      multiplier: state.production.criticalMultiplier
+      chancePercent: selectCriticalChance(state),
+      multiplier: selectCriticalMultiplier(state)
     },
     objective: undefined,
     leaderboard: undefined,
