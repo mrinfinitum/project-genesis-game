@@ -670,7 +670,7 @@ const reportedDashboardAssetFailures = new Set<string>();
 
 function useDashboardAssetDiagnostics(artAudit: DashboardArtResolution[]) {
   useEffect(() => {
-    if (!import.meta.env.DEV || typeof window === "undefined") return;
+    if (!dashboardDevToolsEnabled || typeof window === "undefined") return;
 
     const byUrl = new Map(artAudit.filter((item) => item.path).map((item) => [item.path as string, item]));
     const diagnostics = artAudit
@@ -761,6 +761,7 @@ type BeveledActionButtonProps = {
 
 export function BeveledActionButton({ art, label, tone, disabled = false, active = false, pressed = false, onClick, className = "" }: BeveledActionButtonProps) {
   const path = dashboardImagePath(art);
+  const positionClass = /\babsolute\b/.test(className) ? "" : "relative";
   const toneClasses = {
     cyan: "border-cyan-200/40 bg-[linear-gradient(180deg,rgba(20,124,168,0.9),rgba(4,48,86,0.95))] text-white shadow-[0_0_24px_rgba(45,212,255,0.18)]",
     green: "border-emerald-200/45 bg-[linear-gradient(180deg,rgba(28,146,78,0.92),rgba(7,79,48,0.96))] text-white shadow-[0_0_26px_rgba(52,245,106,0.24)]",
@@ -772,7 +773,7 @@ export function BeveledActionButton({ art, label, tone, disabled = false, active
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`relative overflow-hidden ${bevel} border text-[23px] font-black uppercase tracking-normal transition hover:brightness-125 active:scale-[0.97] disabled:opacity-50 ${toneClasses} ${active ? "brightness-110" : ""} ${pressed ? "scale-[0.97] brightness-125" : ""} ${className}`}
+      className={`${positionClass} overflow-hidden ${bevel} border text-[23px] font-black uppercase tracking-normal transition hover:brightness-125 active:scale-[0.97] disabled:opacity-50 ${toneClasses} ${active ? "brightness-110" : ""} ${pressed ? "scale-[0.97] brightness-125" : ""} ${className}`}
     >
       {path ? <img src={path} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
       {!path ? <span className="relative z-10 [text-shadow:0_2px_6px_rgba(0,0,0,0.72)]">{label}</span> : null}
@@ -889,8 +890,8 @@ export function ClickPowerPanel({
           click_interface_circle source missing
         </div>
       ) : null}
-      <h2 className="absolute left-[35px] top-[18px] h-[32px] w-[245px] text-[18px] font-black uppercase leading-8 text-cyan-100/90">Click Power</h2>
-      <HelpIconButton art={art.dashboard_help_icon} className="absolute left-[315px] top-[22px] h-[22px] w-[22px]" />
+      <h2 className="absolute left-[28px] top-[23px] h-[32px] w-[220px] text-[28px] font-black uppercase leading-8 text-cyan-100/90">Click Power</h2>
+      <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[17px] top-[26px] h-[20px] w-[20px]" />
       <RotatingControlRing
         outerArt={art.dashboard_click_ring}
         middleArt={art.click_ring_middle}
@@ -900,13 +901,13 @@ export function ClickPowerPanel({
         disabled={!hasClickState}
         pulseKey={pulseKey}
         onActivate={hasClickState ? onClick : undefined}
-        className="left-[49px] top-[70px] h-[182px] w-[182px]"
+        className="left-[42px] top-[92px] h-[156px] w-[156px]"
       />
-      <div className="absolute left-[182px] top-[76px] h-[134px] w-[133px] text-center">
-        <div className="whitespace-pre-line text-[13px] font-black uppercase leading-[1.12] text-cyan-100/58">{formattedClickLabel(clickResourceLabel)}</div>
-        <div className="mt-[10px] text-[28px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "Missing"}</div>
-        <div className="mt-[10px] text-[12px] font-black uppercase leading-none text-cyan-100/80">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
-        <div className={`mt-[11px] text-[15px] font-black uppercase leading-none text-cyan-200 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
+      <div className="absolute left-[198px] top-[84px] h-[142px] w-[116px] text-center">
+        <div className="whitespace-pre-line text-[18px] font-black uppercase leading-[1.15] text-cyan-100/70">{formattedClickLabel(clickResourceLabel)}</div>
+        <div className="mt-[13px] text-[36px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
+        <div className="mt-[14px] text-[20px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
+        <div className={`mt-[6px] text-[18px] font-black uppercase leading-none text-cyan-300 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
       </div>
       <BeveledActionButton
         art={art.dashboard_click_button}
@@ -915,7 +916,7 @@ export function ClickPowerPanel({
         disabled={!hasClickState}
         pressed={pressed}
         onClick={hasClickState ? onClick : undefined}
-        className="absolute bottom-[10px] left-[19px] h-[66px] w-[312px]"
+        className="absolute bottom-[22px] left-[28px] h-[54px] w-[280px]"
       />
     </section>
   );
@@ -936,8 +937,8 @@ export function AutoClickPanel({
 
   return (
     <section className="absolute left-0 top-[344px] h-[270px] w-full">
-      <h2 className="absolute left-[35px] top-[21px] h-[35px] w-[245px] text-[18px] font-black uppercase leading-9 text-cyan-100/90">Auto Click</h2>
-      <HelpIconButton art={art.dashboard_help_icon} className="absolute left-[315px] top-[25px] h-[22px] w-[22px]" />
+      <h2 className="absolute left-[28px] top-[22px] h-[35px] w-[220px] text-[28px] font-black uppercase leading-9 text-cyan-100/90">Auto Click</h2>
+      <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[17px] top-[27px] h-[20px] w-[20px]" />
       <RotatingControlRing
         outerArt={art.dashboard_auto_ring}
         centerArt={art.dashboard_auto_robot}
@@ -945,12 +946,12 @@ export function AutoClickPanel({
         active={autoEnabled}
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
-        className="left-[56px] top-[62px] h-[182px] w-[182px]"
+        className="left-[50px] top-[82px] h-[138px] w-[138px]"
       />
-      <div className="absolute left-[196px] top-[62px] h-[108px] w-[119px] text-center">
-        <div className="text-[11px] font-black uppercase leading-tight text-cyan-100/58">Auto Click<br />Power</div>
-        <div className="mt-[12px] text-[28px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "Missing"}</div>
-        <div className="mt-[13px] text-[12px] font-black uppercase leading-none text-cyan-100/80">Per/S</div>
+      <div className="absolute left-[195px] top-[76px] h-[120px] w-[118px] text-center">
+        <div className="text-[18px] font-black uppercase leading-[1.05] text-cyan-100/70">Auto Click<br />Power</div>
+        <div className="mt-[16px] text-[36px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
+        <div className="mt-[15px] text-[20px] font-black uppercase leading-none text-cyan-200">Per/S</div>
       </div>
       <BeveledActionButton
         art={autoArt}
@@ -959,7 +960,7 @@ export function AutoClickPanel({
         active={autoEnabled}
         disabled={!hasAutomation}
         onClick={hasAutomation ? onToggle : undefined}
-        className={`absolute bottom-[9px] left-[19px] h-[55px] w-[312px] ${autoEnabled ? "shadow-[0_0_30px_rgba(52,245,106,0.32)]" : ""}`}
+        className={`absolute bottom-[17px] left-[28px] h-[46px] w-[280px] ${autoEnabled ? "shadow-[0_0_30px_rgba(52,245,106,0.32)]" : ""}`}
       />
     </section>
   );
@@ -980,15 +981,14 @@ function robloxLayoutRect(rect: { x: number; y: number; width: number; height: n
 }
 
 const robloxNavItems = [
-  { id: "dashboard", label: "Overview", icon: Gauge, iconSize: 54, offsetY: 14 },
-  { id: "production", label: "Buildings", icon: Building2, iconSize: 64, offsetY: 0 },
-  { id: "research", label: "Research", icon: FlaskConical, iconSize: 62, offsetY: 0 },
-  { id: "resources", label: "Resources", icon: Coins, iconSize: 62, offsetY: -2 },
-  { id: "upgrades", label: "Upgrades", icon: WrenchIcon, iconSize: 64, offsetY: -5 },
-  { id: "civilization", label: "Civilization", icon: Crown, iconSize: 60, offsetY: -5 },
-  { id: "events", label: "Events", icon: CalendarDays, iconSize: 62, offsetY: -5 },
-  { id: "galaxy", label: "Galaxy", icon: Globe2, iconSize: 68, offsetY: -8 },
-  { id: "spaceport", label: "Spaceport", icon: Rocket, iconSize: 66, offsetY: -14 }
+  { id: "dashboard", label: "Overview", icon: Gauge, iconSize: 48, offsetY: 8 },
+  { id: "production", label: "Buildings", icon: Building2, iconSize: 58, offsetY: 0 },
+  { id: "research", label: "Research", icon: FlaskConical, iconSize: 56, offsetY: 0 },
+  { id: "upgrades", label: "Upgrades", icon: WrenchIcon, iconSize: 58, offsetY: -3 },
+  { id: "civilization", label: "Civilization", icon: Crown, iconSize: 56, offsetY: -3 },
+  { id: "events", label: "Events", icon: CalendarDays, iconSize: 56, offsetY: -3 },
+  { id: "galaxy", label: "Galaxy", icon: Globe2, iconSize: 60, offsetY: -5 },
+  { id: "spaceport", label: "Spaceport", icon: Rocket, iconSize: 60, offsetY: -8 }
 ];
 
 function WrenchIcon({ className }: { className?: string }) {
@@ -1009,7 +1009,7 @@ function hudIconForResource(resource: { category: string; label: string }) {
   return Hexagon;
 }
 
-function RobloxTopHud({ model, art }: { model: DashboardModel; art: DashboardArtMap }) {
+function RobloxTopHud({ model, art, showDevWarnings = false }: { model: DashboardModel; art: DashboardArtMap; showDevWarnings?: boolean }) {
   const resourceSlots = [
     { x: 515, w: 230, iconX: 27, valueX: 94, textW: 132 },
     { x: 755, w: 230, iconX: 21, valueX: 88, textW: 132 },
@@ -1018,27 +1018,28 @@ function RobloxTopHud({ model, art }: { model: DashboardModel; art: DashboardArt
     { x: 1445, w: 185, iconX: -8, valueX: 58, textW: 107 }
   ];
   const hudResources = model.hudResources.slice(0, resourceSlots.length);
+  const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
 
   return (
     <header className="relative h-full w-full">
       {dashboardImagePath(art.dashboard_top_hud) ? <img src={dashboardImagePath(art.dashboard_top_hud)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_top_hud} className="absolute inset-0" />}
 
-      <div className="absolute top-0 flex min-w-0 items-center gap-3.5 px-4" style={{ left: `${(160 / 1920) * 100}%`, width: `${(360 / 1920) * 100}%`, height: "100%" }}>
-        <div className="relative flex h-[4.35rem] w-[4.35rem] shrink-0 items-center justify-center border border-cyan-200/40 bg-cyan-300/14 text-cyan-100 shadow-[0_0_30px_rgba(45,212,255,0.28)] [clip-path:polygon(14px_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%,0_14px)]">
-          {dashboardImagePath(art.civilization_crest) ? <img src={dashboardImagePath(art.civilization_crest)} alt="" className="h-10 w-10 object-contain opacity-85" /> : <Hexagon className="h-9 w-9" />}
-          <span className="absolute text-[0.58rem] font-black text-white">PG</span>
-        </div>
+      <div className="absolute left-[23px] top-[15px] flex h-[58px] items-center gap-2">
+        {[Hexagon, Gauge, CircleHelp].map((Icon, index) => (
+          <button key={index} className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-black/48 text-cyan-100/82 shadow-[0_0_16px_rgba(45,212,255,0.12)]">
+            <Icon className="h-[22px] w-[22px]" />
+          </button>
+        ))}
+      </div>
+
+      <div className="absolute top-0 flex min-w-0 items-center gap-3 px-3" style={{ left: `${(190 / 1920) * 100}%`, width: `${(355 / 1920) * 100}%`, height: "100%" }}>
         <div className="min-w-0">
-          <div className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-cyan-100/50">Project Genesis</div>
-          <div className="truncate text-[1.55rem] font-black leading-none text-white">{model.playerState.civilizationName ?? "No Civilization Profile"}</div>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="inline-flex rounded-sm border border-amber-200/30 bg-amber-300/10 px-2 py-0.5 text-[0.68rem] font-black uppercase text-amber-100">{shortEraName(model.currentEra)} Era</span>
-            {model.missingSystems.civilizationName ? <span className="inline-flex rounded-sm border border-rose-200/30 bg-rose-300/10 px-2 py-0.5 text-[0.58rem] font-black uppercase text-rose-100">Missing Player Data</span> : null}
-          </div>
+          <div className="truncate text-[1.9rem] font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]">{civilizationTitle}</div>
+          <div className="mt-2 truncate text-[1.35rem] font-medium leading-none text-cyan-50/82">Era 1 - {shortEraName(model.currentEra)}</div>
         </div>
       </div>
 
-      {model.economyWarnings.length ? (
+      {showDevWarnings && model.economyWarnings.length ? (
         <div className="absolute left-[515px] top-[28px] max-w-[690px] truncate rounded-sm border border-amber-200/45 bg-amber-950/88 px-3 py-2 text-[0.65rem] font-black uppercase text-amber-100">
           {model.economyWarnings[0]}
         </div>
@@ -1101,7 +1102,7 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
   return (
     <nav className="relative h-full w-full overflow-hidden">
       {dashboardImagePath(art.sidebar_frame) ? <img src={dashboardImagePath(art.sidebar_frame)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.sidebar_frame} className="absolute inset-0" />}
-      <div className="pointer-events-none absolute inset-x-[10px] h-[120px] rounded-[10px] border-2 border-cyan-200/80 bg-cyan-400/18 shadow-[0_0_22px_rgba(45,212,255,0.35),inset_0_0_22px_rgba(45,212,255,0.1)]" style={{ top: `${(activeIndex * 118 - 2) / 944 * 100}%` }} />
+      <div className="pointer-events-none absolute inset-x-[8px] h-[107px] rounded-[8px] border border-cyan-200/80 bg-cyan-400/18 shadow-[0_0_20px_rgba(45,212,255,0.34),inset_0_0_20px_rgba(45,212,255,0.1)]" style={{ top: `${(activeIndex * 113 + 6) / 927 * 100}%` }} />
       {robloxNavItems.map((item, index) => {
         const Icon = item.icon;
         const isActive = item.id === current;
@@ -1113,13 +1114,13 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
             className={`absolute left-0 flex w-full flex-col items-center text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "text-white" : "text-blue-50/82"}`}
             style={{ top: `${index * slotHeight}%`, height: `${slotHeight}%` }}
           >
-            <span className="absolute left-[18px] right-[18px] top-[-2px] h-[6px] bg-cyan-100/10 shadow-[0_0_12px_rgba(45,212,255,0.18)]" />
+            <span className="absolute left-[14px] right-[14px] top-[-1px] h-px bg-cyan-100/18 shadow-[0_0_10px_rgba(45,212,255,0.16)]" />
             {iconArt && dashboardImagePath(iconArt) ? (
-              <img src={dashboardImagePath(iconArt)} alt="" className="mt-[14px] object-contain drop-shadow-[0_0_13px_rgba(125,249,255,0.28)]" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.72 }} />
+              <img src={dashboardImagePath(iconArt)} alt="" className="mt-[12px] object-contain drop-shadow-[0_0_13px_rgba(125,249,255,0.28)]" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.72 }} />
             ) : (
-              <Icon className="mt-[14px] text-cyan-100" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)` }} />
+              <Icon className="mt-[12px] text-cyan-100" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)` }} />
             )}
-            <span className="mt-[-2px] w-full px-1 text-[15px] [text-shadow:0_1px_4px_rgba(0,0,0,0.75)]" style={{ transform: `translateY(${item.offsetY}px)` }}>{item.label}</span>
+            <span className="mt-[-1px] w-full px-1 text-[14px] [text-shadow:0_1px_4px_rgba(0,0,0,0.75)]" style={{ transform: `translateY(${item.offsetY}px)` }}>{item.label}</span>
           </button>
         );
       })}
@@ -1165,13 +1166,13 @@ function RobloxLeftColumn({
       <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} pressed={clickPressed} pulseKey={clickPulseKey} />
       <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
 
-      <section className="absolute left-0 top-[638px] h-[185px] w-full">
-        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[28px] top-[13px] h-[89px] w-[112px] object-contain drop-shadow-[0_0_18px_rgba(255,216,77,0.28)]" /> : <Star className="absolute left-[28px] top-[13px] h-[89px] w-[112px] text-amber-100" />}
-        <div className="absolute left-[147px] top-[17px]">
-          <div className="text-[0.75rem] font-black uppercase text-cyan-100/55">Critical Chance</div>
-          <div className="mt-1 text-[1.55rem] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "Missing"}</div>
-          <div className="mt-4 text-[0.75rem] font-black uppercase text-cyan-100/55">Critical Multiplier</div>
-          <div className="mt-1 text-[1.55rem] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "Missing"}</div>
+      <section className="absolute left-0 top-[638px] h-[168px] w-full">
+        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[30px] top-[22px] h-[78px] w-[92px] object-contain drop-shadow-[0_0_18px_rgba(255,216,77,0.28)]" /> : <Star className="absolute left-[30px] top-[22px] h-[78px] w-[92px] text-amber-100" />}
+        <div className="absolute left-[135px] top-[27px] w-[170px]">
+          <div className="text-[1rem] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
+          <div className="mt-2 text-[1.7rem] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
+          <div className="mt-4 text-[1rem] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
+          <div className="mt-2 text-[1.7rem] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
         </div>
       </section>
     </div>
@@ -1205,24 +1206,27 @@ function HeroCityScene({ art, fallbackArt }: { art: RuntimeAssetResolution; fall
 }
 
 function RobloxEraRail({ eras, activeEraId, art }: { eras: EraDefinition[]; activeEraId: string; art: DashboardArtMap }) {
+  const activeIndex = Math.max(0, eras.findIndex((era) => era.id === activeEraId));
+
   return (
-    <div className="absolute h-[85px] w-[860px]" style={{ left: 25, top: 394 }}>
-      <div className="absolute left-[68px] right-[68px] top-[33px] h-[4px] bg-cyan-100/22 shadow-[0_0_16px_rgba(45,212,255,0.18)]" />
+    <div className="absolute h-[86px] w-[860px]" style={{ left: 25, top: 392 }}>
+      <div className="absolute left-[68px] right-[68px] top-[34px] h-[3px] bg-cyan-100/18 shadow-[0_0_14px_rgba(45,212,255,0.16)]" />
       {eras.map((era, index) => {
         const active = era.id === activeEraId;
+        const future = index > activeIndex;
         const denominator = Math.max(eras.length - 1, 1);
         const x = 0.08 + (index / denominator) * 0.84;
         return (
-          <div key={era.id} className="absolute top-0 h-full w-[96px]" style={{ left: `calc(${x * 100}% - 48px)` }}>
-            <div className="absolute left-[13px] top-[6px] h-[66px] w-[70px]">
+          <div key={era.id} className="absolute top-0 h-full w-[88px]" style={{ left: `calc(${x * 100}% - 44px)` }}>
+            <div className="absolute left-[13px] top-[6px] h-[62px] w-[64px]">
               {dashboardImagePath(art.era_progression_hex) ? (
-                <img src={dashboardImagePath(art.era_progression_hex)} alt="" className={`h-full w-full object-contain drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "opacity-100 brightness-125" : "opacity-70"}`} />
+                <img src={dashboardImagePath(art.era_progression_hex)} alt="" className={`h-full w-full object-contain drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "opacity-100 brightness-125 hue-rotate-[55deg]" : future ? "opacity-38 saturate-50" : "opacity-72"}`} />
               ) : (
-                <Hexagon className={`h-full w-full drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "text-emerald-200 opacity-100 brightness-125" : "text-cyan-100 opacity-70"}`} />
+                <Hexagon className={`h-full w-full drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "text-emerald-200 opacity-100 brightness-125" : future ? "text-cyan-100 opacity-38" : "text-cyan-100 opacity-70"}`} />
               )}
-              <span className="absolute inset-0 flex items-center justify-center text-[1.55rem] font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)]">{index + 1}</span>
+              <span className="absolute inset-0 flex items-center justify-center text-[1.45rem] font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)]">{index + 1}</span>
             </div>
-            <span className={`absolute left-0 top-[72px] block w-full truncate text-center text-[13px] font-black uppercase leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] ${active ? "text-emerald-200" : "text-white/86"}`}>{shortEraName(era)}</span>
+            <span className={`absolute left-0 top-[70px] block w-full truncate text-center text-[12px] font-black uppercase leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] ${active ? "text-emerald-300" : future ? "text-white/52" : "text-white/86"}`}>{shortEraName(era)}</span>
           </div>
         );
       })}
@@ -1253,9 +1257,11 @@ function RobloxHero({ data, model, art: dashboardArt }: { data: GameRuntimeData;
         </div>
         <p className="absolute left-[42%] top-[61%] h-[22%] w-[16%] text-center text-[17px] font-black leading-none text-white">{hasProgress ? `${progressCurrent}/${progressTarget}` : "--"}</p>
       </div>
-      <div className="absolute right-5 top-5 rounded-sm border border-cyan-200/20 bg-black/40 px-3 py-2 text-[0.68rem] font-black uppercase text-cyan-50/76 backdrop-blur-sm">
-        {shortEraName(era)} Era · {focusResource?.displayName ?? "Missing Focus"} · {typeof objective?.discoveryPercent === "number" ? `${objective.discoveryPercent}%` : "No Discovery"}
-      </div>
+      {dashboardDevToolsEnabled ? (
+        <div className="absolute right-5 top-5 rounded-sm border border-cyan-200/20 bg-black/40 px-3 py-2 text-[0.68rem] font-black uppercase text-cyan-50/76 backdrop-blur-sm">
+          {shortEraName(era)} Era · {focusResource?.displayName ?? "Missing Focus"} · {typeof objective?.discoveryPercent === "number" ? `${objective.discoveryPercent}%` : "No Discovery"}
+        </div>
+      ) : null}
       <RobloxEraRail eras={data.eras} activeEraId={era.id} art={dashboardArt} />
     </section>
   );
@@ -1281,24 +1287,26 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art }
           </button>
           );
       })}
-      <div className="absolute left-0 top-[14.5%] h-[82%] w-full overflow-hidden">
+      <div className="absolute left-[3.4%] top-[16.8%] h-[5%] w-[33%] text-[13px] font-black uppercase text-cyan-200/86">{shortEraName(model.currentEra)} Age</div>
+      <div className="absolute left-[33%] right-[7%] top-[19.1%] h-px bg-cyan-100/26" />
+      <div className="absolute left-0 top-[21.5%] h-[75%] w-full overflow-hidden">
         {model.upgradeRows.length ? model.upgradeRows.slice(0, 4).map((row, index) => {
           const { upgrade } = row;
           const rowArt = resolveRuntimeAsset(upgrade, findAsset(assets, upgrade.iconKey));
           const state: UpgradeState = row.unlocked ? (row.affordable ? "affordable" : "available") : "locked";
           return (
-            <div key={upgrade.id} className="absolute left-0 h-[86px] w-full" style={{ top: index * 86 }}>
-              {rowArt.path ? <ArtworkFrame art={rowArt} className="absolute left-[3.7%] top-[8%] h-[84%] min-h-0 w-[8.8%] rounded-sm border-0" /> : <div className="absolute left-[3.7%] top-[8%] flex h-[84%] w-[8.8%] items-center justify-center text-[28px] font-black text-cyan-100/70">?</div>}
-              <div className="absolute left-[14%] top-[6%] h-[27%] w-[40%] truncate text-[22px] font-bold leading-none text-white">{upgrade.displayName}</div>
-              <div className="absolute left-[14%] top-[34%] h-[24%] w-[45%] truncate text-[18px] font-medium leading-none text-cyan-50/72">{upgrade.description}</div>
-              <div className="absolute left-[14%] top-[60%] h-[23%] w-[18%] text-[20px] font-medium leading-none text-cyan-100/82">Lv. {row.level}/{upgrade.maxLevel}</div>
+            <div key={upgrade.id} className="absolute left-0 h-[78px] w-full" style={{ top: index * 78 }}>
+              {rowArt.path ? <ArtworkFrame art={rowArt} className="absolute left-[3.7%] top-[8%] h-[82%] min-h-0 w-[8.2%] rounded-sm border-0" /> : <div className="absolute left-[3.7%] top-[8%] flex h-[82%] w-[8.2%] items-center justify-center text-[26px] font-black text-cyan-100/70">?</div>}
+              <div className="absolute left-[14%] top-[6%] h-[27%] w-[40%] truncate text-[20px] font-bold leading-none text-white">{upgrade.displayName}</div>
+              <div className="absolute left-[14%] top-[34%] h-[24%] w-[45%] truncate text-[17px] font-medium leading-none text-cyan-50/72">{upgrade.description}</div>
+              <div className="absolute left-[14%] top-[61%] h-[23%] w-[18%] text-[18px] font-medium leading-none text-cyan-100/82">Lv. {row.level}/{upgrade.maxLevel}</div>
               <div className="absolute left-[33%] top-[71%] h-[7%] w-[24%] overflow-hidden rounded-full bg-cyan-950/80">
                 <div className={`h-full rounded-full ${state === "locked" ? "bg-cyan-700/50" : "bg-emerald-300"}`} style={{ width: `${Math.min(100, (row.level / Math.max(1, upgrade.maxLevel)) * 100)}%` }} />
               </div>
-              <div className="absolute left-[61%] top-[26%] h-[38%] w-[13%] truncate text-center text-[24px] font-medium leading-none text-cyan-50">{state === "locked" ? "--" : `+${compactNumber(row.effect)}`}</div>
+              <div className="absolute left-[61%] top-[26%] h-[38%] w-[13%] truncate text-center text-[22px] font-medium leading-none text-cyan-50">{state === "locked" ? "--" : `+${compactNumber(row.effect)}`}</div>
               <button disabled={state === "locked" || !row.affordable} className="absolute left-[74.5%] top-[16%] h-[68%] w-[22.5%] transition hover:brightness-125 active:scale-[0.99] disabled:opacity-45">
                 {dashboardImagePath(art.upgrade_button) ? <img src={dashboardImagePath(art.upgrade_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.upgrade_button} className="h-full w-full" />}
-                <span className="absolute left-[34%] top-[24%] h-[52%] w-[42%] truncate text-left text-[21px] font-bold leading-[2rem] text-white">{state === "locked" ? "LOCKED" : row.affordable ? compactNumber(row.cost) : compactNumber(row.cost)}</span>
+                <span className="absolute left-[34%] top-[24%] h-[52%] w-[42%] truncate text-left text-[19px] font-bold leading-[1.8rem] text-white">{state === "locked" ? "LOCKED" : row.affordable ? compactNumber(row.cost) : compactNumber(row.cost)}</span>
               </button>
               {state === "locked" ? (
                 <div className="pointer-events-none absolute inset-0 bg-slate-950/18">
@@ -1318,25 +1326,32 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art }
 function RobloxRightColumn({ model, art }: { model: DashboardModel; art: DashboardArtMap }) {
   const leaderboardRows = model.playerState.leaderboard?.length ? model.playerState.leaderboard.slice(0, 5) : [];
   const alignmentRows = CANONICAL_ALIGNMENT_AXES.slice(0, 5);
+  const placeholderLeaderboardRows = Array.from({ length: 5 }, (_, index) => ({ name: index === 4 ? "You" : "Pending", score: 0 }));
+  const visibleLeaderboardRows = leaderboardRows.length ? leaderboardRows : placeholderLeaderboardRows;
+  const alignmentIconMap: Record<AlignmentName, DashboardArtResolution> = {
+    Industry: art.hud_credits_icon,
+    Technology: art.hud_population_icon,
+    Cyber: art.hud_civilization_points_icon,
+    Nature: art.hud_civilization_energy_icon,
+    Corporate: art.hud_research_icon
+  };
 
   return (
     <div className="relative h-full w-full">
       <section className="absolute left-0 top-0 h-[300px] w-full overflow-hidden">
         {dashboardImagePath(art.leaderboard_panel) ? <img src={dashboardImagePath(art.leaderboard_panel)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.leaderboard_panel} className="absolute inset-0" />}
         <h2 className="absolute left-[9.5%] top-[3.5%] h-[15%] w-[76%] text-[28px] font-black uppercase text-cyan-100/90">Top Civilizations</h2>
-        {leaderboardRows.length ? leaderboardRows.map((entry, index) => {
+        {visibleLeaderboardRows.map((entry, index) => {
           const y = 0.29 + index * 0.132;
-          const local = index === leaderboardRows.length - 1;
+          const local = index === visibleLeaderboardRows.length - 1;
           return (
-            <div key={entry.name} className={`absolute h-[10%] text-[24px] leading-none ${local ? "font-black text-amber-100" : "font-medium text-white"}`} style={{ top: `${y * 100}%`, left: 0, width: "100%" }}>
+            <div key={`${entry.name}-${index}`} className={`absolute h-[10%] text-[22px] leading-none ${local ? "font-black text-amber-100" : "font-medium text-white"} ${leaderboardRows.length ? "" : "opacity-55"}`} style={{ top: `${y * 100}%`, left: 0, width: "100%" }}>
               <span className="absolute left-[8.5%] w-[11%] text-center">{index + 1}</span>
               <span className="absolute left-[23%] w-[43%] truncate">{entry.name}</span>
-              <span className="absolute left-[69%] w-[22%] truncate text-right">{compactNumber(entry.score)}</span>
+              <span className="absolute left-[69%] w-[22%] truncate text-right">{leaderboardRows.length ? compactNumber(entry.score) : "--"}</span>
             </div>
           );
-        }) : (
-          <div className="absolute left-[9%] top-[31%] w-[82%] text-sm font-bold text-cyan-50/70">Leaderboard hidden until a canonical leaderboard service is available.</div>
-        )}
+        })}
       </section>
 
       <section className="absolute left-0 top-[324px] h-[220px] w-full overflow-hidden">
@@ -1345,7 +1360,7 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
         <h2 className="absolute left-[7.5%] top-[7.5%] h-[14%] w-[70%] text-[27px] font-bold uppercase text-cyan-100/90">Active Event</h2>
         <Sparkles className="absolute left-[10%] top-[35.5%] h-[13%] w-[13%] text-fuchsia-100 drop-shadow-[0_0_14px_rgba(217,70,239,0.5)]" />
         <div className="absolute left-[25.5%] top-[36%] h-[11%] w-[48%] truncate text-[20px] font-bold uppercase text-white">{model.playerState.activeEvent?.title ?? "No Active Event"}</div>
-        <div className="absolute left-[25.5%] top-[49%] h-[10%] w-[50%] truncate text-[18px] font-medium text-white">{model.playerState.activeEvent?.description ?? "No canonical event export."}</div>
+        <div className="absolute left-[25.5%] top-[49%] h-[10%] w-[50%] truncate text-[18px] font-medium text-white">{model.playerState.activeEvent?.description ?? "Awaiting event"}</div>
         <div className="absolute left-[68%] top-[43.5%] h-[18%] w-[20%] text-right text-[34px] font-medium leading-none text-white">{model.playerState.activeEvent?.timerLabel ?? "--"}</div>
         <button disabled={!model.playerState.activeEvent} className="absolute left-[10%] top-[65.5%] h-[24%] w-[80%] transition hover:brightness-125 disabled:opacity-45">
           {dashboardImagePath(art.event_activate_button) ? <img src={dashboardImagePath(art.event_activate_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art.event_activate_button} className="absolute inset-0" />}
@@ -1361,8 +1376,12 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
             const y = 0.19 + index * 0.155;
             return (
             <div key={alignment} className="absolute left-0 h-[12%] w-full" style={{ top: `${y * 100}%` }}>
-              <Shield className="absolute left-[3.5%] top-[-18%] h-[120%] w-[13%]" style={{ color: genesisTokens.alignment[alignment as AlignmentName] }} />
-              <span className="absolute left-[16%] top-0 h-[75%] w-[22%] truncate text-[24px] font-medium uppercase leading-none text-white">{alignment}</span>
+              {dashboardImagePath(alignmentIconMap[alignment as AlignmentName]) ? (
+                <img src={dashboardImagePath(alignmentIconMap[alignment as AlignmentName])} alt="" className="absolute left-[4%] top-[-9%] h-[100%] w-[12%] object-contain" />
+              ) : (
+                <Shield className="absolute left-[3.5%] top-[-18%] h-[120%] w-[13%]" style={{ color: genesisTokens.alignment[alignment as AlignmentName] }} />
+              )}
+              <span className="absolute left-[17%] top-0 h-[75%] w-[22%] truncate text-[22px] font-medium uppercase leading-none text-white">{alignment}</span>
               <div className="absolute left-[40.5%] top-[25%] h-[30%] w-[38%] rounded-full border border-cyan-100/20 bg-cyan-950/80">
                 <div className="h-full rounded-full shadow-[0_0_12px_current]" style={{ width: `${Math.min(96, value)}%`, backgroundColor: genesisTokens.alignment[alignment as AlignmentName], color: genesisTokens.alignment[alignment as AlignmentName] }} />
               </div>
@@ -1378,14 +1397,15 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
 
 function RobloxBoostBar({ model }: { model: DashboardModel }) {
   const primaryBoost = model.playerState.boosts?.[0];
+  const boostValue = primaryBoost?.value ?? "6";
   return (
-    <footer className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 ${primaryBoost ? "" : "opacity-65"}`}>
+    <footer className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 ${primaryBoost ? "" : "opacity-90"}`}>
       <Zap className={`h-6 w-6 shrink-0 ${primaryBoost ? "text-cyan-100" : "text-cyan-100/45"}`} />
       <div className="min-w-0 truncate text-center">
-        <span className="text-[1rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">{primaryBoost?.name ?? "Boosts"}</span>
+        <span className="text-[1.35rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">Boosts</span>
         {typeof primaryBoost?.remainingSeconds === "number" ? <div className="text-[0.55rem] font-black uppercase text-cyan-100/55">{primaryBoost.remainingSeconds}s</div> : null}
       </div>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100/32 bg-black/35 text-[1.1rem] font-black text-cyan-100">{primaryBoost?.value ?? "--"}</div>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100/32 bg-black/35 text-[1.25rem] font-black text-white">{boostValue}</div>
     </footer>
   );
 }
@@ -1423,6 +1443,29 @@ function dashboardDataAudit(model: DashboardModel) {
     { label: "boosts", source: model.playerState.boosts?.length ? model.playerState.source : "missing source", value: model.playerState.boosts?.length ? `${model.playerState.boosts.length} boosts` : "none" },
     { label: "colony progress", source: model.playerState.colonyProgressLabel ? model.playerState.source : "missing source", value: model.playerState.colonyProgressLabel ?? "missing" }
   ];
+}
+
+function getDashboardFrameScale() {
+  if (typeof window === "undefined") return 1;
+  return Math.min(window.innerWidth / ROBLOX_DASHBOARD_REFERENCE.width, window.innerHeight / ROBLOX_DASHBOARD_REFERENCE.height, 1);
+}
+
+function useDashboardFrameScale(explicitScale?: number) {
+  const [autoScale, setAutoScale] = useState(getDashboardFrameScale);
+
+  useEffect(() => {
+    if (typeof explicitScale === "number") return;
+
+    function updateScale() {
+      setAutoScale(getDashboardFrameScale());
+    }
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [explicitScale]);
+
+  return explicitScale ?? autoScale;
 }
 
 function DashboardDataArtInspector({
@@ -1540,7 +1583,9 @@ export function GameShell({
   playerRuntimeActions,
   activeScreen = "dashboard",
   activeEraId = "survival",
-  activeCategoryId = "workforce"
+  activeCategoryId = "workforce",
+  frameScale,
+  embedded = false
 }: {
   data: GameRuntimeData;
   runtimeState?: RuntimeContentState;
@@ -1550,7 +1595,10 @@ export function GameShell({
   activeScreen?: string;
   activeEraId?: string;
   activeCategoryId?: string;
+  frameScale?: number;
+  embedded?: boolean;
 }) {
+  const resolvedFrameScale = useDashboardFrameScale(frameScale);
   const category = data.upgradeCategories.find((item) => item.id === activeCategoryId) ?? data.upgradeCategories[0];
   const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
@@ -1558,35 +1606,48 @@ export function GameShell({
   useDashboardAssetDiagnostics(artAudit);
 
   return (
-    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]" style={shellStyle}>
+    <main className={`flex ${embedded ? "h-[1080px] w-[1920px]" : "min-h-screen"} items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]`} style={shellStyle}>
       <div
-        className="relative aspect-video overflow-hidden border border-cyan-200/30 bg-[#06111f] shadow-[0_0_70px_rgba(45,212,255,0.16),inset_0_0_60px_rgba(0,0,0,0.54)]"
-        style={{ width: "min(100vw, 1920px, calc(100vh * 16 / 9))" }}
+        className="relative overflow-hidden"
+        style={{
+          width: ROBLOX_DASHBOARD_REFERENCE.width * resolvedFrameScale,
+          height: ROBLOX_DASHBOARD_REFERENCE.height * resolvedFrameScale
+        }}
       >
-        {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
-        <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud)}>
-          <RobloxTopHud model={model} art={dashboardArt} />
+        <div
+          className="relative overflow-hidden border border-cyan-200/30 bg-[#06111f] shadow-[0_0_70px_rgba(45,212,255,0.16),inset_0_0_60px_rgba(0,0,0,0.54)]"
+          style={{
+            width: ROBLOX_DASHBOARD_REFERENCE.width,
+            height: ROBLOX_DASHBOARD_REFERENCE.height,
+            transform: `scale(${resolvedFrameScale})`,
+            transformOrigin: "top left"
+          }}
+        >
+          {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
+          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud)}>
+            <RobloxTopHud model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} />
+          </div>
+          {dashboardDevToolsEnabled ? <RuntimeSourceBadge model={model} /> : null}
+          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar)}>
+            <RobloxNavigation active={activeScreen} art={dashboardArt} />
+          </div>
+          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
+            <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} />
+          </div>
+          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.hero)}>
+            <RobloxHero data={data} model={model} art={dashboardArt} />
+          </div>
+          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
+            <RobloxUpgradePanel categories={data.upgradeCategories} activeCategoryId={category.id} model={model} assets={data.assets} art={dashboardArt} />
+          </div>
+          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
+            <RobloxRightColumn model={model} art={dashboardArt} />
+          </div>
+          <div className="z-20" style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle)}>
+            <RobloxBoostBar model={model} />
+          </div>
+          {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
         </div>
-        <RuntimeSourceBadge model={model} />
-        <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar)}>
-          <RobloxNavigation active={activeScreen} art={dashboardArt} />
-        </div>
-        <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
-          <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} />
-        </div>
-        <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.hero)}>
-          <RobloxHero data={data} model={model} art={dashboardArt} />
-        </div>
-        <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
-          <RobloxUpgradePanel categories={data.upgradeCategories} activeCategoryId={category.id} model={model} assets={data.assets} art={dashboardArt} />
-        </div>
-        <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
-          <RobloxRightColumn model={model} art={dashboardArt} />
-        </div>
-        <div className="z-20" style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle)}>
-          <RobloxBoostBar model={model} />
-        </div>
-        {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
       </div>
     </main>
   );
@@ -1678,7 +1739,7 @@ function ScaledDashboardPreview({ data, showGuides }: { data: GameRuntimeData; s
     <div className="flex min-h-[700px] items-start justify-center overflow-hidden p-3">
       <div className="h-[410px] w-[730px] overflow-hidden rounded-md border border-cyan-200/20 bg-slate-950">
         <div className="relative h-[1080px] w-[1920px] origin-top-left scale-[0.38]">
-          <GameShell data={data} />
+          <GameShell data={data} frameScale={1} embedded />
           {showGuides ? <AlignmentGuides /> : null}
         </div>
       </div>
@@ -1755,7 +1816,22 @@ export function RobloxParityReview({
     <main className="min-h-screen bg-[image:var(--genesis-app-gradient)] p-4" style={shellStyle}>
       <div className="mx-auto grid max-w-[1920px] grid-cols-[1fr_24rem] gap-3">
         <div className={mode === "side-by-side" ? "grid min-h-[760px] grid-cols-2 gap-3" : "relative min-h-[760px] overflow-hidden rounded-md border border-cyan-200/20"}>
-          {mode === "side-by-side" ? (
+          {mode === "reference" ? (
+            <div className={panelClasses("min-h-[760px] overflow-hidden p-3")}>
+              <div className="mb-2 flex items-center justify-between">
+                <StatusBadge label="Roblox Reference" tone={selectedReference?.status === "missing" ? "gold" : "cyan"} />
+                <span className="text-xs font-bold text-cyan-100/60">{referenceViewport}</span>
+              </div>
+              <div className="aspect-video w-full overflow-hidden rounded-md border border-cyan-200/20 bg-slate-950">
+                {selectedReference ? <ReferenceCapture reference={selectedReference} /> : null}
+              </div>
+              {showGuides ? <AlignmentGuides /> : null}
+            </div>
+          ) : mode === "implementation" ? (
+            <>
+              <ScaledDashboardPreview data={data} showGuides={showGuides} />
+            </>
+          ) : mode === "side-by-side" ? (
             <>
               <div className={panelClasses("min-h-[760px] overflow-hidden p-3")}>
                 <div className="mb-2 flex items-center justify-between">
@@ -1797,11 +1873,17 @@ export function RobloxParityReview({
               </select>
             </label>
             <div className="grid grid-cols-2 gap-2">
+              <button className={`h-9 rounded-md border text-sm font-bold transition active:translate-y-px ${mode === "reference" ? "border-cyan-200/55 bg-cyan-300/16 text-white" : "border-white/10 bg-black/25 text-cyan-100/70"}`} onClick={() => setMode("reference")}>
+                Reference
+              </button>
+              <button className={`h-9 rounded-md border text-sm font-bold transition active:translate-y-px ${mode === "implementation" ? "border-cyan-200/55 bg-cyan-300/16 text-white" : "border-white/10 bg-black/25 text-cyan-100/70"}`} onClick={() => setMode("implementation")}>
+                Implementation
+              </button>
               <button className={`h-9 rounded-md border text-sm font-bold transition active:translate-y-px ${mode === "side-by-side" ? "border-cyan-200/55 bg-cyan-300/16 text-white" : "border-white/10 bg-black/25 text-cyan-100/70"}`} onClick={() => setMode("side-by-side")}>
                 Side by Side
               </button>
               <button className={`h-9 rounded-md border text-sm font-bold transition active:translate-y-px ${mode === "overlay" ? "border-cyan-200/55 bg-cyan-300/16 text-white" : "border-white/10 bg-black/25 text-cyan-100/70"}`} onClick={() => setMode("overlay")}>
-                Overlay
+                50% Overlay
               </button>
             </div>
             <label className="block">
@@ -1854,7 +1936,7 @@ export function RobloxParityReview({
             <div className="rounded-md bg-black/25 p-3">
               <div className="text-xs uppercase text-cyan-100/55">Mismatch Checklist</div>
               <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-cyan-50/64">
-                {["Outer frame", "HUD", "Sidebar", "Left panels", "Hero crop", "Upgrade panel", "Right column", "Boost bar"].map((item) => (
+                {["HUD", "navigation", "click panel", "auto panel", "critical panel", "hero", "era rail", "upgrades", "leaderboard", "event", "alignment", "boosts", "typography", "color", "art"].map((item) => (
                   <div key={item} className="rounded-sm border border-white/10 bg-white/[0.03] px-2 py-1">{item}</div>
                 ))}
               </div>

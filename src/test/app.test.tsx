@@ -17,7 +17,7 @@ describe("Project Genesis app", () => {
     render(<App />);
 
     expect(await screen.findByText("Local Genesis Initiative")).toBeInTheDocument();
-    expect(screen.getByText("Project Genesis")).toBeInTheDocument();
+    expect(screen.getByText("Era 1 - Survival")).toBeInTheDocument();
     expect(screen.queryByText("Get started")).not.toBeInTheDocument();
     expect(screen.queryByText(/Count is/)).not.toBeInTheDocument();
   });
