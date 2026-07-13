@@ -4,8 +4,10 @@ import {
   DASHBOARD_ART_REGISTRY,
   getDashboardArtAudit,
   resolveDashboardArt,
+  type EraDefinition,
   type AssetDefinition
 } from "@/lib/canonical-runtime";
+import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT } from "@/lib/dashboard/dashboard-layout";
 
 function asset(overrides: Partial<AssetDefinition>): AssetDefinition {
@@ -18,6 +20,28 @@ function asset(overrides: Partial<AssetDefinition>): AssetDefinition {
     ...overrides
   };
 }
+
+function era(id: string, index: number, displayName: string): EraDefinition {
+  return {
+    id,
+    index,
+    name: id,
+    displayName,
+    description: `${displayName} era`
+  };
+}
+
+const canonicalEras = [
+  era("survival", 1, "Survival"),
+  era("ancient", 2, "Ancient"),
+  era("medieval", 3, "Medieval"),
+  era("renaissance", 4, "Renaissance"),
+  era("industrial", 5, "Industrial"),
+  era("modern", 6, "Modern"),
+  era("space-age", 7, "Space Age"),
+  era("interstellar", 8, "Interstellar"),
+  era("galactic", 9, "Galactic")
+];
 
 describe("dashboard art registry", () => {
   it("keeps local Roblox fallback paths centralized outside dashboard JSX", () => {
@@ -100,5 +124,41 @@ describe("dashboard art registry", () => {
       rightColumn: { x: 1514, y: 139, width: 425, height: 927 },
       boostToggle: { x: 866, y: 1010, width: 230, height: 58 }
     });
+  });
+
+  it("shows only previous, current, and next eras on the dashboard rail", () => {
+    const focused = getFocusedDashboardEras(canonicalEras, "medieval", 3);
+
+    expect(focused.map((item) => item.era.id)).toEqual(["ancient", "medieval", "renaissance"]);
+    expect(focused.map((item) => item.state)).toEqual(["completed", "current", "locked"]);
+    expect(focused).toHaveLength(3);
+  });
+
+  it("does not repeat Survival at the first-era boundary", () => {
+    const focused = getFocusedDashboardEras(canonicalEras, "survival", 3);
+
+    expect(focused.map((item) => item.era.id)).toEqual(["survival", "ancient"]);
+    expect(focused.map((item) => item.state)).toEqual(["current", "locked"]);
+  });
+
+  it("does not invent a next era at the Galactic boundary", () => {
+    const focused = getFocusedDashboardEras(canonicalEras, "galactic", 3);
+
+    expect(focused.map((item) => item.era.id)).toEqual(["interstellar", "galactic"]);
+    expect(focused.map((item) => item.state)).toEqual(["completed", "current"]);
+  });
+
+  it("derives the focused era window from canonical order instead of fixed indexes", () => {
+    const reorderedWithInsertedEra = [
+      canonicalEras[0],
+      canonicalEras[1],
+      era("classical", 10, "Classical"),
+      canonicalEras[2],
+      canonicalEras[3]
+    ];
+
+    const focused = getFocusedDashboardEras(reorderedWithInsertedEra, "medieval", 3);
+
+    expect(focused.map((item) => item.era.id)).toEqual(["classical", "medieval", "renaissance"]);
   });
 });

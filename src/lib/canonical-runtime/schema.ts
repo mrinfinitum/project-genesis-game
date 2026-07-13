@@ -154,6 +154,14 @@ export const balanceDefinitionSchema = z
 
 export const clientProfileSchema = z
   .object({
+    eraNavigation: z
+      .object({
+        dashboardMode: z.string().optional(),
+        visibleEraCount: finiteNumber.optional(),
+        fullTimelineEnabled: z.boolean().optional(),
+        allowPrimaryHorizontalScroll: z.boolean().optional()
+      })
+      .optional(),
     defaultUpgradeRowsVisible: finiteNumber.optional(),
     futureUpgradeTeaserCount: finiteNumber.optional(),
     showUnknownUpgradeSlots: z.boolean().optional(),

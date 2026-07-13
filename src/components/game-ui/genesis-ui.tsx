@@ -33,6 +33,7 @@ import {
 import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
 import type { AssetDefinition, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
@@ -382,30 +383,25 @@ export function EraProgressRail({ eras, activeEraId, lockedFromIndex }: { eras: 
 }
 
 export function CurrentEraJourney({ eras, activeEraId }: { eras: EraDefinition[]; activeEraId: string }) {
-  const activeIndex = Math.max(0, eras.findIndex((era) => era.id === activeEraId));
-  const previous = eras[Math.max(0, activeIndex - 1)];
-  const current = eras[activeIndex] ?? eras[0];
-  const next = eras[Math.min(eras.length - 1, activeIndex + 1)];
-  const journey = [
-    { label: "Previous", era: previous, tone: "muted" as const },
-    { label: "Current", era: current, tone: "cyan" as const },
-    { label: "Next", era: next, tone: "gold" as const }
-  ];
+  const journey = getFocusedDashboardEras(eras, activeEraId, 3);
+  const gridClass = journey.length === 2 ? "grid-cols-2" : "grid-cols-[1fr_1.2fr_1fr]";
 
   return (
     <Panel title="Current Journey" eyebrow={`${eras.length}-era progression`} action={<button className="h-8 rounded-md border border-cyan-200/30 bg-cyan-300/10 px-3 text-xs font-black uppercase text-cyan-100 transition hover:bg-cyan-300/18 active:translate-y-px">View Full Timeline</button>}>
-      <div className="grid grid-cols-[1fr_1.2fr_1fr] gap-2">
-        {journey.map(({ label, era, tone }) => {
-          const color = genesisTokens.era[era?.id as keyof typeof genesisTokens.era] ?? genesisTokens.color.cyan;
-          const isCurrent = label === "Current";
+      <div className={`grid ${gridClass} gap-2`}>
+        {journey.map(({ era, state }) => {
+          const color = genesisTokens.era[era.id as keyof typeof genesisTokens.era] ?? genesisTokens.color.cyan;
+          const isCurrent = state === "current";
+          const label = state === "completed" ? "Previous" : state === "current" ? "Current" : "Next";
+          const tone = state === "completed" ? "muted" : state === "current" ? "cyan" : "gold";
           return (
-            <div key={`${label}-${era?.id}`} className={`relative min-h-20 rounded-md border bg-black/30 p-3 ${isCurrent ? "shadow-[0_0_24px_rgba(45,212,255,0.18)]" : ""}`} style={{ borderColor: isCurrent ? color : "rgba(255,255,255,0.12)" }}>
+            <div key={`${label}-${era.id}`} className={`relative min-h-20 rounded-md border bg-black/30 p-3 ${isCurrent ? "shadow-[0_0_24px_rgba(45,212,255,0.18)]" : ""}`} style={{ borderColor: isCurrent ? color : "rgba(255,255,255,0.12)" }}>
               <div className="mb-1 flex items-center justify-between gap-2">
                 <StatusBadge label={label} tone={tone} />
-                <span className="text-xs font-black text-cyan-100/45">#{era?.index ?? "-"}</span>
+                <span className="text-xs font-black text-cyan-100/45">#{era.index}</span>
               </div>
-              <div className="truncate text-lg font-black text-white">{era?.displayName ?? "Unknown"}</div>
-              <p className="mt-1 line-clamp-2 text-xs leading-4 text-cyan-50/62">{era?.description ?? "Awaiting canonical era data."}</p>
+              <div className="truncate text-lg font-black text-white">{shortEraName(era)}</div>
+              <p className="mt-1 line-clamp-2 text-xs leading-4 text-cyan-50/62">{era.description}</p>
               {isCurrent ? <div className="absolute inset-x-3 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-200/70 to-transparent" /> : null}
             </div>
           );
@@ -996,8 +992,16 @@ function WrenchIcon({ className }: { className?: string }) {
 }
 
 function shortEraName(era: EraDefinition) {
+  const eraWithShortName = era as EraDefinition & { shortDisplayName?: string };
+  if (eraWithShortName.shortDisplayName) return eraWithShortName.shortDisplayName;
   if (era.id === "space-age") return "Space";
   return era.displayName.replace(" Era", "");
+}
+
+function dashboardEraVisibleCount(data: GameRuntimeData) {
+  const configuredCount = data.clientProfiles.default.eraNavigation?.visibleEraCount;
+  if (typeof configuredCount !== "number" || !Number.isFinite(configuredCount)) return 3;
+  return Math.max(1, Math.min(3, Math.floor(configuredCount)));
 }
 
 function hudIconForResource(resource: { category: string; label: string }) {
@@ -1205,28 +1209,39 @@ function HeroCityScene({ art, fallbackArt }: { art: RuntimeAssetResolution; fall
   );
 }
 
-function RobloxEraRail({ eras, activeEraId, art }: { eras: EraDefinition[]; activeEraId: string; art: DashboardArtMap }) {
-  const activeIndex = Math.max(0, eras.findIndex((era) => era.id === activeEraId));
+function RobloxEraRail({
+  eras,
+  activeEraId,
+  art,
+  visibleEraCount
+}: {
+  eras: EraDefinition[];
+  activeEraId: string;
+  art: DashboardArtMap;
+  visibleEraCount: number;
+}) {
+  const focusedEras = getFocusedDashboardEras(eras, activeEraId, visibleEraCount);
 
   return (
     <div className="absolute h-[86px] w-[860px]" style={{ left: 25, top: 392 }}>
-      <div className="absolute left-[68px] right-[68px] top-[34px] h-[3px] bg-cyan-100/18 shadow-[0_0_14px_rgba(45,212,255,0.16)]" />
-      {eras.map((era, index) => {
-        const active = era.id === activeEraId;
-        const future = index > activeIndex;
-        const denominator = Math.max(eras.length - 1, 1);
-        const x = 0.08 + (index / denominator) * 0.84;
+      <div className="absolute left-[255px] right-[255px] top-[34px] h-[3px] bg-cyan-100/18 shadow-[0_0_14px_rgba(45,212,255,0.16)]" />
+      {focusedEras.map(({ era, state }, index) => {
+        const active = state === "current";
+        const future = state === "locked";
+        const denominator = Math.max(focusedEras.length - 1, 1);
+        const x = focusedEras.length === 1 ? 0.5 : 0.26 + (index / denominator) * 0.48;
+        const canonicalIndex = Number.isFinite(era.index) ? era.index : eras.findIndex((item) => item.id === era.id) + 1;
         return (
-          <div key={era.id} className="absolute top-0 h-full w-[88px]" style={{ left: `calc(${x * 100}% - 44px)` }}>
-            <div className="absolute left-[13px] top-[6px] h-[62px] w-[64px]">
+          <div key={era.id} className={`absolute top-0 h-full ${active ? "w-[112px]" : "w-[92px]"}`} style={{ left: `calc(${x * 100}% - ${active ? 56 : 46}px)` }}>
+            <div className={`absolute top-[6px] ${active ? "left-[20px] h-[72px] w-[74px]" : "left-[14px] h-[62px] w-[64px]"}`}>
               {dashboardImagePath(art.era_progression_hex) ? (
-                <img src={dashboardImagePath(art.era_progression_hex)} alt="" className={`h-full w-full object-contain drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "opacity-100 brightness-125 hue-rotate-[55deg]" : future ? "opacity-38 saturate-50" : "opacity-72"}`} />
+                <img src={dashboardImagePath(art.era_progression_hex)} alt="" className={`h-full w-full object-contain drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "opacity-100 brightness-150 hue-rotate-[55deg] drop-shadow-[0_0_22px_rgba(52,245,106,0.42)]" : future ? "opacity-38 saturate-50" : "opacity-78 hue-rotate-[35deg]"}`} />
               ) : (
-                <Hexagon className={`h-full w-full drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "text-emerald-200 opacity-100 brightness-125" : future ? "text-cyan-100 opacity-38" : "text-cyan-100 opacity-70"}`} />
+                <Hexagon className={`h-full w-full drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "text-emerald-200 opacity-100 brightness-150" : future ? "text-cyan-100 opacity-38" : "text-emerald-100 opacity-78"}`} />
               )}
-              <span className="absolute inset-0 flex items-center justify-center text-[1.45rem] font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)]">{index + 1}</span>
+              <span className={`absolute inset-0 flex items-center justify-center font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)] ${active ? "text-[1.7rem]" : "text-[1.45rem]"}`}>{canonicalIndex}</span>
             </div>
-            <span className={`absolute left-0 top-[70px] block w-full truncate text-center text-[12px] font-black uppercase leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] ${active ? "text-emerald-300" : future ? "text-white/52" : "text-white/86"}`}>{shortEraName(era)}</span>
+            <span className={`absolute left-0 top-[78px] block w-full truncate text-center font-black uppercase leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] ${active ? "text-[13px] text-emerald-300" : future ? "text-[12px] text-white/52" : "text-[12px] text-emerald-100/86"}`}>{shortEraName(era)}</span>
           </div>
         );
       })}
@@ -1262,7 +1277,7 @@ function RobloxHero({ data, model, art: dashboardArt }: { data: GameRuntimeData;
           {shortEraName(era)} Era · {focusResource?.displayName ?? "Missing Focus"} · {typeof objective?.discoveryPercent === "number" ? `${objective.discoveryPercent}%` : "No Discovery"}
         </div>
       ) : null}
-      <RobloxEraRail eras={data.eras} activeEraId={era.id} art={dashboardArt} />
+      <RobloxEraRail eras={data.eras} activeEraId={era.id} art={dashboardArt} visibleEraCount={dashboardEraVisibleCount(data)} />
     </section>
   );
 }

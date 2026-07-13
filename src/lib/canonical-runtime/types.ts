@@ -165,6 +165,12 @@ export interface PrimaryHudResourceDefinition {
 
 export interface ClientProfile {
   primaryHudResources?: Array<string | PrimaryHudResourceDefinition>;
+  eraNavigation?: {
+    dashboardMode?: string;
+    visibleEraCount?: number;
+    fullTimelineEnabled?: boolean;
+    allowPrimaryHorizontalScroll?: boolean;
+  };
   defaultUpgradeRowsVisible?: number;
   futureUpgradeTeaserCount?: number;
   showUnknownUpgradeSlots?: boolean;
