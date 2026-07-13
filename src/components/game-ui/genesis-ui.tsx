@@ -760,7 +760,7 @@ export function HelpIconButton({ art, className = "" }: { art: DashboardArtResol
       type="button"
       aria-label={helpText(art)}
       title={helpText(art)}
-      className={`flex items-center justify-center text-cyan-100/70 drop-shadow-[0_0_8px_rgba(45,212,255,0.22)] transition hover:text-cyan-50 ${className}`}
+      className={`flex items-center justify-center text-cyan-100/70 transition hover:text-cyan-50 ${className}`}
     >
       {path ? <img src={path} alt="" className="h-full w-full object-contain" /> : <CircleHelp className="h-full w-full" />}
     </button>
@@ -868,7 +868,7 @@ export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, 
         <img
           src={centerPath}
           alt=""
-          className={`relative h-[31%] w-[31%] object-contain transition-transform group-active:scale-90 ${variant === "auto" ? "drop-shadow-[0_0_14px_rgba(52,245,106,0.45)]" : "drop-shadow-[0_0_14px_rgba(125,249,255,0.52)]"}`}
+          className="relative h-[31%] w-[31%] object-contain transition-transform group-active:scale-90"
         />
       ) : (
         <FallbackIcon className={`relative h-[31%] w-[31%] ${variant === "auto" ? "text-emerald-100" : "text-cyan-100"}`} />
@@ -912,7 +912,7 @@ export function ClickPowerPanel({
           click_interface_circle source missing
         </div>
       ) : null}
-      <h2 className="absolute left-[28px] top-[23px] h-[32px] w-[220px] text-[28px] font-black uppercase leading-8 text-cyan-100/90">Click Power</h2>
+      <h2 className="absolute left-[35px] top-[19px] h-[32px] w-[220px] text-[22px] font-black uppercase leading-7 text-cyan-100/90">Click Power</h2>
       <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[17px] top-[26px] h-[20px] w-[20px]" />
       <RotatingControlRing
         outerArt={art.dashboard_click_ring}
@@ -925,11 +925,11 @@ export function ClickPowerPanel({
         onActivate={hasClickState ? onClick : undefined}
         className="left-[42px] top-[92px] h-[156px] w-[156px]"
       />
-      <div className="absolute left-[198px] top-[84px] h-[142px] w-[116px] text-center">
-        <div className="whitespace-pre-line text-[18px] font-black uppercase leading-[1.15] text-cyan-100/70">{formattedClickLabel(clickResourceLabel)}</div>
-        <div className="mt-[13px] text-[36px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
-        <div className="mt-[14px] text-[20px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
-        <div className={`mt-[6px] text-[18px] font-black uppercase leading-none text-cyan-300 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
+      <div className="absolute left-[182px] top-[77px] h-[142px] w-[133px] text-center">
+        <div className="whitespace-pre-line text-[15px] font-black uppercase leading-[1.05] text-cyan-100/68">{formattedClickLabel(clickResourceLabel)}</div>
+        <div className="mt-[10px] text-[30px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
+        <div className="mt-[11px] text-[14px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
+        <div className={`mt-[7px] text-[15px] font-black uppercase leading-none text-cyan-300 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
       </div>
       <BeveledActionButton
         art={art.dashboard_click_button}
@@ -959,7 +959,7 @@ export function AutoClickPanel({
 
   return (
     <section className="absolute left-0 top-[344px] h-[270px] w-full">
-      <h2 className="absolute left-[28px] top-[22px] h-[35px] w-[220px] text-[28px] font-black uppercase leading-9 text-cyan-100/90">Auto Click</h2>
+      <h2 className="absolute left-[35px] top-[22px] h-[35px] w-[220px] text-[22px] font-black uppercase leading-7 text-cyan-100/90">Auto Click</h2>
       <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[17px] top-[27px] h-[20px] w-[20px]" />
       <RotatingControlRing
         outerArt={art.dashboard_auto_ring}
@@ -970,10 +970,10 @@ export function AutoClickPanel({
         onActivate={hasAutomation ? onToggle : undefined}
         className="left-[50px] top-[82px] h-[138px] w-[138px]"
       />
-      <div className="absolute left-[195px] top-[76px] h-[120px] w-[118px] text-center">
-        <div className="text-[18px] font-black uppercase leading-[1.05] text-cyan-100/70">Auto Click<br />Power</div>
-        <div className="mt-[16px] text-[36px] font-black leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.74)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
-        <div className="mt-[15px] text-[20px] font-black uppercase leading-none text-cyan-200">Per/S</div>
+      <div className="absolute left-[196px] top-[62px] h-[120px] w-[119px] text-center">
+        <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
+        <div className="mt-[10px] text-[30px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
+        <div className="mt-[11px] text-[14px] font-black uppercase leading-none text-cyan-200">Per/S</div>
       </div>
       <BeveledActionButton
         art={autoArt}
@@ -1056,7 +1056,7 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
 
       <div className="absolute left-[23px] top-[15px] flex h-[58px] items-center gap-2">
         {[Hexagon, Gauge, CircleHelp].map((Icon, index) => (
-          <button key={index} className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-black/48 text-cyan-100/82 shadow-[0_0_16px_rgba(45,212,255,0.12)]">
+          <button key={index} className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-black/48 text-cyan-100/82">
             <Icon className="h-[22px] w-[22px]" />
           </button>
         ))}
@@ -1084,7 +1084,7 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
             {iconArt && dashboardImagePath(iconArt) ? (
               <img src={dashboardImagePath(iconArt)} alt="" className="absolute h-[58px] w-[58px] object-contain" style={{ left: slot.iconX, top: 23 }} />
             ) : (
-              <div className="absolute flex h-[58px] w-[58px] items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-cyan-100 shadow-[0_0_20px_rgba(45,212,255,0.16)]" style={{ left: slot.iconX, top: 23 }}>
+              <div className="absolute flex h-[58px] w-[58px] items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-cyan-100" style={{ left: slot.iconX, top: 23 }}>
                 <Icon className="h-[1.45rem] w-[1.45rem]" />
               </div>
             )}
@@ -1132,7 +1132,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
 
   return (
     <nav className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.sidebar_frame) ? <img src={dashboardImagePath(art.sidebar_frame)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.sidebar_frame} className="absolute inset-0" />}
+      {dashboardImagePath(art.dashboard_nav_background) ? <img src={dashboardImagePath(art.dashboard_nav_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
       <div
         className="pointer-events-none absolute inset-x-[10px] rounded-[10px] border-2 border-cyan-200/75 bg-[linear-gradient(180deg,rgba(13,71,116,0.56),rgba(4,24,44,0.62))] shadow-[inset_0_0_12px_rgba(45,212,255,0.08)]"
         style={{ top: `${(activeIndex * slotHeightPx - 2) / ROBLOX_DASHBOARD_LAYOUT.sidebar.height * 100}%`, height: `${(slotHeightPx + 2) / ROBLOX_DASHBOARD_LAYOUT.sidebar.height * 100}%` }}
@@ -1154,7 +1154,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
             ) : (
               <Icon className={`mt-[14px] ${isActive ? "text-cyan-100" : "text-white/72"}`} style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)` }} />
             )}
-            <span className="mt-[-2px] w-full px-1 text-[15px] [text-shadow:0_1px_3px_rgba(0,0,0,0.72)]" style={{ transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.92 }}>{item.label}</span>
+            <span className="mt-[-2px] w-full px-1 text-[14px] [text-shadow:0_1px_2px_rgba(0,0,0,0.68)]" style={{ transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.9 }}>{item.label}</span>
           </button>
         );
       })}
@@ -1196,18 +1196,19 @@ function RobloxLeftColumn({
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.clicker_hud_background) ? <img src={dashboardImagePath(art.clicker_hud_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.clicker_hud_background} className="absolute inset-0" />}
+      {dashboardImagePath(art.dashboard_click_panel_background) ? <img src={dashboardImagePath(art.dashboard_click_panel_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
       <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} pressed={clickPressed} pulseKey={clickPulseKey} />
       <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
 
       <section className="absolute left-0 top-[638px] h-[168px] w-full">
-        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[30px] top-[22px] h-[78px] w-[92px] object-contain drop-shadow-[0_0_18px_rgba(255,216,77,0.28)]" /> : <Star className="absolute left-[30px] top-[22px] h-[78px] w-[92px] text-amber-100" />}
-        <div className="absolute left-[135px] top-[27px] w-[170px]">
-          <div className="text-[1rem] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
-          <div className="mt-2 text-[1.7rem] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
-          <div className="mt-4 text-[1rem] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
-          <div className="mt-2 text-[1.7rem] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
+        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[28px] top-[12px] h-[86px] w-[112px] object-contain" /> : <Star className="absolute left-[28px] top-[12px] h-[86px] w-[112px] text-amber-100" />}
+        <div className="absolute left-[142px] top-[15px] w-[170px]">
+          <div className="text-[14px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
+          <div className="mt-[7px] text-[25px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
+          <div className="mt-[16px] text-[14px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
+          <div className="mt-[7px] text-[25px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
         </div>
+        <div className="absolute left-[28px] right-[34px] top-[139px] truncate text-[11px] font-black uppercase text-cyan-100/58">Next Milestone: Level Up Upgrades</div>
       </section>
     </div>
   );
@@ -1313,7 +1314,7 @@ function EraProgressionNode({
               ? "genesis-era-current-card brightness-150 hue-rotate-[55deg] drop-shadow-[0_0_22px_rgba(52,245,106,0.5)]"
               : locked
                 ? "opacity-38 saturate-50"
-                : "opacity-78 hue-rotate-[35deg] drop-shadow-[0_0_12px_rgba(52,245,106,0.18)]"
+                : "opacity-78 hue-rotate-[35deg]"
           }`}
         />
       ) : (
@@ -1586,13 +1587,13 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art }
 
   return (
     <section className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.upgrade_panel_structure) ? <img src={dashboardImagePath(art.upgrade_panel_structure)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.upgrade_panel_structure} className="absolute inset-0" />}
+      {dashboardImagePath(art.dashboard_upgrade_background) ? <img src={dashboardImagePath(art.dashboard_upgrade_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_upgrade_background} className="absolute inset-0" />}
       {categories.slice(0, 4).map((category, index) => {
           const active = category.id === activeCategoryId;
           return (
           <button
             key={category.id}
-            className={`absolute top-0 h-[16%] text-center text-[19px] font-black uppercase transition hover:brightness-125 ${active ? "text-white" : "text-cyan-100/72"}`}
+            className={`absolute top-0 h-[16%] text-center text-[17px] font-black uppercase transition hover:brightness-125 ${active ? "text-white" : "text-cyan-100/72"}`}
             style={{ left: `${index * 25}%`, width: "25%" }}
           >
             <span className="absolute h-[9%] w-[20.5%] whitespace-nowrap" style={{ left: `${tabLabelXOffsets[index] * 400}%`, top: "10%" }}>
@@ -1611,16 +1612,16 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art }
           return (
             <div key={upgrade.id} className="absolute left-0 h-[78px] w-full" style={{ top: index * 78 }}>
               {rowArt.path ? <ArtworkFrame art={rowArt} className="absolute left-[3.7%] top-[8%] h-[82%] min-h-0 w-[8.2%] rounded-sm border-0" /> : <div className="absolute left-[3.7%] top-[8%] flex h-[82%] w-[8.2%] items-center justify-center text-[26px] font-black text-cyan-100/70">?</div>}
-              <div className="absolute left-[14%] top-[6%] h-[27%] w-[40%] truncate text-[20px] font-bold leading-none text-white">{upgrade.displayName}</div>
-              <div className="absolute left-[14%] top-[34%] h-[24%] w-[45%] truncate text-[17px] font-medium leading-none text-cyan-50/72">{upgrade.description}</div>
-              <div className="absolute left-[14%] top-[61%] h-[23%] w-[18%] text-[18px] font-medium leading-none text-cyan-100/82">Lv. {row.level}/{upgrade.maxLevel}</div>
+              <div className="absolute left-[14%] top-[6%] h-[27%] w-[40%] truncate text-[18px] font-bold leading-none text-white">{upgrade.displayName}</div>
+              <div className="absolute left-[14%] top-[34%] h-[24%] w-[45%] truncate text-[15px] font-medium leading-none text-cyan-50/72">{upgrade.description}</div>
+              <div className="absolute left-[14%] top-[61%] h-[23%] w-[18%] text-[16px] font-medium leading-none text-cyan-100/82">Lv. {row.level}/{upgrade.maxLevel}</div>
               <div className="absolute left-[33%] top-[71%] h-[7%] w-[24%] overflow-hidden rounded-full bg-cyan-950/80">
                 <div className={`h-full rounded-full ${state === "locked" ? "bg-cyan-700/50" : "bg-emerald-300"}`} style={{ width: `${Math.min(100, (row.level / Math.max(1, upgrade.maxLevel)) * 100)}%` }} />
               </div>
-              <div className="absolute left-[61%] top-[26%] h-[38%] w-[13%] truncate text-center text-[22px] font-medium leading-none text-cyan-50">{state === "locked" ? "--" : `+${compactNumber(row.effect)}`}</div>
+              <div className="absolute left-[61%] top-[26%] h-[38%] w-[13%] truncate text-center text-[20px] font-medium leading-none text-cyan-50">{state === "locked" ? "--" : `+${compactNumber(row.effect)}`}</div>
               <button disabled={state === "locked" || !row.affordable} className="absolute left-[74.5%] top-[16%] h-[68%] w-[22.5%] transition hover:brightness-125 active:scale-[0.99] disabled:opacity-45">
                 {dashboardImagePath(art.upgrade_button) ? <img src={dashboardImagePath(art.upgrade_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.upgrade_button} className="h-full w-full" />}
-                <span className="absolute left-[34%] top-[24%] h-[52%] w-[42%] truncate text-left text-[19px] font-bold leading-[1.8rem] text-white">{state === "locked" ? "LOCKED" : row.affordable ? compactNumber(row.cost) : compactNumber(row.cost)}</span>
+                <span className="absolute left-[34%] top-[24%] h-[52%] w-[42%] truncate text-left text-[17px] font-bold leading-[1.55rem] text-white">{state === "locked" ? "LOCKED" : row.affordable ? compactNumber(row.cost) : compactNumber(row.cost)}</span>
               </button>
               {state === "locked" ? (
                 <div className="pointer-events-none absolute inset-0 bg-slate-950/18">
@@ -1653,13 +1654,13 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
   return (
     <div className="relative h-full w-full">
       <section className="absolute left-0 top-0 h-[300px] w-full overflow-hidden">
-        {dashboardImagePath(art.leaderboard_panel) ? <img src={dashboardImagePath(art.leaderboard_panel)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.leaderboard_panel} className="absolute inset-0" />}
-        <h2 className="absolute left-[9.5%] top-[3.5%] h-[15%] w-[76%] text-[28px] font-black uppercase text-cyan-100/90">Top Civilizations</h2>
+        {dashboardImagePath(art.dashboard_leaderboard_background) ? <img src={dashboardImagePath(art.dashboard_leaderboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_leaderboard_background} className="absolute inset-0" />}
+        <h2 className="absolute left-[9.5%] top-[3.5%] h-[15%] w-[76%] text-[24px] font-black uppercase text-cyan-100/90">Top Civilizations</h2>
         {visibleLeaderboardRows.map((entry, index) => {
           const y = 0.29 + index * 0.132;
           const local = index === visibleLeaderboardRows.length - 1;
           return (
-            <div key={`${entry.name}-${index}`} className={`absolute h-[10%] text-[22px] leading-none ${local ? "font-black text-amber-100" : "font-medium text-white"} ${leaderboardRows.length ? "" : "opacity-55"}`} style={{ top: `${y * 100}%`, left: 0, width: "100%" }}>
+            <div key={`${entry.name}-${index}`} className={`absolute h-[10%] text-[19px] leading-none ${local ? "font-black text-amber-100" : "font-medium text-white"} ${leaderboardRows.length ? "" : "opacity-55"}`} style={{ top: `${y * 100}%`, left: 0, width: "100%" }}>
               <span className="absolute left-[8.5%] w-[11%] text-center">{index + 1}</span>
               <span className="absolute left-[23%] w-[43%] truncate">{entry.name}</span>
               <span className="absolute left-[69%] w-[22%] truncate text-right">{leaderboardRows.length ? compactNumber(entry.score) : "--"}</span>
@@ -1669,22 +1670,22 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
       </section>
 
       <section className="absolute left-0 top-[324px] h-[220px] w-full overflow-hidden">
-        {dashboardImagePath(art.active_event_panel) ? <img src={dashboardImagePath(art.active_event_panel)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.active_event_panel} className="absolute inset-0" />}
+        {dashboardImagePath(art.dashboard_event_background) ? <img src={dashboardImagePath(art.dashboard_event_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_event_background} className="absolute inset-0" />}
         {dashboardImagePath(art.active_event_sub_layer) ? <img src={dashboardImagePath(art.active_event_sub_layer)} alt="" className="absolute left-[22px] top-[52px] h-[156px] w-[388px] object-fill" /> : null}
-        <h2 className="absolute left-[7.5%] top-[7.5%] h-[14%] w-[70%] text-[27px] font-bold uppercase text-cyan-100/90">Active Event</h2>
-        <Sparkles className="absolute left-[10%] top-[35.5%] h-[13%] w-[13%] text-fuchsia-100 drop-shadow-[0_0_14px_rgba(217,70,239,0.5)]" />
-        <div className="absolute left-[25.5%] top-[36%] h-[11%] w-[48%] truncate text-[20px] font-bold uppercase text-white">{model.playerState.activeEvent?.title ?? "No Active Event"}</div>
-        <div className="absolute left-[25.5%] top-[49%] h-[10%] w-[50%] truncate text-[18px] font-medium text-white">{model.playerState.activeEvent?.description ?? "Awaiting event"}</div>
-        <div className="absolute left-[68%] top-[43.5%] h-[18%] w-[20%] text-right text-[34px] font-medium leading-none text-white">{model.playerState.activeEvent?.timerLabel ?? "--"}</div>
+        <h2 className="absolute left-[7.5%] top-[7.5%] h-[14%] w-[70%] text-[24px] font-bold uppercase text-cyan-100/90">Active Event</h2>
+        <Sparkles className="absolute left-[10%] top-[35.5%] h-[13%] w-[13%] text-fuchsia-100" />
+        <div className="absolute left-[25.5%] top-[36%] h-[11%] w-[48%] truncate text-[18px] font-bold uppercase text-white">{model.playerState.activeEvent?.title ?? "No Active Event"}</div>
+        <div className="absolute left-[25.5%] top-[49%] h-[10%] w-[50%] truncate text-[15px] font-medium text-white">{model.playerState.activeEvent?.description ?? "Awaiting event"}</div>
+        <div className="absolute left-[68%] top-[43.5%] h-[18%] w-[20%] text-right text-[26px] font-medium leading-none text-white">{model.playerState.activeEvent?.timerLabel ?? "--"}</div>
         <button disabled={!model.playerState.activeEvent} className="absolute left-[10%] top-[65.5%] h-[24%] w-[80%] transition hover:brightness-125 disabled:opacity-45">
           {dashboardImagePath(art.event_activate_button) ? <img src={dashboardImagePath(art.event_activate_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art.event_activate_button} className="absolute inset-0" />}
-          <span className="relative text-[25px] font-bold uppercase text-white">{model.playerState.activeEvent ? "Activate" : "Unavailable"}</span>
+          <span className="relative text-[22px] font-bold uppercase text-white">{model.playerState.activeEvent ? "Activate" : "Unavailable"}</span>
         </button>
       </section>
 
       <section className="absolute left-0 top-[574px] h-[365px] w-full overflow-hidden">
-        {dashboardImagePath(art.alignment_panel) ? <img src={dashboardImagePath(art.alignment_panel)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.alignment_panel} className="absolute inset-0" />}
-        <h2 className="absolute left-[8%] top-[5.5%] h-[8%] w-[70%] text-[24px] font-black uppercase text-cyan-100/90">Alignment</h2>
+        {dashboardImagePath(art.dashboard_alignment_background) ? <img src={dashboardImagePath(art.dashboard_alignment_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_alignment_background} className="absolute inset-0" />}
+        <h2 className="absolute left-[8%] top-[5.5%] h-[8%] w-[70%] text-[22px] font-black uppercase text-cyan-100/90">Alignment</h2>
         {alignmentRows.map((alignment, index) => {
             const value = model.alignment[alignment];
             const y = 0.19 + index * 0.155;
@@ -1695,11 +1696,11 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
               ) : (
                 <Shield className="absolute left-[3.5%] top-[-18%] h-[120%] w-[13%]" style={{ color: genesisTokens.alignment[alignment as AlignmentName] }} />
               )}
-              <span className="absolute left-[17%] top-0 h-[75%] w-[22%] truncate text-[22px] font-medium uppercase leading-none text-white">{alignment}</span>
+              <span className="absolute left-[17%] top-0 h-[75%] w-[22%] truncate text-[18px] font-medium uppercase leading-none text-white">{alignment}</span>
               <div className="absolute left-[40.5%] top-[25%] h-[30%] w-[38%] rounded-full border border-cyan-100/20 bg-cyan-950/80">
-                <div className="h-full rounded-full shadow-[0_0_12px_current]" style={{ width: `${Math.min(96, value)}%`, backgroundColor: genesisTokens.alignment[alignment as AlignmentName], color: genesisTokens.alignment[alignment as AlignmentName] }} />
+                <div className="h-full rounded-full" style={{ width: `${Math.min(96, value)}%`, backgroundColor: genesisTokens.alignment[alignment as AlignmentName], color: genesisTokens.alignment[alignment as AlignmentName] }} />
               </div>
-              <span className="absolute left-[81%] top-[-2%] h-[85%] w-[11%] text-right text-[24px] font-black leading-none text-white">{value}%</span>
+              <span className="absolute left-[81%] top-[-2%] h-[85%] w-[11%] text-right text-[20px] font-black leading-none text-white">{value}%</span>
             </div>
             );
         })}
@@ -2572,10 +2573,35 @@ export function RobloxParityReview({
   }, [selectedReferenceId, mode, overlayOpacity, reviewStatus, reviewNotes, showGuides, viewport]);
 
   const artMappings = [
-    ["Hero era artwork", data.eras[0]?.artKey ?? "era-survival", "placeholder"],
-    ["HUD economy icons", data.clientProfiles.default.primaryHudResources?.map((resource) => typeof resource === "string" ? resource : resource.iconKey ?? resource.id).join(", ") ?? "missing", "mixed"],
-    ["Upgrade row icons", data.upgrades.slice(0, 4).map((upgrade) => upgrade.iconKey ?? "missing").join(", "), "placeholder"],
-    ["Panel/event accents", "local UI tokens", "draft"]
+    ["Hero era artwork", data.eras[0]?.artKey ?? "era-survival", "Needs Work"],
+    ["HUD economy icons", data.clientProfiles.default.primaryHudResources?.map((resource) => typeof resource === "string" ? resource : resource.iconKey ?? resource.id).join(", ") ?? "missing", "Close"],
+    ["Upgrade row icons", data.upgrades.slice(0, 4).map((upgrade) => upgrade.iconKey ?? "missing").join(", "), "Needs Work"],
+    ["Panel backgrounds", "Roblox dashboard asset registry", "Close"]
+  ];
+  const backgroundAudit = [
+    ["Navigation", "dashboard_nav_background", "Roblox background image"],
+    ["Click Power", "dashboard_click_panel_background", "Roblox integrated clicker HUD"],
+    ["Auto Click", "dashboard_auto_panel_background", "Roblox integrated clicker HUD"],
+    ["Critical Chance", "dashboard_critical_panel_background", "Roblox integrated clicker HUD"],
+    ["Hero Frame", "dashboard_city_hero", "Roblox background image"],
+    ["Top HUD", "dashboard_top_hud", "Roblox background image"],
+    ["Upgrade Panel", "dashboard_upgrade_background", "Roblox background image"],
+    ["Leaderboard", "dashboard_leaderboard_background", "Roblox background image"],
+    ["Active Event", "dashboard_event_background", "Roblox background image"],
+    ["Alignment", "dashboard_alignment_background", "Roblox background image"],
+    ["Boosts Tray", "none exported", "CSS framework until Studio art exists"]
+  ];
+  const parityChecklist = [
+    ["Navigation", "Close"],
+    ["Buttons", "Close"],
+    ["Typography", "Close"],
+    ["Backgrounds", "Close"],
+    ["Icons", "Close"],
+    ["Glow", "Close"],
+    ["Spacing", "Close"],
+    ["Panel padding", "Close"],
+    ["Hero art", "Needs Work"],
+    ["Upgrade icons", "Needs Work"]
   ];
 
   return (
@@ -2700,10 +2726,24 @@ export function RobloxParityReview({
               </div>
             </div>
             <div className="rounded-md bg-black/25 p-3">
+              <div className="text-xs uppercase text-cyan-100/55">Panel Background Audit</div>
+              <div className="mt-2 space-y-1 text-xs">
+                {backgroundAudit.map(([panel, key, state]) => (
+                  <div key={panel} className="grid grid-cols-[6.5rem_1fr] gap-2 rounded-sm border border-white/10 bg-white/[0.03] px-2 py-1">
+                    <span className="font-bold text-white">{panel}</span>
+                    <span className="truncate text-cyan-100/62">{key} · {state}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-md bg-black/25 p-3">
               <div className="text-xs uppercase text-cyan-100/55">Mismatch Checklist</div>
-              <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-cyan-50/64">
-                {["HUD", "navigation", "click panel", "auto panel", "critical panel", "hero", "era rail", "upgrades", "leaderboard", "event", "alignment", "boosts", "typography", "color", "art"].map((item) => (
-                  <div key={item} className="rounded-sm border border-white/10 bg-white/[0.03] px-2 py-1">{item}</div>
+              <div className="mt-2 grid grid-cols-1 gap-1 text-xs text-cyan-50/64">
+                {parityChecklist.map(([item, itemStatus]) => (
+                  <div key={item} className="grid grid-cols-[1fr_5.5rem] rounded-sm border border-white/10 bg-white/[0.03] px-2 py-1">
+                    <span>{item}</span>
+                    <span className={itemStatus === "Perfect" ? "text-emerald-100" : itemStatus === "Close" ? "text-cyan-100" : "text-amber-100"}>{itemStatus}</span>
+                  </div>
                 ))}
               </div>
             </div>

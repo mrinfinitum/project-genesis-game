@@ -151,6 +151,15 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/UI/sidebar_frame_160x790.png",
     sourceStatus: "mapped"
   },
+  dashboard_nav_background: {
+    key: "dashboard_nav_background",
+    label: "Dashboard navigation background",
+    viteUsage: "RobloxNavigation shell",
+    artKey: "sidebar_frame",
+    robloxAssetId: "133332255744133",
+    localPath: "/roblox-assets/UI/sidebar_frame_160x790.png",
+    sourceStatus: "mapped"
+  },
   navigation_overview_icon: {
     key: "navigation_overview_icon",
     label: "Overview nav icon",
@@ -231,6 +240,36 @@ export const DASHBOARD_ART_REGISTRY = {
     robloxAssetId: "76675288800216",
     localPath: "/roblox-assets/UI/hud_clicker_350x823.png",
     sourceStatus: "mapped"
+  },
+  dashboard_click_panel_background: {
+    key: "dashboard_click_panel_background",
+    label: "Dashboard click panel background",
+    viteUsage: "Click panel background from integrated clicker HUD art",
+    artKey: "clicker_hud_background",
+    robloxAssetId: "76675288800216",
+    localPath: "/roblox-assets/UI/hud_clicker_350x823.png",
+    sourceStatus: "mapped",
+    notes: "Roblox uses one integrated ClickerHudBackground and removes generated chrome for click, auto, and critical panels."
+  },
+  dashboard_auto_panel_background: {
+    key: "dashboard_auto_panel_background",
+    label: "Dashboard auto panel background",
+    viteUsage: "Auto panel background from integrated clicker HUD art",
+    artKey: "clicker_hud_background",
+    robloxAssetId: "76675288800216",
+    localPath: "/roblox-assets/UI/hud_clicker_350x823.png",
+    sourceStatus: "mapped",
+    notes: "Roblox uses one integrated ClickerHudBackground and removes generated chrome for click, auto, and critical panels."
+  },
+  dashboard_critical_panel_background: {
+    key: "dashboard_critical_panel_background",
+    label: "Dashboard critical panel background",
+    viteUsage: "Critical panel background from integrated clicker HUD art",
+    artKey: "clicker_hud_background",
+    robloxAssetId: "76675288800216",
+    localPath: "/roblox-assets/UI/hud_clicker_350x823.png",
+    sourceStatus: "mapped",
+    notes: "Roblox uses one integrated ClickerHudBackground and removes generated chrome for click, auto, and critical panels."
   },
   dashboard_click_interface: {
     key: "dashboard_click_interface",
@@ -447,6 +486,15 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/UI/folder-tabs-base-920.png",
     sourceStatus: "mapped"
   },
+  dashboard_upgrade_background: {
+    key: "dashboard_upgrade_background",
+    label: "Dashboard upgrade background",
+    viteUsage: "Upgrade panel background and tabs",
+    artKey: "upgrade_panel_structure",
+    robloxAssetId: "137465475952770",
+    localPath: "/roblox-assets/UI/folder-tabs-base-920.png",
+    sourceStatus: "mapped"
+  },
   upgrade_button: {
     key: "upgrade_button",
     label: "Upgrade purchase button",
@@ -465,9 +513,27 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/UI/leaderboard-main.png",
     sourceStatus: "mapped"
   },
+  dashboard_leaderboard_background: {
+    key: "dashboard_leaderboard_background",
+    label: "Dashboard leaderboard background",
+    viteUsage: "Right column leaderboard",
+    artKey: "leaderboard_panel",
+    robloxAssetId: "130675384010731",
+    localPath: "/roblox-assets/UI/leaderboard-main.png",
+    sourceStatus: "mapped"
+  },
   active_event_panel: {
     key: "active_event_panel",
     label: "Active event panel",
+    viteUsage: "Right column active event",
+    artKey: "active_event_panel",
+    robloxAssetId: "88733035792020",
+    localPath: "/roblox-assets/UI/current-event.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_event_background: {
+    key: "dashboard_event_background",
+    label: "Dashboard event background",
     viteUsage: "Right column active event",
     artKey: "active_event_panel",
     robloxAssetId: "88733035792020",
@@ -495,6 +561,15 @@ export const DASHBOARD_ART_REGISTRY = {
   alignment_panel: {
     key: "alignment_panel",
     label: "Alignment panel",
+    viteUsage: "Right column alignment",
+    artKey: "alignment_panel",
+    robloxAssetId: "133827934088512",
+    localPath: "/roblox-assets/UI/alignment-background.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_alignment_background: {
+    key: "dashboard_alignment_background",
+    label: "Dashboard alignment background",
     viteUsage: "Right column alignment",
     artKey: "alignment_panel",
     robloxAssetId: "133827934088512",
