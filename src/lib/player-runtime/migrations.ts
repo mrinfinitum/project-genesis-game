@@ -1,5 +1,5 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
-import { CREDITS_ECONOMY_ID, getEconomyResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
+import { CREDITS_ECONOMY_ID, getEconomyResourceIds, getPrimaryHudResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { createNewPlayerRuntimeState } from "./initializer";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
@@ -227,6 +227,28 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.economy.balances[LABOR_ECONOMY_ID] = Number((currentLabor + migratedAmount).toFixed(3));
       next.economy.balances[CREDITS_ECONOMY_ID] = Number((currentCredits - migratedAmount).toFixed(3));
       next.unresolved.migrationNotes.push(`Migrated ${migratedAmount} mistaken Survival click ${CREDITS_ECONOMY_ID} into ${LABOR_ECONOMY_ID}.`);
+    }
+  }
+  if (previousSaveVersion < 7) {
+    const primaryEconomyId = resolvePrimaryEconomyIdForCurrentEra(content, next.civilization.currentEraId);
+    const survivalHudIds = new Set(getPrimaryHudResourceIds(content, "survival"));
+    const seedCredits = seed.economy.balances[CREDITS_ECONOMY_ID] ?? 0;
+    const seedLabor = seed.economy.balances[LABOR_ECONOMY_ID] ?? 0;
+    const currentCredits = next.economy.balances[CREDITS_ECONOMY_ID] ?? seedCredits;
+    const currentLabor = next.economy.balances[LABOR_ECONOMY_ID] ?? seedLabor;
+    const hiddenCreditsDelta = currentCredits - seedCredits;
+    const staleSurvivalCredits =
+      next.civilization.currentEraId === "survival" &&
+      primaryEconomyId === LABOR_ECONOMY_ID &&
+      !survivalHudIds.has(CREDITS_ECONOMY_ID) &&
+      currentLabor <= seedLabor &&
+      hiddenCreditsDelta > 0;
+
+    if (staleSurvivalCredits) {
+      const migratedAmount = Number(hiddenCreditsDelta.toFixed(3));
+      next.economy.balances[LABOR_ECONOMY_ID] = Number((currentLabor + migratedAmount).toFixed(3));
+      next.economy.balances[CREDITS_ECONOMY_ID] = seedCredits;
+      next.unresolved.migrationNotes.push(`Repaired hidden Survival ${CREDITS_ECONOMY_ID} passive balance into ${LABOR_ECONOMY_ID}.`);
     }
   }
 

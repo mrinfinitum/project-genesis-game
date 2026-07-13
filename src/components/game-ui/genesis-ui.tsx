@@ -672,6 +672,15 @@ type DashboardArtMap = Record<DashboardArtKey, DashboardArtResolution>;
 
 const topbarIconKeys: DashboardArtKey[] = ["topbar_calendar_icon", "topbar_trophy_icon", "topbar_settings_icon"];
 const hudIconKeys: DashboardArtKey[] = ["hud_credits_icon", "hud_population_icon", "hud_civilization_energy_icon", "hud_research_icon", "hud_civilization_points_icon"];
+const economyHudIconMap: Record<string, DashboardArtKey> = {
+  "ECON-CREDITS": "hud_credits_icon",
+  "ECON-POPULATION": "hud_population_icon",
+  "ECON-LABOR": "hud_civilization_energy_icon",
+  "ECON-CIVILIZATION-ENERGY": "hud_civilization_energy_icon",
+  "ECON-RESEARCH": "hud_research_icon",
+  "ECON-PREMIUM-CRYSTALS": "hud_civilization_points_icon",
+  "ECON-CIVILIZATION-POINTS": "hud_civilization_points_icon"
+};
 const menuIconKeys: DashboardArtKey[] = [
   "navigation_overview_icon",
   "navigation_buildings_icon",
@@ -1099,6 +1108,10 @@ function hudIconForResource(resource: { category: string; label: string }) {
   return Hexagon;
 }
 
+function hudArtForResource(resource: DashboardModel["hudResources"][number], art: DashboardArtMap, fallbackIndex: number) {
+  return art[economyHudIconMap[resource.resourceId] ?? hudIconKeys[fallbackIndex]];
+}
+
 function RobloxTopHud({ model, art, showDevWarnings = false }: { model: DashboardModel; art: DashboardArtMap; showDevWarnings?: boolean }) {
   const resourceSlots = [
     { x: 515, w: 230, iconX: 27, valueX: 94, textW: 132 },
@@ -1137,11 +1150,11 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
       {hudResources.map((resource, index) => {
         const slot = resourceSlots[index];
           const Icon = hudIconForResource(resource);
-          const iconArt = art[hudIconKeys[index]];
+          const iconArt = hudArtForResource(resource, art, index);
           return (
           <div key={resource.resourceId} className="absolute top-0 h-full min-w-0" style={{ left: `${(slot.x / 1920) * 100}%`, width: `${(slot.w / 1920) * 100}%` }}>
             {iconArt && dashboardImagePath(iconArt) ? (
-              <img src={dashboardImagePath(iconArt)} alt="" className="absolute h-[58px] w-[58px] object-contain" style={{ left: slot.iconX, top: 23 }} />
+              <img src={dashboardImagePath(iconArt)} alt="" data-testid={`top-hud-economy-icon-${resource.resourceId}`} data-art-key={iconArt.key} className="absolute h-[58px] w-[58px] object-contain" style={{ left: slot.iconX, top: 23 }} />
             ) : (
               <div className="absolute flex h-[58px] w-[58px] items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-cyan-100" style={{ left: slot.iconX, top: 23 }}>
                 <Icon className="h-[1.45rem] w-[1.45rem]" />

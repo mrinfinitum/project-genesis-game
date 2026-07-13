@@ -280,6 +280,8 @@ describe("Roblox left column geometry", () => {
 
     expect(screen.getByTestId("roblox-top-hud")).toHaveAttribute("data-layout-mode", "fixed-rojo-coordinates");
     expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-art-key", "dashboard_top_hud");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-art-key", "hud_civilization_energy_icon");
+    expect(screen.queryByTestId("top-hud-economy-icon-ECON-CREDITS")).toBeNull();
     expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle({
       left: "190px",
       width: "355px"

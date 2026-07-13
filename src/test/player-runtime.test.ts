@@ -253,6 +253,34 @@ describe("canonical player runtime", () => {
     expect(migrated.unresolved.migrationNotes).toContain(`Migrated 50 mistaken Survival click ${CREDITS_ECONOMY_ID} into ${LABOR_ECONOMY_ID}.`);
   });
 
+  it("repairs v6 Survival saves with hidden passive Credits into Labor", async () => {
+    const runtime = await bundledRuntime();
+    const hiddenCredits = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "hidden-passive-credits" });
+    const legacy = {
+      ...hiddenCredits,
+      saveVersion: 6,
+      contentVersion: 8,
+      economy: {
+        ...hiddenCredits.economy,
+        balances: { ...hiddenCredits.economy.balances, [CREDITS_ECONOMY_ID]: 12, [LABOR_ECONOMY_ID]: 0 }
+      },
+      production: {
+        ...hiddenCredits.production,
+        totalManualClicks: 0,
+        totalAutoClicks: 0,
+        lifetimeLaborGenerated: 0,
+        totalAutoLaborGenerated: 0
+      }
+    };
+
+    const migrated = migratePlayerRuntimeState(legacy, runtime);
+
+    expect(migrated.saveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
+    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(12);
+    expect(migrated.economy.balances[CREDITS_ECONOMY_ID]).toBe(0);
+    expect(migrated.unresolved.migrationNotes).toContain(`Repaired hidden Survival ${CREDITS_ECONOMY_ID} passive balance into ${LABOR_ECONOMY_ID}.`);
+  });
+
   it("preserves established Population 125 saves", async () => {
     const runtime = await bundledRuntime();
     const established = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "established-population" });
