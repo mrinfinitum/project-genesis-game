@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|roblox-assets/|design-reference/|favicon\\.svg|icons\\.svg).*)",
       "destination": "/index.html"
     }
   ]

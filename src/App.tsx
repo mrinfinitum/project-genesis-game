@@ -41,6 +41,7 @@ type GenesisOutletContext = {
   playerRuntime: PlayerRuntimeState;
   playerRuntimeActions: PlayerRuntimeActions;
   refreshCanonicalRuntime: () => Promise<void>;
+  clearCanonicalRuntimeCache: () => Promise<void>;
 };
 
 const developerToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
@@ -151,7 +152,13 @@ function useRuntimeContent() {
     setState(refreshed.state);
   }
 
-  return { state, refreshCanonicalRuntime };
+  async function clearCanonicalRuntimeCache() {
+    setState((current) => ({ ...current, status: "refreshing" }));
+    const cleared = await manager.clearCache();
+    setState(cleared);
+  }
+
+  return { state, refreshCanonicalRuntime, clearCanonicalRuntimeCache };
 }
 
 function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
@@ -233,7 +240,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
 }
 
 function RuntimeRouteShell() {
-  const { state, refreshCanonicalRuntime } = useRuntimeContent();
+  const { state, refreshCanonicalRuntime, clearCanonicalRuntimeCache } = useRuntimeContent();
   const data = useMemo(() => payloadFromState(state), [state]);
   const { playerRuntime, actions: playerRuntimeActions } = usePlayerRuntime(data, state.status !== "loading");
 
@@ -252,10 +259,10 @@ function RuntimeRouteShell() {
 
   return (
     <>
-      <Outlet context={{ data, state, playerRuntime, playerRuntimeActions, refreshCanonicalRuntime } satisfies GenesisOutletContext} />
+      <Outlet context={{ data, state, playerRuntime, playerRuntimeActions, refreshCanonicalRuntime, clearCanonicalRuntimeCache } satisfies GenesisOutletContext} />
       {developerToolsEnabled ? (
         <Suspense fallback={null}>
-          <RuntimeDiagnostics state={state} onRefresh={refreshCanonicalRuntime} />
+          <RuntimeDiagnostics state={state} onRefresh={refreshCanonicalRuntime} onClearCache={clearCanonicalRuntimeCache} />
         </Suspense>
       ) : null}
     </>

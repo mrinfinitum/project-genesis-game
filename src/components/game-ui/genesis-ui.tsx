@@ -30,7 +30,7 @@ import {
   Trophy,
   Zap
 } from "lucide-react";
-import { createDashboardArtMap, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
+import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
 import type { AssetDefinition, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
@@ -664,6 +664,61 @@ const menuIconKeys: DashboardArtKey[] = [
 
 function dashboardImagePath(art: DashboardArtResolution) {
   return art.path;
+}
+
+const reportedDashboardAssetFailures = new Set<string>();
+
+function useDashboardAssetDiagnostics(artAudit: DashboardArtResolution[]) {
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === "undefined") return;
+
+    const byUrl = new Map(artAudit.filter((item) => item.path).map((item) => [item.path as string, item]));
+    const diagnostics = artAudit
+      .filter((item) => item.path)
+      .map(async (item) => {
+        let httpStatus: number | "fetch-failed";
+        let mimeType = "";
+
+        try {
+          const response = await fetch(item.path as string, { method: "HEAD", cache: "no-store" });
+          httpStatus = response.status;
+          mimeType = response.headers.get("content-type") ?? "";
+        } catch {
+          httpStatus = "fetch-failed";
+        }
+
+        return {
+          key: item.key,
+          canonicalWebUrl: item.platformWebPath ?? "",
+          localFallbackUrl: item.localPath ?? "",
+          resolvedUrl: item.path,
+          httpStatus,
+          mimeType,
+          fallbackUsed: item.mappingStatus === "local-fallback"
+        };
+      });
+
+    void Promise.all(diagnostics).then((rows) => {
+      console.table(rows);
+    });
+
+    function reportImageError(event: Event) {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+
+      const failedUrl = target.currentSrc || target.src;
+      const path = failedUrl.startsWith(window.location.origin) ? failedUrl.slice(window.location.origin.length) : failedUrl;
+      const art = byUrl.get(path);
+      const key = `${art?.key ?? "unknown"}:${path}`;
+
+      if (reportedDashboardAssetFailures.has(key)) return;
+      reportedDashboardAssetFailures.add(key);
+      console.error("Dashboard asset failed to load", dashboardAssetFailureDiagnostic(art, path));
+    }
+
+    window.addEventListener("error", reportImageError, true);
+    return () => window.removeEventListener("error", reportImageError, true);
+  }, [artAudit]);
 }
 
 function DashboardMissingArt({ art, className = "" }: { art: DashboardArtResolution; className?: string }) {
@@ -1500,6 +1555,7 @@ export function GameShell({
   const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
   const artAudit = useMemo(() => getDashboardArtAudit(data.assets), [data.assets]);
+  useDashboardAssetDiagnostics(artAudit);
 
   return (
     <main className="flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]" style={shellStyle}>

@@ -30,7 +30,7 @@ describe("canonical runtime", () => {
 
     expect(validation.ok).toBe(true);
     expect(runtime.metadata.schemaVersion).toBe("game-runtime-v1");
-    expect(runtime.metadata.contentVersion).toBe(4);
+    expect(runtime.metadata.contentVersion).toBe(5);
     expect(runtime.eras).toHaveLength(9);
     expect(runtime.eras.map((era) => era.id)).toEqual([
       "survival",
@@ -73,17 +73,33 @@ describe("canonical runtime", () => {
     expect(validation.errors.some((error) => error.includes("Expected exactly 9 canonical eras"))).toBe(true);
   });
 
-  it("uses the last valid cache before bundled fallback", async () => {
+  it("uses a valid cache when it is newer than the bundled snapshot", async () => {
     const cache = new MemoryRuntimeContentCache();
-    const runtime = await bundledRuntime();
+    const runtime = cloneRuntime(await bundledRuntime());
+    runtime.metadata.contentVersion += 1;
     await cache.write(createCacheRecord(runtime, "2026-07-12T00:00:00.000Z"));
 
     const manager = new CanonicalRuntimeContentManager(cache, createRuntimeContentConfig({ configuredMode: "live" }));
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("cache");
-    expect(state.contentVersion).toBe(4);
+    expect(state.contentVersion).toBe(6);
     expect(state.cacheStatus).toBe("valid");
+  });
+
+  it("clears a stale v4 cache instead of overriding bundled v5", async () => {
+    const cache = new MemoryRuntimeContentCache();
+    const stale = cloneRuntime(await bundledRuntime());
+    stale.metadata.contentVersion = 4;
+    await cache.write(createCacheRecord(stale));
+
+    const manager = new CanonicalRuntimeContentManager(cache, createRuntimeContentConfig({ configuredMode: "live" }));
+    const state = await manager.loadStartup();
+
+    expect(state.activeSource).toBe("bundled-snapshot");
+    expect(state.contentVersion).toBe(5);
+    expect(state.cacheStatus).toBe("cleared");
+    expect(await cache.read()).toBeNull();
   });
 
   it("falls back to the bundled snapshot when cache is empty or stale", async () => {
@@ -96,7 +112,7 @@ describe("canonical runtime", () => {
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("bundled-snapshot");
-    expect(state.contentVersion).toBe(4);
+    expect(state.contentVersion).toBe(5);
     expect(state.eras[3].id).toBe("renaissance");
     expect(await cache.read()).toBeNull();
   });

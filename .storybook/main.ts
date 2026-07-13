@@ -8,8 +8,8 @@ const config: StorybookConfig = {
   stories: ["../src/stories/**/*.stories.@(ts|tsx)"],
   staticDirs: [
     {
-      from: "../public/design-reference",
-      to: "/design-reference"
+      from: "../public",
+      to: "/"
     }
   ],
   addons: [],

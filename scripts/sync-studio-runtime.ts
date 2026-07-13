@@ -4,6 +4,7 @@ import { validateGameRuntimeData } from "../src/lib/canonical-runtime/schema";
 
 const DEFAULT_URL = "https://project-genesis-livid.vercel.app";
 const DEFAULT_PATH = "/api/export/game-runtime-data.json";
+const MIN_STUDIO_RUNTIME_CONTENT_VERSION = 5;
 const outputPath = path.resolve(process.cwd(), "src/content/generated/studio-runtime.snapshot.json");
 
 function endpoint() {
@@ -57,6 +58,10 @@ async function run() {
 
   if (!validation.ok || !validation.payload) {
     throw new Error(`Studio runtime validation failed. Existing snapshot was not overwritten.\n${validation.errors.join("\n")}`);
+  }
+
+  if (validation.payload.metadata.contentVersion < MIN_STUDIO_RUNTIME_CONTENT_VERSION) {
+    throw new Error(`Studio runtime contentVersion ${validation.payload.metadata.contentVersion} is older than required ${MIN_STUDIO_RUNTIME_CONTENT_VERSION}. Existing snapshot was not overwritten.`);
   }
 
   const sorted = `${JSON.stringify(sortValue(validation.payload), null, 2)}\n`;

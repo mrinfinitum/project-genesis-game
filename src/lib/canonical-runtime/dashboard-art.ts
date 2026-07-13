@@ -545,3 +545,13 @@ export function createDashboardArtMap(assets: AssetDefinition[]) {
 export function getDashboardArtAudit(assets: AssetDefinition[]) {
   return (Object.keys(DASHBOARD_ART_REGISTRY) as DashboardArtKey[]).map((key) => resolveDashboardArt(assets, key));
 }
+
+export function dashboardAssetFailureDiagnostic(art: DashboardArtResolution | undefined, failedUrl: string) {
+  return {
+    key: art?.key ?? "unknown",
+    canonicalWebUrl: art?.platformWebPath ?? "",
+    localFallbackUrl: art?.localPath ?? "",
+    resolvedUrl: failedUrl,
+    fallbackUsed: art?.mappingStatus === "local-fallback"
+  };
+}

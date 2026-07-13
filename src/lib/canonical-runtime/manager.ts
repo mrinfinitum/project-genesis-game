@@ -124,7 +124,9 @@ export class CanonicalRuntimeContentManager {
       return stateFromPayload(mockRuntimeData, this.config, "mock", { cacheStatus: "unknown" });
     }
 
-    const cached = await this.cache.read();
+    const [cached, bundled] = await Promise.all([this.cache.read(), getBundledStudioRuntimeSnapshot()]);
+    const bundledValidation = bundled ? validateGameRuntimeData(bundled) : undefined;
+    const validBundled = bundledValidation?.ok ? bundledValidation.payload : undefined;
 
     if (cached && cached.contentVersion < MIN_RUNTIME_CONTENT_VERSION) {
       await this.cache.clear();
@@ -135,15 +137,47 @@ export class CanonicalRuntimeContentManager {
       const validation = validateGameRuntimeData(cached.payload);
 
       if (validation.ok && validation.payload) {
+        if (validBundled) {
+          const comparison = compareRuntimeVersions(validation.payload, validBundled);
+
+          if (comparison === "local_newer") {
+            await this.cache.clear();
+            return stateFromPayload(validBundled, this.config, "bundled-snapshot", {
+              status: "fallback",
+              isUsingFallback: true,
+              fallbackReason: `Cached runtime contentVersion ${cached.contentVersion} is older than bundled contentVersion ${validBundled.metadata.contentVersion}.`,
+              cacheStatus: "cleared",
+              validationWarnings: bundledValidation?.warnings ?? []
+            });
+          }
+        }
+
         return stateFromPayload(validation.payload, this.config, "cache", {
           cacheStatus: "valid",
           lastDownloadedAt: cached.downloadedAt,
           validationWarnings: validation.warnings
         });
       }
+
+      await this.cache.clear();
     }
 
-    return this.bundledOrMockState(cached ? "Cached runtime failed validation." : "No cached runtime is available.");
+    if (validBundled) {
+      return stateFromPayload(validBundled, this.config, "bundled-snapshot", {
+        cacheStatus: cached ? "cleared" : "empty",
+        fallbackReason: cached ? "Cached runtime failed validation." : undefined,
+        isUsingFallback: Boolean(cached),
+        status: cached ? "fallback" : "ready",
+        validationWarnings: bundledValidation?.warnings ?? []
+      });
+    }
+
+    return stateFromPayload(mockRuntimeData, this.config, "mock", {
+      status: "fallback",
+      isUsingFallback: true,
+      fallbackReason: cached ? "Cached runtime failed validation and no bundled Studio snapshot is available." : "No cached runtime or bundled Studio snapshot is available.",
+      cacheStatus: cached ? "cleared" : "empty"
+    });
   }
 
   async refreshLiveContent(activePayload?: GameRuntimeData, activeSource: RuntimeContentSource = "cache") {
@@ -182,7 +216,7 @@ export class CanonicalRuntimeContentManager {
 
         if (comparison === "local_newer" || comparison === "same") {
           return {
-            state: stateFromPayload(activePayload, this.config, "cache", {
+            state: stateFromPayload(activePayload, this.config, activeSource, {
               status: "ready",
               lastCheckedAt: checkedAt,
               validationWarnings: validation.warnings,

@@ -39,41 +39,11 @@ function runtimeState(runtime: GameRuntimeData, configuredMode: RuntimeContentSt
   };
 }
 
-function withCanonicalEconomy(runtime: GameRuntimeData): GameRuntimeData {
-  const primaryHudResources = [
-    "ECON-CIVILIZATION-ENERGY",
-    "ECON-CREDITS",
-    "ECON-RESEARCH",
-    "ECON-POPULATION",
-    "ECON-CIVILIZATION-POINTS",
-    "ECON-PREMIUM-CRYSTALS"
-  ];
-
-  return {
-    ...runtime,
-    clientProfiles: {
-      ...runtime.clientProfiles,
-      default: {
-        ...runtime.clientProfiles.default,
-        primaryHudResources
-      }
-    },
-    economyDefinitions: [
-      { id: "ECON-CIVILIZATION-ENERGY", label: "Civilization Energy", iconKey: "economy-energy", artKey: "economy-energy", color: "#11cdef", startingValue: 10, startingRate: 1 },
-      { id: "ECON-CREDITS", label: "Credits", iconKey: "economy-credits", artKey: "economy-credits", color: "#f5c542", startingValue: 20 },
-      { id: "ECON-RESEARCH", label: "Research", iconKey: "economy-research", artKey: "economy-research", color: "#a78bfa", startingValue: 30 },
-      { id: "ECON-POPULATION", label: "Population", iconKey: "economy-population", artKey: "economy-population", color: "#34d399", startingValue: 125 },
-      { id: "ECON-CIVILIZATION-POINTS", label: "Civilization Points", iconKey: "economy-civ-points", artKey: "economy-civ-points", color: "#fb7185", startingValue: 0 },
-      { id: "ECON-PREMIUM-CRYSTALS", label: "Premium Crystals", iconKey: "economy-premium-crystals", artKey: "economy-premium-crystals", color: "#22d3ee", startingValue: 5 }
-    ]
-  };
-}
-
 describe("dashboard canonical model", () => {
-  it("loads contentVersion 4 and resolves the canonical nine-era journey", async () => {
+  it("loads contentVersion 5 and resolves the canonical nine-era journey", async () => {
     const runtime = await bundledRuntime();
 
-    expect(runtime.metadata.contentVersion).toBe(4);
+    expect(runtime.metadata.contentVersion).toBe(5);
     expect(runtime.eras).toHaveLength(9);
 
     expect(getCurrentJourney(runtime.eras, "survival")).toMatchObject({
@@ -94,23 +64,22 @@ describe("dashboard canonical model", () => {
   });
 
   it("uses configured canonical HUD resource ids instead of catalog ordering", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const model = createDashboardModel(runtime, { runtimeState: runtimeState(runtime) });
 
     const expectedHudIds = [
-      "ECON-CIVILIZATION-ENERGY",
       "ECON-CREDITS",
-      "ECON-RESEARCH",
       "ECON-POPULATION",
-      "ECON-CIVILIZATION-POINTS",
+      "ECON-CIVILIZATION-ENERGY",
+      "ECON-RESEARCH",
       "ECON-PREMIUM-CRYSTALS"
     ];
 
     expect(getDashboardHudResourceConfig(runtime).map((resource) => resource.id)).toEqual(expectedHudIds);
     expect(model.hudResources.map((resource) => resource.resourceId)).toEqual(expectedHudIds);
     expect(model.hudResources[0]).toMatchObject({
-      resourceId: "ECON-CIVILIZATION-ENERGY",
-      label: "Civilization Energy",
+      resourceId: "ECON-CREDITS",
+      label: "Credits",
       amount: 0,
       provenance: "canonical-definition+default-zero"
     });
@@ -119,7 +88,7 @@ describe("dashboard canonical model", () => {
   });
 
   it("keeps player economy amounts separate from inventory resource definitions", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const playerState: DashboardPlayerState = {
       source: "player-runtime",
       sourceLabel: "Test Player State",
@@ -151,7 +120,24 @@ describe("dashboard canonical model", () => {
   });
 
   it("reports a development warning when canonical economy definitions are missing", async () => {
-    const runtime = await bundledRuntime();
+    const sourceRuntime = await bundledRuntime();
+    const runtime: GameRuntimeData = {
+      ...sourceRuntime,
+      clientProfiles: {
+        ...sourceRuntime.clientProfiles,
+        default: {
+          ...sourceRuntime.clientProfiles.default,
+          primaryHudResources: []
+        }
+      },
+      economy: {
+        ...sourceRuntime.economy,
+        primaryHudResources: [],
+        definitions: [],
+        resources: []
+      },
+      economyDefinitions: []
+    };
     const model = createDashboardModel(runtime, { runtimeState: runtimeState(runtime) });
 
     expect(model.hudResources).toEqual([]);

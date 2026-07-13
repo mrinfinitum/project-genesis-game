@@ -2804,6 +2804,90 @@
       },
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
+      "primaryHudResources": [
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-CIVILIZATION-ENERGY",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_1_econ_credits",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_2_econ_population",
+          "order": 2,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Energy",
+          "economyId": "ECON-CIVILIZATION-ENERGY",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_civilization_energy",
+          "id": "hud_slot_3_econ_civilization_energy",
+          "order": 3,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
       "showUnknownUpgradeSlots": true
     },
     "godot": {
@@ -2817,6 +2901,90 @@
       },
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
+      "primaryHudResources": [
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-CIVILIZATION-ENERGY",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_1_econ_credits",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_2_econ_population",
+          "order": 2,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Energy",
+          "economyId": "ECON-CIVILIZATION-ENERGY",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_civilization_energy",
+          "id": "hud_slot_3_econ_civilization_energy",
+          "order": 3,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
       "showUnknownUpgradeSlots": true
     },
     "roblox": {
@@ -2830,6 +2998,90 @@
       },
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
+      "primaryHudResources": [
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-CIVILIZATION-ENERGY",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_1_econ_credits",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_2_econ_population",
+          "order": 2,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Energy",
+          "economyId": "ECON-CIVILIZATION-ENERGY",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_civilization_energy",
+          "id": "hud_slot_3_econ_civilization_energy",
+          "order": 3,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
       "showUnknownUpgradeSlots": true
     },
     "unity": {
@@ -2843,6 +3095,90 @@
       },
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
+      "primaryHudResources": [
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-CIVILIZATION-ENERGY",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_1_econ_credits",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_2_econ_population",
+          "order": 2,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Energy",
+          "economyId": "ECON-CIVILIZATION-ENERGY",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_civilization_energy",
+          "id": "hud_slot_3_econ_civilization_energy",
+          "order": 3,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
       "showUnknownUpgradeSlots": true
     },
     "unreal": {
@@ -2856,6 +3192,90 @@
       },
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
+      "primaryHudResources": [
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-CIVILIZATION-ENERGY",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_1_econ_credits",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_2_econ_population",
+          "order": 2,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Energy",
+          "economyId": "ECON-CIVILIZATION-ENERGY",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_civilization_energy",
+          "id": "hud_slot_3_econ_civilization_energy",
+          "order": 3,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
       "showUnknownUpgradeSlots": true
     },
     "web": {
@@ -2869,9 +3289,276 @@
       },
       "futureUpgradeTeaserCount": 3,
       "lockedOpacity": 0.55,
+      "primaryHudResources": [
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-CIVILIZATION-ENERGY",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_1_econ_credits",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_2_econ_population",
+          "order": 2,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Energy",
+          "economyId": "ECON-CIVILIZATION-ENERGY",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_civilization_energy",
+          "id": "hud_slot_3_econ_civilization_energy",
+          "order": 3,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
       "showUnknownUpgradeSlots": true
     }
   },
+  "economyDefinitions": [
+    {
+      "category": "global_economy",
+      "color": "#22d3ee",
+      "description": "Global energy and action economy used by automation, boosts, systems, and civilization-wide production pacing.",
+      "displayName": "Civilization Energy",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_civilization_energy",
+      "id": "ECON-CIVILIZATION-ENERGY",
+      "maximum": null,
+      "minimum": 0,
+      "name": "civilization_energy",
+      "premium": false,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "base click contribution",
+        "automation contribution",
+        "boosts",
+        "events",
+        "missions"
+      ],
+      "valueType": "currency",
+      "visibility": "always"
+    },
+    {
+      "category": "global_economy",
+      "color": "#34d399",
+      "description": "Long-term meta-progression counter awarded by milestones, mastery, era progression, discoveries, and major achievements.",
+      "displayName": "Civilization Points",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_civilization_points",
+      "id": "ECON-CIVILIZATION-POINTS",
+      "maximum": null,
+      "minimum": 0,
+      "name": "civilization_points",
+      "premium": false,
+      "spendable": false,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "era mastery",
+        "milestones",
+        "progression rewards",
+        "achievements"
+      ],
+      "valueType": "counter",
+      "visibility": "when_unlocked"
+    },
+    {
+      "category": "global_economy",
+      "color": "#facc15",
+      "description": "Primary spendable civilization currency used for upgrades, buildings, trade, boosts, and general progression costs.",
+      "displayName": "Credits",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_credits",
+      "id": "ECON-CREDITS",
+      "maximum": null,
+      "minimum": 0,
+      "name": "credits",
+      "premium": false,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "upgrade costs",
+        "building costs",
+        "trade",
+        "missions",
+        "events",
+        "progression rewards"
+      ],
+      "valueType": "currency",
+      "visibility": "always"
+    },
+    {
+      "category": "global_economy",
+      "color": "#7dd3fc",
+      "description": "Civilization-wide population counter used for growth, workers, era unlocks, settlement scale, and progression checks.",
+      "displayName": "Population",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_population",
+      "id": "ECON-POPULATION",
+      "maximum": null,
+      "minimum": 0,
+      "name": "population",
+      "premium": false,
+      "spendable": false,
+      "startingAmount": 125,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "era unlocks",
+        "building requirements",
+        "mission objectives",
+        "progression rewards"
+      ],
+      "valueType": "counter",
+      "visibility": "always"
+    },
+    {
+      "category": "global_economy",
+      "color": "#f0abfc",
+      "description": "Explicit premium currency. It is globally visible only where premium/store UX is enabled and is never inferred from Quartz or other materials.",
+      "displayName": "Premium Crystals",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_premium_crystals",
+      "id": "ECON-PREMIUM-CRYSTALS",
+      "maximum": null,
+      "minimum": 0,
+      "name": "premium_crystals",
+      "premium": true,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "premium boosts",
+        "premium store"
+      ],
+      "valueType": "currency",
+      "visibility": "premium_store"
+    },
+    {
+      "category": "global_economy",
+      "color": "#a78bfa",
+      "description": "Global research progress used for research unlocks, technology pacing, and science progression.",
+      "displayName": "Research",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_research",
+      "id": "ECON-RESEARCH",
+      "maximum": null,
+      "minimum": 0,
+      "name": "research",
+      "premium": false,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "research costs",
+        "technology unlocks",
+        "missions",
+        "progression rewards"
+      ],
+      "valueType": "currency",
+      "visibility": "always"
+    }
+  ],
   "eras": [
     {
       "artKey": "era-survival",
@@ -3038,8 +3725,8 @@
   ],
   "metadata": {
     "accessLevel": "public-published",
-    "checksum": "aa10cdcdf6a1f40b1df4d78497b0ac8a8124b684137b18640b2d3ee46e9844e9",
-    "contentVersion": 4,
+    "checksum": "459fee404eac0972255345ccebf8f71ba622645e25b61d133663db1c9f592a8f",
+    "contentVersion": 5,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

@@ -1,6 +1,6 @@
 import type { RuntimeContentState } from "@/lib/canonical-runtime";
 
-export default function RuntimeDiagnostics({ state, onRefresh }: { state: RuntimeContentState; onRefresh: () => Promise<void> }) {
+export default function RuntimeDiagnostics({ state, onRefresh, onClearCache }: { state: RuntimeContentState; onRefresh: () => Promise<void>; onClearCache: () => Promise<void> }) {
   const issues = [...state.validationErrors, ...state.validationWarnings];
 
   return (
@@ -20,6 +20,15 @@ export default function RuntimeDiagnostics({ state, onRefresh }: { state: Runtim
         }}
       >
         {state.status === "refreshing" ? "Refreshing Canonical Runtime" : "Refresh Canonical Runtime"}
+      </button>
+      <button
+        className="mt-2 h-8 w-full rounded-md border border-amber-200/30 bg-amber-300/10 text-[0.68rem] font-black uppercase text-amber-50 transition hover:bg-amber-300/16 disabled:border-slate-300/16 disabled:bg-slate-500/10 disabled:text-slate-300/50"
+        disabled={state.status === "refreshing"}
+        onClick={() => {
+          void onClearCache();
+        }}
+      >
+        Clear Canonical Content Cache
       </button>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <div className="rounded-md bg-white/[0.04] p-2">
