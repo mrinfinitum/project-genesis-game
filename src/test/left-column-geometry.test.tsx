@@ -78,7 +78,7 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("roblox-nav-item-dashboard").querySelector("img, span, svg")).toBeNull();
     expect(screen.getAllByTestId(/roblox-nav-icon-/)).toHaveLength(8);
     expect(screen.getAllByTestId(/roblox-nav-label-/)).toHaveLength(8);
-    expect(screen.getAllByTestId("roblox-nav-active-frame")).toHaveLength(1);
+    expect(screen.queryByTestId("roblox-nav-active-frame")).toBeNull();
   });
 
   it("does not draw separate bordered cards around inactive nav hit targets", async () => {

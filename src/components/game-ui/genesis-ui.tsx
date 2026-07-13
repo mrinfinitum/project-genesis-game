@@ -1166,7 +1166,6 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
     journal: "spaceport"
   };
   const current = activeMap[active] ?? active;
-  const activeIndex = robloxNavItems.findIndex((item) => item.id === current);
 
   return (
     <nav className="relative h-full w-full overflow-hidden" data-testid="roblox-integrated-nav-hud" data-dom-model="single-hud-image-with-absolute-overlays">
@@ -1185,20 +1184,6 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
           className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill"
         />
       ) : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
-      {activeIndex >= 0 ? (
-        <div
-          aria-hidden="true"
-          data-testid="roblox-nav-active-frame"
-          data-active-for={current}
-          className="pointer-events-none absolute z-10 bg-cyan-300/8 outline outline-1 -outline-offset-1 outline-cyan-100/58"
-          style={{
-            left: ROBLOX_NAV_GEOMETRY.paddingX,
-            top: robloxNavItemTop(activeIndex),
-            width: ROBLOX_NAV_GEOMETRY.itemWidth,
-            height: ROBLOX_NAV_GEOMETRY.itemHeight
-          }}
-        />
-      ) : null}
       {robloxNavItems.map((item, index) => {
         const Icon = item.icon;
         const isActive = item.id === current;
@@ -1209,15 +1194,15 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
           top: itemTop + ROBLOX_NAV_GEOMETRY.iconTop,
           width: ROBLOX_NAV_GEOMETRY.iconWidth,
           height: ROBLOX_NAV_GEOMETRY.iconHeight,
-          opacity: isActive ? 1 : 0.72,
-          filter: isActive ? "brightness(1.08)" : "none"
+          opacity: 1,
+          filter: "none"
         };
         const labelStyle = {
           left: ROBLOX_NAV_GEOMETRY.paddingX + ROBLOX_NAV_GEOMETRY.labelLeft,
           top: itemTop + ROBLOX_NAV_GEOMETRY.labelTop,
           width: ROBLOX_NAV_GEOMETRY.labelWidth,
           height: ROBLOX_NAV_GEOMETRY.labelHeight,
-          opacity: isActive ? 1 : 0.9
+          opacity: 1
         };
         return (
           <Fragment key={item.id}>

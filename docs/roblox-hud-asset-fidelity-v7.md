@@ -63,7 +63,7 @@ Source of truth:
 
 | Area | Missing/Generated item | Current handling |
 | --- | --- | --- |
-| Left navigation item states | Individual active/inactive item backgrounds are runtime-created Rojo frames, not exported bitmaps | Active state uses a restrained overlay; inactive state is transparent over the rail art |
+| Left navigation item states | Individual active/inactive item backgrounds are runtime-created Rojo frames, not exported bitmaps | No CSS active or inactive frame is rendered; hit targets are transparent over the rail art until exact state art is exported |
 | Help icons | Rojo uses text/generated help treatment | Vite keeps a semantic fallback button unless a future exported bitmap appears |
 | Boost drawer and launcher | No exact exported drawer/launcher background found in manifest | Vite preserves the Roblox-style generated bottom drawer until source art is exported |
 | Click interface generic circle | Manifest key exists without local source or native size | Vite uses the resolved ring layers that do have web-compatible files |
