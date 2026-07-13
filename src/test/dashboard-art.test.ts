@@ -45,6 +45,25 @@ describe("dashboard art registry", () => {
     expect(resolved.mappingStatus).toBe("canonical-web");
   });
 
+  it("uses local fallbacks for exported Roblox art placeholder paths", () => {
+    const resolved = resolveDashboardArt(
+      [
+        asset({
+          id: "asset-dashboard-city-hero",
+          artKey: "city_preview",
+          platformMappings: { web: { path: "/assets/roblox-art/asset_city_preview/asset_city_preview.png" } }
+        })
+      ],
+      "dashboard_city_hero"
+    );
+
+    expect(resolved.kind).toBe("local-registry");
+    expect(resolved.path).toBe("/roblox-assets/UI/cityimage-1.png");
+    expect(resolved.platformWebPath).toBe("/assets/roblox-art/asset_city_preview/asset_city_preview.png");
+    expect(resolved.canonicalAssetId).toBe("asset-dashboard-city-hero");
+    expect(resolved.mappingStatus).toBe("local-fallback");
+  });
+
   it("uses local fallbacks when canonical web paths are absent", () => {
     const resolved = resolveDashboardArt([], "dashboard_city_hero");
 

@@ -493,6 +493,10 @@ function findCanonicalAsset(assets: AssetDefinition[], entry: DashboardArtRegist
   });
 }
 
+function isExportedRobloxArtPlaceholder(path: string | undefined) {
+  return path?.startsWith("/assets/roblox-art/") === true;
+}
+
 export function resolveDashboardArt(assets: AssetDefinition[], key: DashboardArtKey): DashboardArtResolution {
   const entry: DashboardArtRegistryEntry = DASHBOARD_ART_REGISTRY[key];
   const canonical = findCanonicalAsset(assets, entry);
@@ -502,7 +506,7 @@ export function resolveDashboardArt(assets: AssetDefinition[], key: DashboardArt
   if (entry.sourceStatus === "source-missing") warnings.push("Source Missing");
   if (entry.sourceStatus === "replacement-required" || entry.robloxAssetId === "0") warnings.push("Replacement Required");
 
-  if (platformWebPath) {
+  if (platformWebPath && !isExportedRobloxArtPlaceholder(platformWebPath)) {
     return {
       ...entry,
       kind: "web-path",
