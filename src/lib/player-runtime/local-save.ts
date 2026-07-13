@@ -17,8 +17,8 @@ function clone<T>(value: T): T {
 
 export class PlayerRuntimeLocalSaveService {
   constructor(
-    private readonly store: KeyValueStore = new BrowserKeyValueStore(),
-    private readonly content: GameRuntimeData
+    private readonly content: GameRuntimeData,
+    private readonly store: KeyValueStore = new BrowserKeyValueStore()
   ) {}
 
   loadOrCreate() {
@@ -70,4 +70,3 @@ export class PlayerRuntimeLocalSaveService {
     }
   }
 }
-

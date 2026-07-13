@@ -49,6 +49,13 @@ export const mockRuntimeData: GameRuntimeData = {
   },
   clientProfiles: {
     default: {
+      primaryHudResources: [
+        { id: "ECON-CIVILIZATION-ENERGY", label: "Energy", iconKey: "hud_civilization_energy_icon", artKey: "hud_civilization_energy_icon", balanceKey: "startingCivilizationEnergy", color: "#67e8f9" },
+        { id: "ECON-CREDITS", label: "Credits", iconKey: "hud_credits_icon", artKey: "hud_credits_icon", balanceKey: "startingCoins", color: "#facc15" },
+        { id: "ECON-RESEARCH", label: "Research", iconKey: "hud_research_icon", artKey: "hud_research_icon", balanceKey: "startingResearch", color: "#a78bfa" },
+        { id: "ECON-POPULATION", label: "Population", iconKey: "hud_population_icon", artKey: "hud_population_icon", balanceKey: "startingPopulation", color: "#34d399" },
+        { id: "ECON-CIVILIZATION-POINTS", label: "Civ Points", iconKey: "hud_civilization_points_icon", artKey: "hud_civilization_points_icon", color: "#fb7185" }
+      ],
       defaultUpgradeRowsVisible: 4,
       futureUpgradeTeaserCount: 2,
       showUnknownUpgradeSlots: true,

@@ -146,7 +146,17 @@ export interface BalanceDefinition {
   [key: string]: unknown;
 }
 
+export interface PrimaryHudResourceDefinition {
+  id: string;
+  label: string;
+  iconKey?: string;
+  artKey?: string;
+  color?: string;
+  balanceKey?: keyof BalanceDefinition | string;
+}
+
 export interface ClientProfile {
+  primaryHudResources?: Array<string | PrimaryHudResourceDefinition>;
   defaultUpgradeRowsVisible?: number;
   futureUpgradeTeaserCount?: number;
   showUnknownUpgradeSlots?: boolean;

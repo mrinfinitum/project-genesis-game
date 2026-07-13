@@ -1,6 +1,9 @@
 import { GameShell } from "@/components/game-ui/genesis-ui";
 import type { GameRuntimeData, RuntimeContentState } from "@/lib/canonical-runtime";
+import type { ComponentProps } from "react";
 
-export default function CivilizationRoute({ data, runtimeState }: { data: GameRuntimeData; runtimeState: RuntimeContentState }) {
-  return <GameShell data={data} runtimeState={runtimeState} activeScreen="civilization" activeEraId="modern" activeCategoryId="workforce" />;
+type RouteProps = { data: GameRuntimeData; runtimeState: RuntimeContentState } & Pick<ComponentProps<typeof GameShell>, "playerState" | "playerRuntime" | "playerRuntimeActions">;
+
+export default function CivilizationRoute({ data, runtimeState, playerState, playerRuntime, playerRuntimeActions }: RouteProps) {
+  return <GameShell data={data} runtimeState={runtimeState} playerState={playerState} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} activeScreen="civilization" activeEraId={playerRuntime?.civilization.currentEraId ?? "modern"} activeCategoryId="workforce" />;
 }

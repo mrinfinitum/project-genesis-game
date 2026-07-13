@@ -1,5 +1,5 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
-import { createNewPlayerRuntimeState } from "./initializer";
+import { createNewPlayerRuntimeState, getPrimaryHudResourceIds } from "./initializer";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
 function clone<T>(value: T): T {
@@ -21,9 +21,24 @@ function normalizeStringArray(input: unknown) {
 
 export function preserveUnresolvedPlayerRuntimeIds(state: PlayerRuntimeState, content: GameRuntimeData): PlayerRuntimeState {
   const next = clone(state);
+  const economyIds = new Set(getPrimaryHudResourceIds(content));
   const resourceIds = new Set(content.resources.map((resource) => resource.id));
   const upgradeIds = new Set(content.upgrades.map((upgrade) => upgrade.id));
   const eraIds = new Set(content.eras.map((era) => era.id));
+
+  for (const [economyId, amount] of Object.entries(next.economy.balances)) {
+    if (!economyIds.has(economyId)) {
+      next.unresolved.economy[economyId] = amount;
+      delete next.economy.balances[economyId];
+    }
+  }
+
+  for (const [economyId, rate] of Object.entries(next.economy.rates)) {
+    if (!economyIds.has(economyId)) {
+      next.unresolved.economyRates[economyId] = rate;
+      delete next.economy.rates[economyId];
+    }
+  }
 
   for (const [resourceId, amount] of Object.entries(next.resources.inventory)) {
     if (!resourceIds.has(resourceId)) {
@@ -98,6 +113,10 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       currentEraId: typeof record.civilization?.currentEraId === "string" ? record.civilization.currentEraId : seed.civilization.currentEraId,
       population: typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.population
     },
+    economy: {
+      balances: { ...seed.economy.balances, ...normalizeNumberMap(record.economy?.balances) },
+      rates: { ...seed.economy.rates, ...normalizeNumberMap(record.economy?.rates) }
+    },
     resources: {
       inventory: { ...seed.resources.inventory, ...normalizeNumberMap(record.resources?.inventory) },
       productionRates: { ...seed.resources.productionRates, ...normalizeNumberMap(record.resources?.productionRates) },
@@ -132,6 +151,8 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       ...(record.colonies ?? {})
     },
     unresolved: {
+      economy: normalizeNumberMap(record.unresolved?.economy),
+      economyRates: normalizeNumberMap(record.unresolved?.economyRates),
       resources: normalizeNumberMap(record.unresolved?.resources),
       resourceRates: normalizeNumberMap(record.unresolved?.resourceRates),
       storageLimits: normalizeNumberMap(record.unresolved?.storageLimits),
@@ -147,4 +168,3 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
 
   return preserveUnresolvedPlayerRuntimeIds(next, content);
 }
-

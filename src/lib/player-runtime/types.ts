@@ -12,6 +12,8 @@ export type PlayerRuntimeBoost = {
 };
 
 export type UnresolvedPlayerRuntimeIds = {
+  economy: Record<string, number>;
+  economyRates: Record<string, number>;
   resources: Record<string, number>;
   resourceRates: Record<string, number>;
   storageLimits: Record<string, number>;
@@ -39,6 +41,10 @@ export type PlayerRuntimeState = {
     eraMastery: number;
     population: number;
     discoveryPoints: number;
+  };
+  economy: {
+    balances: Record<string, number>;
+    rates: Record<string, number>;
   };
   resources: {
     inventory: Record<string, number>;
@@ -82,4 +88,3 @@ export type PlayerRuntimeImportResult = {
   state?: PlayerRuntimeState;
   error?: string;
 };
-

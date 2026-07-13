@@ -1,16 +1,8 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
+import { getInventoryResources, getPrimaryHudResourceIds, getStartingEconomyBalances } from "./economy";
 
-export const DEFAULT_PRIMARY_HUD_RESOURCE_IDS = ["RES-0001", "RES-0005", "RES-0006", "RES-0016", "RES-0077"];
-
-export function getPrimaryHudResourceIds(content: GameRuntimeData) {
-  const profileIds = content.clientProfiles.web?.primaryHudResourceIds;
-  const resourceIds = new Set(content.resources.map((resource) => resource.id));
-  const configured = Array.isArray(profileIds) ? profileIds.filter((id): id is string => typeof id === "string" && resourceIds.has(id)) : [];
-  const fallback = DEFAULT_PRIMARY_HUD_RESOURCE_IDS.filter((id) => resourceIds.has(id));
-
-  return configured.length ? configured : fallback;
-}
+export { DEFAULT_PRIMARY_HUD_RESOURCES, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources } from "./economy";
 
 export function getStartingEraId(content: GameRuntimeData) {
   return (content.eras.find((era) => era.unlockRequirements?.start) ?? [...content.eras].sort((a, b) => a.index - b.index)[0])?.id ?? "survival";
@@ -36,10 +28,13 @@ function defaultAlignment(): Record<AlignmentKey, number> {
 
 export function createNewPlayerRuntimeState(content: GameRuntimeData, options: { now?: Date; playerId?: string; civilizationName?: string } = {}): PlayerRuntimeState {
   const timestamp = nowIso(options.now);
-  const primaryHudIds = getPrimaryHudResourceIds(content);
-  const inventory = Object.fromEntries(primaryHudIds.map((id) => [id, 0]));
-  const productionRates = Object.fromEntries(primaryHudIds.map((id) => [id, 0]));
-  const storageLimits = Object.fromEntries(primaryHudIds.map((id) => [id, 1000]));
+  const economyIds = getPrimaryHudResourceIds(content);
+  const inventoryResourceIds = getInventoryResources(content).map((resource) => resource.id);
+  const economyBalances = getStartingEconomyBalances(content);
+  const economyRates = Object.fromEntries(economyIds.map((id) => [id, 0]));
+  const inventory = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
+  const productionRates = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
+  const storageLimits = Object.fromEntries(inventoryResourceIds.map((id) => [id, Number.MAX_SAFE_INTEGER]));
   const startEraId = getStartingEraId(content);
 
   return {
@@ -57,6 +52,10 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       eraMastery: 0,
       population: content.balance.startingPopulation,
       discoveryPoints: 0
+    },
+    economy: {
+      balances: economyBalances,
+      rates: economyRates
     },
     resources: {
       inventory,
@@ -89,6 +88,8 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       nextColonyProgress: 0
     },
     unresolved: {
+      economy: {},
+      economyRates: {},
       resources: {},
       resourceRates: {},
       storageLimits: {},
@@ -99,4 +100,3 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
     }
   };
 }
-

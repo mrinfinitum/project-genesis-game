@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
 import {
   AlignmentPanel,
   ArtReviewGallery,
@@ -39,12 +40,24 @@ function selectedResource(category: string, fallbackIndex = 0) {
   return resourceByCategory(data, category, fallbackIndex);
 }
 
+function economyHudResources(data: ReturnType<typeof useGenesisStoryContent>["data"]) {
+  return getPrimaryHudResources(data).map((resource) => ({
+    id: resource.id,
+    name: resource.label,
+    displayName: resource.label,
+    category: "Economy",
+    iconKey: resource.iconKey,
+    artKey: resource.artKey,
+    color: resource.color
+  }));
+}
+
 export const TopResourceHudStartingState: Story = {
   render: () => {
     const { data } = useGenesisStoryContent();
     return (
       <StoryCanvas>
-        <TopResourceHud resources={data.resources.slice(0, 7)} assets={data.assets} />
+        <TopResourceHud resources={economyHudResources(data)} assets={data.assets} />
       </StoryCanvas>
     );
   }
@@ -55,7 +68,7 @@ export const TopResourceHudHighValues: Story = {
     const { data } = useGenesisStoryContent();
     return (
       <StoryCanvas>
-        <TopResourceHud resources={data.resources.slice(0, 7)} assets={data.assets} highValues />
+        <TopResourceHud resources={economyHudResources(data)} assets={data.assets} highValues />
       </StoryCanvas>
     );
   }
@@ -66,7 +79,7 @@ export const TopResourceHudGainingResources: Story = {
     const { data } = useGenesisStoryContent();
     return (
       <StoryCanvas>
-        <TopResourceHud resources={data.resources.slice(0, 7)} assets={data.assets} gaining />
+        <TopResourceHud resources={economyHudResources(data)} assets={data.assets} gaining />
       </StoryCanvas>
     );
   }
@@ -75,7 +88,7 @@ export const TopResourceHudGainingResources: Story = {
 export const TopResourceHudMissingIcon: Story = {
   render: () => {
     const { data } = useGenesisStoryContent();
-    const resources = [{ ...data.resources[0], iconKey: "missing-icon-key" }, ...data.resources.slice(1, 7)];
+    const resources = economyHudResources(data).map((resource, index) => index === 0 ? { ...resource, iconKey: "missing-icon-key" } : resource);
     return (
       <StoryCanvas>
         <TopResourceHud resources={resources} assets={[]} />
@@ -92,7 +105,7 @@ export const TopResourceHudCompactViewport: Story = {
     const { data } = useGenesisStoryContent();
     return (
       <StoryCanvas>
-        <TopResourceHud resources={data.resources.slice(0, 4)} assets={data.assets} compact />
+        <TopResourceHud resources={economyHudResources(data)} assets={data.assets} compact />
       </StoryCanvas>
     );
   }

@@ -1,5 +1,6 @@
-import { createRuntimeSelectors, type GameRuntimeData, type RuntimeContentState, type UpgradeDefinition } from "@/lib/canonical-runtime";
+import type { GameRuntimeData, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { dashboardDemoPlayerState } from "@/content/mock/dashboard-demo-state";
+import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
 
 export type DashboardPlayerStateSource = "player-runtime" | "default-player-state" | "demo-fixture";
 export type DashboardMode = "canonical" | "demo";
@@ -10,11 +11,15 @@ export type DashboardPlayerState = {
   sourceLabel: string;
   civilizationName?: string;
   currentEraId?: string;
+  economyBalances?: Record<string, number>;
+  economyRates?: Record<string, number>;
   resourceInventory: Record<string, number>;
   resourceRates: Record<string, number>;
+  resourceStorageLimits?: Record<string, number>;
   upgradeLevels: Record<string, number>;
   clickOutput?: {
     resourceId?: string;
+    label?: string;
     amount: number;
     perClickLabel: string;
   };
@@ -43,15 +48,16 @@ export type DashboardPlayerState = {
     timerLabel?: string;
   };
   alignment?: Record<AlignmentAxis, number>;
-  boosts?: Array<{ name: string; value: string }>;
+  civilizationPrediction?: string;
+  boosts?: Array<{ name: string; value: string; remainingSeconds?: number }>;
   colonyProgressLabel?: string;
 };
 
 export type DashboardHudResource = {
   resourceId: string;
   label: string;
-  iconKey: string;
-  artKey: string;
+  iconKey?: string;
+  artKey?: string;
   category: string;
   color?: string;
   amount: number;
@@ -98,9 +104,6 @@ export type DashboardModel = {
 };
 
 export const CANONICAL_ALIGNMENT_AXES: AlignmentAxis[] = ["Industry", "Technology", "Cyber", "Nature", "Corporate"];
-
-// Temporary web HUD mapping until Studio exports clientProfiles.web.primaryHudResourceIds.
-export const TEMPORARY_WEB_HUD_RESOURCE_IDS = ["RES-0001", "RES-0005", "RES-0006", "RES-0016", "RES-0077"];
 
 function canUseDemoState(runtimeState?: RuntimeContentState) {
   return !runtimeState || runtimeState.configuredMode === "mock" || runtimeState.activeSource === "mock";
@@ -166,30 +169,25 @@ export function evaluateVisibilityRules(upgrade: UpgradeDefinition, currentEraId
   return rules.defaultState !== "hidden";
 }
 
-function getHudResourceIds(content: GameRuntimeData) {
-  const profileIds = content.clientProfiles.web?.primaryHudResourceIds;
-  return Array.isArray(profileIds) && profileIds.every((id) => typeof id === "string") ? profileIds : TEMPORARY_WEB_HUD_RESOURCE_IDS;
+export function getDashboardHudResourceConfig(content: GameRuntimeData) {
+  return getPrimaryHudResources(content);
 }
 
 function buildHudResources(content: GameRuntimeData, player: DashboardPlayerState): DashboardHudResource[] {
-  const selectors = createRuntimeSelectors(content);
-
-  return getHudResourceIds(content)
-    .map((resourceId) => selectors.getResourceById(resourceId))
-    .filter((resource): resource is GameRuntimeData["resources"][number] => Boolean(resource))
+  return getDashboardHudResourceConfig(content)
     .map((resource) => {
-      const hasPlayerAmount = Object.prototype.hasOwnProperty.call(player.resourceInventory, resource.id);
-      const hasPlayerRate = Object.prototype.hasOwnProperty.call(player.resourceRates, resource.id);
+      const hasPlayerAmount = Object.prototype.hasOwnProperty.call(player.economyBalances ?? {}, resource.id);
+      const hasPlayerRate = Object.prototype.hasOwnProperty.call(player.economyRates ?? {}, resource.id);
 
       return {
         resourceId: resource.id,
-        label: resource.displayName,
+        label: resource.label,
         iconKey: resource.iconKey,
         artKey: resource.artKey,
-        category: resource.category,
+        category: "Economy",
         color: resource.color,
-        amount: hasPlayerAmount ? player.resourceInventory[resource.id] : 0,
-        rate: hasPlayerRate ? player.resourceRates[resource.id] : undefined,
+        amount: hasPlayerAmount ? player.economyBalances?.[resource.id] ?? 0 : 0,
+        rate: hasPlayerRate ? player.economyRates?.[resource.id] : undefined,
         provenance: hasPlayerAmount ? "canonical-definition+player-state" : "canonical-definition+default-zero"
       };
     });
@@ -242,7 +240,7 @@ function resolveAlignment(player: DashboardPlayerState) {
   return {
     alignment,
     label: player.alignment ? "Player Alignment" : "Default Alignment",
-    prediction: topValue > 0 ? `${top} Trajectory` : "Unaligned"
+    prediction: player.civilizationPrediction ?? (topValue > 0 ? "Identity Pending Canonical Definition" : "Unaligned")
   };
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -34,6 +34,7 @@ import { createDashboardArtMap, getDashboardArtAudit, heroCropSettings, resolveR
 import type { AssetDefinition, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
+import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
 import robloxReferenceManifest from "../../design-reference/roblox/reference-manifest.json";
 
@@ -59,6 +60,26 @@ type RobloxReference = {
   status: string;
 };
 
+type PlayerRuntimeDashboardActions = {
+  saveNow: () => void;
+  resetSave: () => void;
+  exportSave: () => string;
+  importSave: (serialized: string) => boolean;
+  advanceSimulation: (seconds?: number) => void;
+  grantTestResources: () => void;
+  click: () => void;
+};
+
+type TopHudResource = {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+  iconKey?: string;
+  artKey?: string;
+  color?: string;
+};
+
 const robloxReferences = robloxReferenceManifest as RobloxReference[];
 
 const shellStyle = tokenStyle();
@@ -68,6 +89,7 @@ const navItems = [
   { id: "dashboard", label: "Dashboard", icon: Gauge },
   { id: "production", label: "Production", icon: Hammer },
   { id: "research", label: "Research", icon: FlaskConical },
+  { id: "resources", label: "Resources", icon: Coins },
   { id: "civilization", label: "Civilization", icon: Crown },
   { id: "earth", label: "Earth", icon: Globe2 },
   { id: "solar", label: "Solar", icon: Orbit },
@@ -165,7 +187,7 @@ function ArtworkFrame({ art, className = "" }: { art: RuntimeAssetResolution; cl
   return <ArtworkFallback label={art.label} artworkNeeded={art.artworkNeeded || failed} className={`bg-gradient-to-br ${art.className} ${className}`} />;
 }
 
-export function TopResourceHud({ resources, assets, highValues = false, gaining = false, compact = false }: { resources: ResourceDefinition[]; assets: AssetDefinition[]; highValues?: boolean; gaining?: boolean; compact?: boolean }) {
+export function TopResourceHud({ resources, assets, highValues = false, gaining = false, compact = false }: { resources: TopHudResource[]; assets: AssetDefinition[]; highValues?: boolean; gaining?: boolean; compact?: boolean }) {
   const visible = resources.slice(0, compact ? 4 : 7);
 
   return (
@@ -669,6 +691,7 @@ const robloxNavItems = [
   { id: "dashboard", label: "Overview", icon: Gauge, iconSize: 54, offsetY: 14 },
   { id: "production", label: "Buildings", icon: Building2, iconSize: 64, offsetY: 0 },
   { id: "research", label: "Research", icon: FlaskConical, iconSize: 62, offsetY: 0 },
+  { id: "resources", label: "Resources", icon: Coins, iconSize: 62, offsetY: -2 },
   { id: "upgrades", label: "Upgrades", icon: WrenchIcon, iconSize: 64, offsetY: -5 },
   { id: "civilization", label: "Civilization", icon: Crown, iconSize: 60, offsetY: -5 },
   { id: "events", label: "Events", icon: CalendarDays, iconSize: 62, offsetY: -5 },
@@ -768,6 +791,7 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
     dashboard: "dashboard",
     production: "production",
     research: "research",
+    resources: "resources",
     civilization: "civilization",
     earth: "production",
     solar: "galaxy",
@@ -807,6 +831,7 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
 
 function RobloxLeftColumn({ data, model, art, showDevWarnings }: { data: GameRuntimeData; model: DashboardModel; art: DashboardArtMap; showDevWarnings: boolean }) {
   const clickResource = model.playerState.clickOutput?.resourceId ? data.resources.find((resource) => resource.id === model.playerState.clickOutput?.resourceId) : undefined;
+  const clickResourceLabel = model.playerState.clickOutput?.label ?? clickResource?.displayName ?? "Civilization Energy";
   const hasClickState = Boolean(model.playerState.clickOutput);
   const hasAutomation = Boolean(model.playerState.automation);
   const critical = model.playerState.criticalStats;
@@ -833,7 +858,7 @@ function RobloxLeftColumn({ data, model, art, showDevWarnings }: { data: GameRun
           {dashboardImagePath(art.click_hand_icon) ? <img src={dashboardImagePath(art.click_hand_icon)} alt="" className="relative h-full w-full object-contain drop-shadow-[0_0_14px_rgba(125,249,255,0.5)]" /> : <MousePointerClick className="relative h-full w-full text-cyan-100" />}
         </div>
         <div className="absolute left-[193px] top-[76px] w-[126px] text-center">
-          <div className="text-[0.78rem] font-black uppercase leading-tight text-cyan-100/58">{clickResource?.displayName ?? "Civilization"}<br />Energy</div>
+          <div className="text-[0.78rem] font-black uppercase leading-tight text-cyan-100/58">{clickResourceLabel}</div>
           <div className="mt-2 text-[1.75rem] font-black leading-none text-white">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "Missing"}</div>
           <div className="mt-2 text-[0.72rem] font-black uppercase text-cyan-100/80">Per Click</div>
         </div>
@@ -1077,12 +1102,13 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
 function RobloxBoostBar({ model }: { model: DashboardModel }) {
   const primaryBoost = model.playerState.boosts?.[0];
   return (
-    <footer className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3`}>
-      <Zap className="h-6 w-6 shrink-0 text-cyan-100" />
+    <footer className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 ${primaryBoost ? "" : "opacity-65"}`}>
+      <Zap className={`h-6 w-6 shrink-0 ${primaryBoost ? "text-cyan-100" : "text-cyan-100/45"}`} />
       <div className="min-w-0 truncate text-center">
         <span className="text-[1rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">{primaryBoost?.name ?? "Boosts"}</span>
+        {typeof primaryBoost?.remainingSeconds === "number" ? <div className="text-[0.55rem] font-black uppercase text-cyan-100/55">{primaryBoost.remainingSeconds}s</div> : null}
       </div>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100/32 bg-black/35 text-[1.1rem] font-black text-cyan-100">{primaryBoost?.value ?? "6"}</div>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100/32 bg-black/35 text-[1.1rem] font-black text-cyan-100">{primaryBoost?.value ?? "--"}</div>
     </footer>
   );
 }
@@ -1105,8 +1131,8 @@ function dashboardDataAudit(model: DashboardModel) {
   return [
     { label: "civilization name", source: model.playerState.civilizationName ? model.playerState.source : "missing source", value: model.playerState.civilizationName ?? "missing" },
     { label: "current era", source: "canonical Studio definition", value: model.currentEra.displayName },
-    { label: "HUD definitions", source: "canonical Studio definitions", value: `${model.hudResources.length} resources` },
-    { label: "resource amounts/rates", source: model.missingSystems.playerResources ? "missing source/default zero" : model.playerState.source, value: model.missingSystems.playerResources ? "default zero" : model.playerState.sourceLabel },
+    { label: "HUD definitions", source: "clientProfiles.default.primaryHudResources", value: `${model.hudResources.length} economy resources` },
+    { label: "economy amounts/rates", source: model.hudResources.length ? model.playerState.source : "missing source/default zero", value: model.hudResources.length ? model.playerState.sourceLabel : "default zero" },
     { label: "click power", source: model.playerState.clickOutput ? model.playerState.source : "missing source", value: model.playerState.clickOutput ? compactNumber(model.playerState.clickOutput.amount) : "missing" },
     { label: "auto-click power", source: model.playerState.automation ? model.playerState.source : "missing source", value: model.playerState.automation ? compactNumber(model.playerState.automation.amountPerSecond) : "missing" },
     { label: "critical stats", source: model.playerState.criticalStats ? model.playerState.source : "missing source", value: model.playerState.criticalStats ? `${model.playerState.criticalStats.chancePercent}% / x${model.playerState.criticalStats.multiplier}` : "missing" },
@@ -1121,9 +1147,36 @@ function dashboardDataAudit(model: DashboardModel) {
   ];
 }
 
-function DashboardDataArtInspector({ model, artAudit }: { model: DashboardModel; artAudit: DashboardArtResolution[] }) {
+function DashboardDataArtInspector({
+  model,
+  artAudit,
+  playerRuntime,
+  playerRuntimeActions
+}: {
+  model: DashboardModel;
+  artAudit: DashboardArtResolution[];
+  playerRuntime?: PlayerRuntimeState;
+  playerRuntimeActions?: PlayerRuntimeDashboardActions;
+}) {
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const missing = artAudit.filter((item) => item.mappingStatus === "missing" || item.warnings.length);
   const demoValues = model.mode === "demo" ? dashboardDataAudit(model).filter((item) => item.source === "demo-fixture") : [];
+
+  function exportSave() {
+    if (!playerRuntimeActions) return;
+    const blob = new Blob([playerRuntimeActions.exportSave()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "project-genesis-player-runtime-save.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importSave(file?: File) {
+    if (!file || !playerRuntimeActions) return;
+    playerRuntimeActions.importSave(await file.text());
+  }
 
   return (
     <aside className="absolute bottom-3 right-3 z-40 max-h-[46rem] w-[28rem] overflow-auto rounded-md border border-cyan-200/25 bg-slate-950/94 p-3 text-[0.68rem] text-cyan-50 shadow-[0_18px_48px_rgba(0,0,0,0.42)]">
@@ -1146,6 +1199,35 @@ function DashboardDataArtInspector({ model, artAudit }: { model: DashboardModel;
           <div className="font-black">{demoValues.length}</div>
         </div>
       </div>
+      {playerRuntime ? (
+        <div className="mt-3 rounded-sm border border-cyan-200/18 bg-black/25 p-2">
+          <div className="font-black uppercase text-cyan-100/75">Player Runtime</div>
+          <div className="mt-1 grid grid-cols-2 gap-1">
+            <div>save v{playerRuntime.saveVersion}</div>
+            <div>rev {playerRuntime.revision}</div>
+            <div>era {playerRuntime.civilization.currentEraId}</div>
+            <div>content v{playerRuntime.contentVersion}</div>
+            <div className="col-span-2 truncate">last save {playerRuntime.updatedAt}</div>
+            <div className="col-span-2 truncate">last sim {playerRuntime.lastSimulationAt}</div>
+            <div className="col-span-2 truncate">objective {playerRuntime.objectives.activeObjectiveId ?? "none"}</div>
+            <div className="col-span-2 truncate">event {playerRuntime.events.activeEventId ?? "none"}</div>
+            <div>boosts {playerRuntime.boosts.active.length}</div>
+            <div>unresolved {Object.keys(playerRuntime.unresolved.resources).length + Object.keys(playerRuntime.unresolved.upgradeLevels).length}</div>
+          </div>
+          {playerRuntimeActions ? (
+            <div className="mt-2 grid grid-cols-3 gap-1">
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.saveNow}>Save Now</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => playerRuntimeActions.advanceSimulation(60)}>Advance</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResources}>Grant</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.click}>Click</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={exportSave}>Export</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => importInputRef.current?.click()}>Import</button>
+              <button className="col-span-3 rounded-sm border border-rose-200/30 bg-rose-300/10 px-2 py-1 font-black uppercase text-rose-100" onClick={playerRuntimeActions.resetSave}>Reset Save</button>
+              <input ref={importInputRef} className="hidden" type="file" accept="application/json" onChange={(event) => void importSave(event.currentTarget.files?.[0])} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-3">
         <div className="font-black uppercase text-cyan-100/75">Missing / Fallback Art</div>
         <div className="mt-1 space-y-1">
@@ -1176,6 +1258,8 @@ export function GameShell({
   data,
   runtimeState,
   playerState,
+  playerRuntime,
+  playerRuntimeActions,
   activeScreen = "dashboard",
   activeEraId = "survival",
   activeCategoryId = "workforce"
@@ -1183,6 +1267,8 @@ export function GameShell({
   data: GameRuntimeData;
   runtimeState?: RuntimeContentState;
   playerState?: DashboardPlayerState;
+  playerRuntime?: PlayerRuntimeState;
+  playerRuntimeActions?: PlayerRuntimeDashboardActions;
   activeScreen?: string;
   activeEraId?: string;
   activeCategoryId?: string;
@@ -1221,7 +1307,7 @@ export function GameShell({
         <div className="z-20" style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle)}>
           <RobloxBoostBar model={model} />
         </div>
-        {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} /> : null}
+        {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
       </div>
     </main>
   );
@@ -1381,7 +1467,7 @@ export function RobloxParityReview({
 
   const artMappings = [
     ["Hero era artwork", data.eras[0]?.artKey ?? "era-survival", "placeholder"],
-    ["HUD resource icons", data.resources.slice(0, 7).map((resource) => resource.iconKey).join(", "), "mixed"],
+    ["HUD economy icons", data.clientProfiles.default.primaryHudResources?.map((resource) => typeof resource === "string" ? resource : resource.iconKey ?? resource.id).join(", ") ?? "missing", "mixed"],
     ["Upgrade row icons", data.upgrades.slice(0, 4).map((upgrade) => upgrade.iconKey ?? "missing").join(", "), "placeholder"],
     ["Panel/event accents", "local UI tokens", "draft"]
   ];

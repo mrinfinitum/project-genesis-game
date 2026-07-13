@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   createDashboardModel,
+  getDashboardHudResourceConfig,
   getCurrentJourney,
-  TEMPORARY_WEB_HUD_RESOURCE_IDS,
   type DashboardPlayerState
 } from "@/lib/dashboard/dashboard-model";
 import { getBundledStudioRuntimeSnapshot, type GameRuntimeData, type RuntimeContentState } from "@/lib/canonical-runtime";
@@ -67,22 +67,34 @@ describe("dashboard canonical model", () => {
     const runtime = await bundledRuntime();
     const model = createDashboardModel(runtime, { runtimeState: runtimeState(runtime) });
 
-    expect(model.hudResources.map((resource) => resource.resourceId)).toEqual(TEMPORARY_WEB_HUD_RESOURCE_IDS);
+    const expectedHudIds = [
+      "ECON-CIVILIZATION-ENERGY",
+      "ECON-CREDITS",
+      "ECON-RESEARCH",
+      "ECON-POPULATION",
+      "ECON-CIVILIZATION-POINTS"
+    ];
+
+    expect(getDashboardHudResourceConfig(runtime).map((resource) => resource.id)).toEqual(expectedHudIds);
+    expect(model.hudResources.map((resource) => resource.resourceId)).toEqual(expectedHudIds);
     expect(model.hudResources[0]).toMatchObject({
-      resourceId: "RES-0001",
-      label: "Stone",
+      resourceId: "ECON-CIVILIZATION-ENERGY",
+      label: "Energy",
       amount: 0,
       provenance: "canonical-definition+default-zero"
     });
+    expect(runtime.resources.some((resource) => expectedHudIds.includes(resource.id))).toBe(false);
   });
 
-  it("keeps player resource amounts separate from canonical definitions", async () => {
+  it("keeps player economy amounts separate from inventory resource definitions", async () => {
     const runtime = await bundledRuntime();
     const playerState: DashboardPlayerState = {
       source: "player-runtime",
       sourceLabel: "Test Player State",
       currentEraId: "survival",
       civilizationName: "Canonical Test Save",
+      economyBalances: { "ECON-CIVILIZATION-ENERGY": 7 },
+      economyRates: { "ECON-CIVILIZATION-ENERGY": 2 },
       resourceInventory: { "RES-0001": 7 },
       resourceRates: { "RES-0001": 2 },
       upgradeLevels: {},
@@ -98,11 +110,12 @@ describe("dashboard canonical model", () => {
     const model = createDashboardModel(runtime, { runtimeState: runtimeState(runtime), playerState });
 
     expect(runtime.resources.find((resource) => resource.id === "RES-0001")?.displayName).toBe("Stone");
-    expect(model.hudResources.find((resource) => resource.resourceId === "RES-0001")).toMatchObject({
+    expect(model.hudResources.find((resource) => resource.resourceId === "ECON-CIVILIZATION-ENERGY")).toMatchObject({
       amount: 7,
       rate: 2,
       provenance: "canonical-definition+player-state"
     });
+    expect(model.hudResources.some((resource) => resource.resourceId === "RES-0001")).toBe(false);
   });
 
   it("populates upgrade rows from canonical upgrade records and player levels", async () => {

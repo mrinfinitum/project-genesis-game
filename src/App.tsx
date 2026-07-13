@@ -13,9 +13,20 @@ import {
   type GameRuntimeData,
   type RuntimeContentState
 } from "@/lib/canonical-runtime";
+import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import {
+  advanceSimulation,
+  applyClickReward,
+  createNewPlayerRuntimeState,
+  grantTestResources,
+  PlayerRuntimeLocalSaveService,
+  playerRuntimeToDashboardPlayerState,
+  type PlayerRuntimeState
+} from "@/lib/player-runtime";
 
 const ProductionRoute = lazy(() => import("@/routes/production-route"));
 const ResearchRoute = lazy(() => import("@/routes/research-route"));
+const ResourcesRoute = lazy(() => import("@/routes/resources-route"));
 const CivilizationRoute = lazy(() => import("@/routes/civilization-route"));
 const EarthRoute = lazy(() => import("@/routes/earth-route"));
 const SolarSystemRoute = lazy(() => import("@/routes/solar-system-route"));
@@ -27,10 +38,22 @@ const RuntimeDiagnostics = lazy(() => import("@/routes/runtime-diagnostics"));
 type GenesisOutletContext = {
   data: GameRuntimeData;
   state: RuntimeContentState;
+  playerRuntime: PlayerRuntimeState;
+  playerRuntimeActions: PlayerRuntimeActions;
   refreshCanonicalRuntime: () => Promise<void>;
 };
 
 const developerToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
+
+type PlayerRuntimeActions = {
+  saveNow: () => void;
+  resetSave: () => void;
+  exportSave: () => string;
+  importSave: (serialized: string) => boolean;
+  advanceSimulation: (seconds?: number) => void;
+  grantTestResources: () => void;
+  click: () => void;
+};
 
 function payloadFromState(state: RuntimeContentState): GameRuntimeData {
   return {
@@ -126,9 +149,79 @@ function useRuntimeContent() {
   return { state, refreshCanonicalRuntime };
 }
 
+function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
+  const service = useMemo(() => new PlayerRuntimeLocalSaveService(data), [data]);
+  const [playerRuntime, setPlayerRuntime] = useState<PlayerRuntimeState>(() => createNewPlayerRuntimeState(data));
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const loaded = service.loadOrCreate();
+      const advanced = advanceSimulation(data, loaded);
+      if (!cancelled) {
+        setPlayerRuntime(service.save(advanced, false));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, enabled, service]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const autosaveSeconds = Math.max(5, data.balance.autosaveSeconds || 30);
+    const id = window.setInterval(() => {
+      setPlayerRuntime((current) => service.autosave(current));
+    }, autosaveSeconds * 1000);
+
+    return () => window.clearInterval(id);
+  }, [data.balance.autosaveSeconds, enabled, service]);
+
+  const actions = useMemo<PlayerRuntimeActions>(
+    () => ({
+      saveNow() {
+        setPlayerRuntime((current) => service.save(current));
+      },
+      resetSave() {
+        setPlayerRuntime(service.reset());
+      },
+      exportSave() {
+        return service.exportSave(playerRuntime);
+      },
+      importSave(serialized: string) {
+        const imported = service.importSave(serialized);
+        if (imported.ok && imported.state) {
+          setPlayerRuntime(imported.state);
+          return true;
+        }
+        return false;
+      },
+      advanceSimulation(seconds = 60) {
+        setPlayerRuntime((current) => service.save(advanceSimulation(data, current, { seconds })));
+      },
+      grantTestResources() {
+        setPlayerRuntime((current) => service.save(grantTestResources(data, current)));
+      },
+      click() {
+        setPlayerRuntime((current) => service.save(applyClickReward(data, current)));
+      }
+    }),
+    [data, playerRuntime, service]
+  );
+
+  return { playerRuntime, actions };
+}
+
 function RuntimeRouteShell() {
   const { state, refreshCanonicalRuntime } = useRuntimeContent();
   const data = useMemo(() => payloadFromState(state), [state]);
+  const { playerRuntime, actions: playerRuntimeActions } = usePlayerRuntime(data, state.status !== "loading");
 
   if (state.status === "loading") {
     return (
@@ -145,7 +238,7 @@ function RuntimeRouteShell() {
 
   return (
     <>
-      <Outlet context={{ data, state, refreshCanonicalRuntime } satisfies GenesisOutletContext} />
+      <Outlet context={{ data, state, playerRuntime, playerRuntimeActions, refreshCanonicalRuntime } satisfies GenesisOutletContext} />
       {developerToolsEnabled ? (
         <Suspense fallback={null}>
           <RuntimeDiagnostics state={state} onRefresh={refreshCanonicalRuntime} />
@@ -175,18 +268,29 @@ function GenesisRouteFallback({ label }: { label: string }) {
   );
 }
 
-function LazyDataRoute({ component: Component, label }: { component: ComponentType<{ data: GameRuntimeData; runtimeState: RuntimeContentState }>; label: string }) {
-  const { data, state } = useGenesisRouteContext();
+type LazyDataRouteProps = {
+  data: GameRuntimeData;
+  runtimeState: RuntimeContentState;
+  playerState: DashboardPlayerState;
+  playerRuntime: PlayerRuntimeState;
+  playerRuntimeActions: PlayerRuntimeActions;
+};
+
+function LazyDataRoute({ component: Component, label }: { component: ComponentType<LazyDataRouteProps>; label: string }) {
+  const { data, state, playerRuntime, playerRuntimeActions } = useGenesisRouteContext();
+  const playerState = useMemo(() => playerRuntimeToDashboardPlayerState(data, playerRuntime), [data, playerRuntime]);
+
   return (
     <Suspense fallback={<GenesisRouteFallback label={label} />}>
-      <Component data={data} runtimeState={state} />
+      <Component data={data} runtimeState={state} playerState={playerState} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} />
     </Suspense>
   );
 }
 
 function DashboardRoute() {
-  const { data, state } = useGenesisRouteContext();
-  return <GameShell data={data} runtimeState={state} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" />;
+  const { data, state, playerRuntime, playerRuntimeActions } = useGenesisRouteContext();
+  const dashboardPlayerState = useMemo(() => playerRuntimeToDashboardPlayerState(data, playerRuntime), [data, playerRuntime]);
+  return <GameShell data={data} runtimeState={state} playerState={dashboardPlayerState} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} activeScreen="dashboard" activeEraId={playerRuntime.civilization.currentEraId} activeCategoryId="workforce" />;
 }
 
 export default function App() {
@@ -197,6 +301,7 @@ export default function App() {
           <Route index element={<DashboardRoute />} />
           <Route path="production" element={<LazyDataRoute component={ProductionRoute} label="Production" />} />
           <Route path="research" element={<LazyDataRoute component={ResearchRoute} label="Research" />} />
+          <Route path="resources" element={<LazyDataRoute component={ResourcesRoute} label="Resources" />} />
           <Route path="civilization" element={<LazyDataRoute component={CivilizationRoute} label="Civilization" />} />
           <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
           <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
