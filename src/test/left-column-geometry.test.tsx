@@ -65,10 +65,10 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveAttribute("data-z-layer", "icon-above-background");
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveClass("z-20");
     const dashboardLabelStyle = screen.getByTestId("roblox-nav-label-dashboard").style;
-    expect(Number.parseFloat(dashboardLabelStyle.left)).toBeCloseTo(10.88);
-    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(70.2);
-    expect(Number.parseFloat(dashboardLabelStyle.width)).toBeCloseTo(138.24);
-    expect(Number.parseFloat(dashboardLabelStyle.height)).toBeCloseTo(29.1);
+    expect(Number.parseFloat(dashboardLabelStyle.left)).toBeCloseTo(8);
+    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(78);
+    expect(Number.parseFloat(dashboardLabelStyle.width)).toBeCloseTo(144);
+    expect(Number.parseFloat(dashboardLabelStyle.height)).toBeCloseTo(28);
   });
 
   it("uses independent icon and label overlays instead of per-item visual containers", async () => {
@@ -129,7 +129,7 @@ describe("Roblox left column geometry", () => {
     const data = await bundledRuntime();
     render(<GameShell data={data} />);
 
-    expect(screen.getByTestId("roblox-nav-label-dashboard")).toHaveClass("text-[11px]");
+    expect(screen.getByTestId("roblox-nav-label-dashboard")).toHaveClass("text-[15px]");
     expect(screen.getByText("Click Power")).toHaveClass("text-[18px]");
     expect(screen.getByText("Auto Click")).toHaveClass("text-[18px]");
     expect(screen.getByText("Critical Chance")).toHaveClass("text-[12px]");

@@ -1032,14 +1032,14 @@ const ROBLOX_NAV_GEOMETRY = {
   itemWidth: 144,
   itemHeight: 103.84,
   itemGap: 11.328,
-  iconLeft: 43.2,
+  iconLeft: 35.5,
   iconTop: 8.3,
-  iconWidth: 57.6,
-  iconHeight: 47.8,
-  labelLeft: 2.88,
-  labelTop: 60.2,
-  labelWidth: 138.24,
-  labelHeight: 29.1
+  iconWidth: 72,
+  iconHeight: 62,
+  labelLeft: 0,
+  labelTop: 68,
+  labelWidth: 144,
+  labelHeight: 28
 } as const;
 
 function robloxNavItemTop(index: number) {
@@ -1224,7 +1224,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
                 style={iconStyle}
               />
             )}
-            <span data-testid={`roblox-nav-label-${item.id}`} className="pointer-events-none absolute z-20 px-1 text-center text-[11px] font-black uppercase leading-tight text-blue-50 [text-shadow:0_1px_2px_rgba(0,0,0,0.66)]" style={labelStyle}>{item.label}</span>
+            <span data-testid={`roblox-nav-label-${item.id}`} className="pointer-events-none absolute z-20 px-1 text-center text-[15px] font-black uppercase leading-tight text-blue-50 [text-shadow:0_1px_2px_rgba(0,0,0,0.66)]" style={labelStyle}>{item.label}</span>
             <button
               type="button"
               aria-label={item.label}
