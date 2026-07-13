@@ -180,6 +180,36 @@ describe("canonical player runtime", () => {
     expect(migrated.unresolved.migrationNotes).toContain("Migrated untouched starter ECON-POPULATION from 125 to 5.");
   });
 
+  it("repairs v4 auto-idle starter saves that were already stamped before the v8 population fix", async () => {
+    const runtime = await bundledRuntime();
+    const idle = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "v4-auto-idle-population" });
+    const legacy = {
+      ...idle,
+      saveVersion: 4,
+      contentVersion: 8,
+      civilization: { ...idle.civilization, population: 125 },
+      economy: {
+        ...idle.economy,
+        balances: { ...idle.economy.balances, [POPULATION_ECONOMY_ID]: 125, [LABOR_ECONOMY_ID]: 90 }
+      },
+      production: {
+        ...idle.production,
+        totalManualClicks: 0,
+        totalAutoClicks: 90,
+        lifetimeLaborGenerated: 90,
+        totalAutoLaborGenerated: 90
+      }
+    };
+
+    const migrated = migratePlayerRuntimeState(legacy, runtime);
+
+    expect(migrated.saveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
+    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
+    expect(migrated.civilization.population).toBe(5);
+    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(90);
+    expect(migrated.unresolved.migrationNotes).toContain("Migrated untouched starter ECON-POPULATION from 125 to 5.");
+  });
+
   it("preserves established Population 125 saves", async () => {
     const runtime = await bundledRuntime();
     const established = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "established-population" });

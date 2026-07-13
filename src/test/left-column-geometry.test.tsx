@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutoClickPanel, ClickPowerPanel, GameShell, RobloxNavigation } from "@/components/game-ui/genesis-ui";
 import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
@@ -198,6 +198,53 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "31,80,162,162");
     expect(screen.getByTestId("click-power-stat-block")).toHaveAttribute("data-rojo-rect", "196,82,126,145");
     expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "32,250,294,66");
+  });
+
+  it("routes the Click Power ring and button through the same manual labor action", async () => {
+    const data = await bundledRuntime();
+    const performManualLaborClick = vi.fn();
+    render(
+      <GameShell
+        data={data}
+        playerState={{
+          source: "player-runtime",
+          sourceLabel: "Test Runtime",
+          currentEraId: "survival",
+          resourceInventory: {},
+          resourceRates: {},
+          upgradeLevels: {},
+          clickOutput: {
+            resourceId: "ECON-LABOR",
+            label: "Labor",
+            amount: 1,
+            lastGain: 0,
+            perClickLabel: "Per Click"
+          },
+          automation: {
+            label: "Auto Click",
+            amountPerSecond: 0,
+            enabled: true
+          }
+        }}
+        playerRuntimeActions={{
+          saveNow: vi.fn(),
+          resetSave: vi.fn(),
+          exportSave: () => "{}",
+          importSave: () => true,
+          advanceSimulation: vi.fn(),
+          grantTestResources: vi.fn(),
+          grantTestCredits: vi.fn(),
+          grantTestResearch: vi.fn(),
+          performManualLaborClick,
+          toggleAutomation: vi.fn()
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("click-power-ring"));
+    fireEvent.click(screen.getByTestId("click-power-button"));
+
+    expect(performManualLaborClick).toHaveBeenCalledTimes(2);
   });
 
   it("keeps Auto Click controls inside the canonical panel bounds", async () => {
