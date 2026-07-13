@@ -5,8 +5,8 @@ import { getPrimaryHudResources } from "./initializer";
 import { resolveUpgradeCost, resolveUpgradeEffect } from "./simulation";
 import type { PlayerRuntimeState } from "./types";
 
-export function selectHudEconomySlots(content: GameRuntimeData) {
-  return getPrimaryHudResources(content);
+export function selectHudEconomySlots(content: GameRuntimeData, currentEraId?: string) {
+  return getPrimaryHudResources(content, currentEraId);
 }
 
 export function selectEconomyBalance(state: PlayerRuntimeState, economyId: string) {
@@ -87,7 +87,7 @@ export function getUpgradeViewState(content: GameRuntimeData, state: PlayerRunti
 }
 
 export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, state: PlayerRuntimeState): DashboardPlayerState {
-  const primaryHudResources = selectHudEconomySlots(content);
+  const primaryHudResources = selectHudEconomySlots(content, state.civilization.currentEraId);
   const clickResource = primaryHudResources.find((resource) => resource.id === LABOR_ECONOMY_ID) ?? primaryHudResources[0];
   const now = Date.now();
   const activeBoosts = state.boosts.active.filter((boost) => Date.parse(boost.endsAt) > now);

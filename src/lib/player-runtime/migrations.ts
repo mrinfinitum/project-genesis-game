@@ -1,6 +1,6 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
-import { LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID } from "./economy";
-import { createNewPlayerRuntimeState, getPrimaryHudResourceIds } from "./initializer";
+import { getEconomyResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID } from "./economy";
+import { createNewPlayerRuntimeState } from "./initializer";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
 function clone<T>(value: T): T {
@@ -22,7 +22,7 @@ function normalizeStringArray(input: unknown) {
 
 export function preserveUnresolvedPlayerRuntimeIds(state: PlayerRuntimeState, content: GameRuntimeData): PlayerRuntimeState {
   const next = clone(state);
-  const economyIds = new Set(getPrimaryHudResourceIds(content));
+  const economyIds = new Set(getEconomyResourceIds(content));
   const resourceIds = new Set(content.resources.map((resource) => resource.id));
   const upgradeIds = new Set(content.upgrades.map((upgrade) => upgrade.id));
   const eraIds = new Set(content.eras.map((era) => era.id));
@@ -180,6 +180,16 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     }
     if (next.economy.balances[LABOR_ECONOMY_ID] === undefined) {
       next.economy.balances[LABOR_ECONOMY_ID] = seed.economy.balances[LABOR_ECONOMY_ID] ?? 0;
+    }
+  }
+  if (previousSaveVersion < 3) {
+    const legacyBalances = normalizeNumberMap(record.economy?.balances);
+    const legacyLabor = legacyBalances[LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID];
+    const currentLabor = next.economy.balances[LABOR_ECONOMY_ID] ?? seed.economy.balances[LABOR_ECONOMY_ID] ?? 0;
+    const seedLabor = seed.economy.balances[LABOR_ECONOMY_ID] ?? 0;
+    if (legacyLabor !== undefined && legacyLabor > seedLabor && currentLabor <= seedLabor) {
+      next.economy.balances[LABOR_ECONOMY_ID] = legacyLabor;
+      next.unresolved.migrationNotes.push(`Migrated legacy ${LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID} balance into ${LABOR_ECONOMY_ID}.`);
     }
   }
 

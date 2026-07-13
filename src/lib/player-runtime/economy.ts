@@ -2,7 +2,8 @@ import type { GameRuntimeData, PrimaryHudResourceDefinition } from "@/lib/canoni
 
 export const CREDITS_ECONOMY_ID = "ECON-CREDITS";
 export const POPULATION_ECONOMY_ID = "ECON-POPULATION";
-export const LABOR_ECONOMY_ID = "ECON-CIVILIZATION-ENERGY";
+export const LABOR_ECONOMY_ID = "ECON-LABOR";
+export const LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID = "ECON-CIVILIZATION-ENERGY";
 export const RESEARCH_ECONOMY_ID = "ECON-RESEARCH";
 export const CIVILIZATION_POINTS_ECONOMY_ID = "ECON-CIVILIZATION-POINTS";
 export const PREMIUM_CRYSTALS_ECONOMY_ID = "ECON-PREMIUM-CRYSTALS";
@@ -51,17 +52,22 @@ export function getCanonicalStartingEconomyRate(content: GameRuntimeData, econom
 function normalizeEconomyDefinition(input: unknown): PrimaryHudResourceDefinition | undefined {
   if (!input || typeof input !== "object") return undefined;
   const record = input as Record<string, unknown>;
-  const id = typeof record.id === "string" ? record.id : typeof record.resourceId === "string" ? record.resourceId : undefined;
+  const id = typeof record.economyId === "string" ? record.economyId : typeof record.resourceId === "string" ? record.resourceId : typeof record.id === "string" ? record.id : undefined;
   if (!id) return undefined;
 
   return {
     id,
+    economyId: typeof record.economyId === "string" ? record.economyId : undefined,
+    compactLabel: typeof record.compactLabel === "string" ? record.compactLabel : undefined,
     name: typeof record.name === "string" ? record.name : undefined,
     displayName: typeof record.displayName === "string" ? record.displayName : undefined,
-    label: typeof record.label === "string" ? record.label : typeof record.displayName === "string" ? record.displayName : typeof record.name === "string" ? record.name : undefined,
+    label: typeof record.label === "string" ? record.label : typeof record.compactLabel === "string" ? record.compactLabel : typeof record.displayName === "string" ? record.displayName : typeof record.name === "string" ? record.name : undefined,
     iconKey: typeof record.iconKey === "string" ? record.iconKey : undefined,
     artKey: typeof record.artKey === "string" ? record.artKey : undefined,
     color: typeof record.color === "string" ? record.color : undefined,
+    order: typeof record.order === "number" ? record.order : undefined,
+    showRate: typeof record.showRate === "boolean" ? record.showRate : undefined,
+    formatting: record.formatting && typeof record.formatting === "object" ? record.formatting as Record<string, unknown> : undefined,
     balanceKey: typeof record.balanceKey === "string" ? record.balanceKey : undefined,
     startingValue: typeof record.startingValue === "number" ? record.startingValue : undefined,
     startingAmount: typeof record.startingAmount === "number" ? record.startingAmount : undefined,
@@ -87,29 +93,76 @@ export function getEconomyDefinitions(content: GameRuntimeData): PrimaryHudResou
   ];
 }
 
-export function getPrimaryHudResources(content: GameRuntimeData): PrimaryHudResourceDefinition[] {
-  const definitions = new Map(getEconomyDefinitions(content).map((definition) => [definition.id, definition]));
-  const configuredSlots = [
-    ...(content.clientProfiles.default.primaryHudResources ?? []),
-    ...(content.economy?.primaryHudResources ?? [])
+function profileRecord(input: unknown): Record<string, unknown> | undefined {
+  return input && typeof input === "object" ? input as Record<string, unknown> : undefined;
+}
+
+function profileMatchesEra(profile: Record<string, unknown>, currentEraId: string) {
+  return [profile.eraId, profile.id, profile.name].some((value) => value === currentEraId);
+}
+
+function profileFromCollection(collection: unknown, currentEraId?: string) {
+  if (!collection || !currentEraId) return undefined;
+  if (Array.isArray(collection)) {
+    return collection.map(profileRecord).find((profile) => profile && profileMatchesEra(profile, currentEraId));
+  }
+  const record = profileRecord(collection);
+  if (!record) return undefined;
+  return profileRecord(record[currentEraId]);
+}
+
+export function resolveEraEconomyProfile(content: GameRuntimeData, currentEraId?: string): Record<string, unknown> {
+  const contentRecord = content as unknown as Record<string, unknown>;
+  const economyRecord = profileRecord(content.economy);
+  const webProfile = profileRecord(content.clientProfiles.web);
+  const defaultProfile = profileRecord(content.clientProfiles.default);
+  const candidates = [
+    profileFromCollection(contentRecord.eraEconomyProfiles, currentEraId),
+    profileFromCollection(economyRecord?.eraEconomyProfiles, currentEraId),
+    profileFromCollection(economyRecord?.profiles, currentEraId),
+    profileFromCollection(webProfile?.eraEconomyProfiles, currentEraId),
+    profileFromCollection(defaultProfile?.eraEconomyProfiles, currentEraId),
+    webProfile,
+    defaultProfile,
+    economyRecord
   ];
+
+  return candidates.find((candidate): candidate is Record<string, unknown> => Boolean(candidate)) ?? {};
+}
+
+function getConfiguredHudSlots(content: GameRuntimeData, currentEraId?: string) {
+  const profile = resolveEraEconomyProfile(content, currentEraId);
+  const profileSlots = Array.isArray(profile.primaryHudSlots) ? profile.primaryHudSlots : [];
+  const profileResources = Array.isArray(profile.primaryHudResources) ? profile.primaryHudResources : [];
+  const economySlots = Array.isArray(content.economy?.primaryHudResources) ? content.economy.primaryHudResources : [];
+  return profileSlots.length ? profileSlots : [...profileResources, ...economySlots];
+}
+
+export function getPrimaryHudResources(content: GameRuntimeData, currentEraId?: string): PrimaryHudResourceDefinition[] {
+  const definitions = new Map(getEconomyDefinitions(content).map((definition) => [definition.id, definition]));
+  const configuredSlots = getConfiguredHudSlots(content, currentEraId);
 
   return configuredSlots
     .map(normalizeHudSlot)
     .filter((slot): slot is PrimaryHudResourceDefinition => Boolean(slot))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     .map((slot) => {
       const canonical = definitions.get(slot.id);
-      if (canonical) return { ...slot, ...canonical };
+      if (canonical) return { ...canonical, ...slot, label: slot.label ?? canonical.label ?? canonical.displayName ?? canonical.name };
       return { ...slot, missingDefinition: true };
     });
 }
 
-export function getPrimaryHudResourceIds(content: GameRuntimeData) {
-  return getPrimaryHudResources(content).map((resource) => resource.id);
+export function getPrimaryHudResourceIds(content: GameRuntimeData, currentEraId?: string) {
+  return getPrimaryHudResources(content, currentEraId).map((resource) => resource.id);
+}
+
+export function getEconomyResourceIds(content: GameRuntimeData) {
+  return getEconomyDefinitions(content).map((definition) => definition.id);
 }
 
 export function getInventoryResources(content: GameRuntimeData) {
-  const hudIds = new Set(getPrimaryHudResourceIds(content));
+  const hudIds = new Set(getEconomyResourceIds(content));
   return content.resources.filter((resource) => !hudIds.has(resource.id));
 }
 
@@ -124,7 +177,7 @@ function numericField(resource: PrimaryHudResourceDefinition, keys: readonly str
 
 export function getStartingEconomyBalances(content: GameRuntimeData) {
   return Object.fromEntries(
-    getPrimaryHudResources(content).map((resource) => {
+    getEconomyDefinitions(content).map((resource) => {
       const canonicalValue = numericField(resource, STARTING_VALUE_KEYS);
       const balanceValue = resource.balanceKey ? content.balance[resource.balanceKey] : undefined;
       const amount = canonicalValue ?? (typeof balanceValue === "number" && Number.isFinite(balanceValue) ? balanceValue : getCanonicalStartingEconomyBalance(content, resource.id) ?? 0);
@@ -135,7 +188,7 @@ export function getStartingEconomyBalances(content: GameRuntimeData) {
 
 export function getStartingEconomyRates(content: GameRuntimeData) {
   return Object.fromEntries(
-    getPrimaryHudResources(content).map((resource) => [resource.id, numericField(resource, STARTING_RATE_KEYS) ?? getCanonicalStartingEconomyRate(content, resource.id) ?? 0])
+    getEconomyDefinitions(content).map((resource) => [resource.id, numericField(resource, STARTING_RATE_KEYS) ?? getCanonicalStartingEconomyRate(content, resource.id) ?? 0])
   );
 }
 

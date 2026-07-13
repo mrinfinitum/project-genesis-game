@@ -1,5 +1,5 @@
 import type { GameRuntimeData, UpgradeDefinition } from "@/lib/canonical-runtime";
-import { CREDITS_ECONOMY_ID, getCanonicalStartingEconomyRate, LABOR_ECONOMY_ID } from "./economy";
+import { getEconomyResourceIds, getPrimaryHudResources, getStartingEconomyRates, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID } from "./economy";
 import { getPrimaryHudResourceIds } from "./initializer";
 import type { PlayerRuntimeState } from "./types";
 
@@ -23,14 +23,14 @@ function balanceNumber(content: GameRuntimeData, key: string, fallback: number) 
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-function activeLaborEconomyId(content: GameRuntimeData) {
-  const hudIds = getPrimaryHudResourceIds(content);
-  return hudIds.includes(LABOR_ECONOMY_ID) ? LABOR_ECONOMY_ID : hudIds[0];
-}
-
-function activeCreditsEconomyId(content: GameRuntimeData) {
-  const hudIds = getPrimaryHudResourceIds(content);
-  return hudIds.includes(CREDITS_ECONOMY_ID) ? CREDITS_ECONOMY_ID : undefined;
+function activeLaborEconomyId(content: GameRuntimeData, currentEraId?: string) {
+  const economyDefinitions = getPrimaryHudResources(content, currentEraId);
+  const laborDefinition = economyDefinitions.find((definition) => {
+    const label = `${definition.id} ${definition.name ?? ""} ${definition.displayName ?? ""} ${definition.label ?? ""}`.toLowerCase();
+    return label.includes("labor");
+  });
+  const ids = getEconomyResourceIds(content);
+  return laborDefinition?.id ?? (ids.includes(LABOR_ECONOMY_ID) ? LABOR_ECONOMY_ID : ids.includes(LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID) ? LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID : undefined);
 }
 
 function resolveEraMultiplier(content: GameRuntimeData, state: PlayerRuntimeState) {
@@ -93,7 +93,7 @@ function addEconomy(state: PlayerRuntimeState, economyId: string, amount: number
 
 export function performManualLaborClick(content: GameRuntimeData, state: PlayerRuntimeState, options: { now?: Date; forceCritical?: boolean } = {}) {
   const next = recomputeProduction(content, state);
-  const laborEconomyId = activeLaborEconomyId(content);
+  const laborEconomyId = activeLaborEconomyId(content, next.civilization.currentEraId);
   if (!laborEconomyId) return next;
 
   const critical = options.forceCritical || Math.random() < normalizeCriticalChance(next.production.criticalChance);
@@ -117,20 +117,14 @@ export function advanceSimulation(content: GameRuntimeData, state: PlayerRuntime
   const now = options.now ?? new Date();
   const elapsedSeconds = options.seconds ?? secondsBetween(state.lastSimulationAt, now);
   const next = recomputeProduction(content, state);
-  const primaryHudIds = getPrimaryHudResourceIds(content);
-  const laborEconomyId = activeLaborEconomyId(content);
-  const creditsEconomyId = activeCreditsEconomyId(content);
+  const economyIds = getEconomyResourceIds(content);
+  const laborEconomyId = activeLaborEconomyId(content, next.civilization.currentEraId);
+  const canonicalRates = getStartingEconomyRates(content);
 
-  for (const economyId of primaryHudIds) {
-    next.economy.rates[economyId] = 0;
-  }
-
-  if (creditsEconomyId) {
-    const creditsPerSecond = getCanonicalStartingEconomyRate(content, creditsEconomyId) ?? 0;
-    if (creditsPerSecond > 0) {
-      addEconomy(next, creditsEconomyId, creditsPerSecond * elapsedSeconds);
-    }
-    next.economy.rates[creditsEconomyId] = creditsPerSecond;
+  for (const economyId of economyIds) {
+    const rate = economyId === laborEconomyId ? 0 : canonicalRates[economyId] ?? 0;
+    next.economy.rates[economyId] = rate;
+    if (rate > 0 && elapsedSeconds > 0) addEconomy(next, economyId, rate * elapsedSeconds);
   }
 
   if (laborEconomyId && next.production.automationEnabled) {
@@ -168,9 +162,9 @@ export function grantTestResources(content: GameRuntimeData, state: PlayerRuntim
 
 export function grantTestEconomy(content: GameRuntimeData, state: PlayerRuntimeState, economyIds: string[], amount = 1000) {
   const next = clone(state);
-  const hudIds = new Set(getPrimaryHudResourceIds(content));
+  const knownEconomyIds = new Set(getEconomyResourceIds(content));
   for (const economyId of economyIds) {
-    if (hudIds.has(economyId)) addEconomy(next, economyId, amount);
+    if (knownEconomyIds.has(economyId)) addEconomy(next, economyId, amount);
   }
   next.updatedAt = nowIso();
   next.revision += 1;

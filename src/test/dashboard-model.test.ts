@@ -40,10 +40,10 @@ function runtimeState(runtime: GameRuntimeData, configuredMode: RuntimeContentSt
 }
 
 describe("dashboard canonical model", () => {
-  it("loads contentVersion 5 and resolves the canonical nine-era journey", async () => {
+  it("loads contentVersion 7 and resolves the canonical nine-era journey", async () => {
     const runtime = await bundledRuntime();
 
-    expect(runtime.metadata.contentVersion).toBe(5);
+    expect(runtime.metadata.contentVersion).toBe(7);
     expect(runtime.eras).toHaveLength(9);
 
     expect(getCurrentJourney(runtime.eras, "survival")).toMatchObject({
@@ -68,21 +68,21 @@ describe("dashboard canonical model", () => {
     const model = createDashboardModel(runtime, { runtimeState: runtimeState(runtime) });
 
     const expectedHudIds = [
-      "ECON-CREDITS",
+      "ECON-LABOR",
       "ECON-POPULATION",
-      "ECON-CIVILIZATION-ENERGY",
       "ECON-RESEARCH",
       "ECON-PREMIUM-CRYSTALS"
     ];
 
-    expect(getDashboardHudResourceConfig(runtime).map((resource) => resource.id)).toEqual(expectedHudIds);
+    expect(getDashboardHudResourceConfig(runtime, "survival").map((resource) => resource.id)).toEqual(expectedHudIds);
     expect(model.hudResources.map((resource) => resource.resourceId)).toEqual(expectedHudIds);
     expect(model.hudResources[0]).toMatchObject({
-      resourceId: "ECON-CREDITS",
-      label: "Credits",
+      resourceId: "ECON-LABOR",
+      label: "Labor",
       amount: 0,
       provenance: "canonical-definition+default-zero"
     });
+    expect(model.hudResources.some((resource) => resource.resourceId === "ECON-CREDITS")).toBe(false);
     expect(runtime.resources.some((resource) => expectedHudIds.includes(resource.id))).toBe(false);
     expect(model.economyWarnings).toEqual([]);
   });
@@ -94,8 +94,8 @@ describe("dashboard canonical model", () => {
       sourceLabel: "Test Player State",
       currentEraId: "survival",
       civilizationName: "Canonical Test Save",
-      economyBalances: { "ECON-CIVILIZATION-ENERGY": 7 },
-      economyRates: { "ECON-CIVILIZATION-ENERGY": 2 },
+      economyBalances: { "ECON-LABOR": 7 },
+      economyRates: { "ECON-LABOR": 2 },
       resourceInventory: { "RES-0001": 7 },
       resourceRates: { "RES-0001": 2 },
       upgradeLevels: {},
@@ -111,7 +111,7 @@ describe("dashboard canonical model", () => {
     const model = createDashboardModel(runtime, { runtimeState: runtimeState(runtime), playerState });
 
     expect(runtime.resources.find((resource) => resource.id === "RES-0001")?.displayName).toBe("Stone");
-    expect(model.hudResources.find((resource) => resource.resourceId === "ECON-CIVILIZATION-ENERGY")).toMatchObject({
+    expect(model.hudResources.find((resource) => resource.resourceId === "ECON-LABOR")).toMatchObject({
       amount: 7,
       rate: 2,
       provenance: "canonical-definition+player-state"
@@ -127,7 +127,13 @@ describe("dashboard canonical model", () => {
         ...sourceRuntime.clientProfiles,
         default: {
           ...sourceRuntime.clientProfiles.default,
-          primaryHudResources: []
+          primaryHudResources: [],
+          primaryHudSlots: []
+        },
+        web: {
+          ...sourceRuntime.clientProfiles.web,
+          primaryHudResources: [],
+          primaryHudSlots: []
         }
       },
       economy: {

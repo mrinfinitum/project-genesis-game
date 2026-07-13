@@ -1,8 +1,8 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
-import { getInventoryResources, getPrimaryHudResourceIds, getStartingEconomyBalances, getStartingEconomyRates } from "./economy";
+import { getEconomyResourceIds, getInventoryResources, getStartingEconomyBalances, getStartingEconomyRates, POPULATION_ECONOMY_ID } from "./economy";
 
-export { getEconomyDefinitions, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources } from "./economy";
+export { getEconomyDefinitions, getEconomyResourceIds, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources } from "./economy";
 
 export function getStartingEraId(content: GameRuntimeData) {
   return (content.eras.find((era) => era.unlockRequirements?.start) ?? [...content.eras].sort((a, b) => a.index - b.index)[0])?.id ?? "survival";
@@ -33,7 +33,7 @@ function balanceNumber(content: GameRuntimeData, key: string, fallback: number) 
 
 export function createNewPlayerRuntimeState(content: GameRuntimeData, options: { now?: Date; playerId?: string; civilizationName?: string } = {}): PlayerRuntimeState {
   const timestamp = nowIso(options.now);
-  const economyIds = getPrimaryHudResourceIds(content);
+  const economyIds = getEconomyResourceIds(content);
   const inventoryResourceIds = getInventoryResources(content).map((resource) => resource.id);
   const economyBalances = getStartingEconomyBalances(content);
   const economyRates = { ...Object.fromEntries(economyIds.map((id) => [id, 0])), ...getStartingEconomyRates(content) };
@@ -55,7 +55,7 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       currentEraId: startEraId,
       eraProgress: 0,
       eraMastery: 0,
-      population: content.balance.startingPopulation,
+      population: economyBalances[POPULATION_ECONOMY_ID] ?? balanceNumber(content, "startingPopulation", 0),
       discoveryPoints: 0
     },
     economy: {

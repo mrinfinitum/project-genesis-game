@@ -2805,24 +2805,23 @@
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
       "primaryHudResources": [
-        "ECON-CREDITS",
+        "ECON-LABOR",
         "ECON-POPULATION",
-        "ECON-CIVILIZATION-ENERGY",
         "ECON-RESEARCH",
         "ECON-PREMIUM-CRYSTALS"
       ],
       "primaryHudSlots": [
         {
-          "compactLabel": "Credits",
-          "economyId": "ECON-CREDITS",
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
           "formatting": {
             "decimals": 0,
             "prefix": "",
             "style": "compact",
             "suffix": ""
           },
-          "iconKey": "economy_credits",
-          "id": "hud_slot_1_econ_credits",
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
           "order": 1,
           "premium": false,
           "showRate": true
@@ -2843,21 +2842,6 @@
           "showRate": false
         },
         {
-          "compactLabel": "Energy",
-          "economyId": "ECON-CIVILIZATION-ENERGY",
-          "formatting": {
-            "decimals": 0,
-            "prefix": "",
-            "style": "compact",
-            "suffix": ""
-          },
-          "iconKey": "economy_civilization_energy",
-          "id": "hud_slot_3_econ_civilization_energy",
-          "order": 3,
-          "premium": false,
-          "showRate": true
-        },
-        {
           "compactLabel": "Research",
           "economyId": "ECON-RESEARCH",
           "formatting": {
@@ -2867,8 +2851,8 @@
             "suffix": ""
           },
           "iconKey": "economy_research",
-          "id": "hud_slot_4_econ_research",
-          "order": 4,
+          "id": "hud_slot_3_econ_research",
+          "order": 3,
           "premium": false,
           "showRate": true
         },
@@ -2882,8 +2866,8 @@
             "suffix": ""
           },
           "iconKey": "economy_premium_crystals",
-          "id": "hud_slot_5_econ_premium_crystals",
-          "order": 5,
+          "id": "hud_slot_4_econ_premium_crystals",
+          "order": 4,
           "premium": true,
           "showRate": false
         }
@@ -2902,24 +2886,23 @@
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
       "primaryHudResources": [
-        "ECON-CREDITS",
+        "ECON-LABOR",
         "ECON-POPULATION",
-        "ECON-CIVILIZATION-ENERGY",
         "ECON-RESEARCH",
         "ECON-PREMIUM-CRYSTALS"
       ],
       "primaryHudSlots": [
         {
-          "compactLabel": "Credits",
-          "economyId": "ECON-CREDITS",
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
           "formatting": {
             "decimals": 0,
             "prefix": "",
             "style": "compact",
             "suffix": ""
           },
-          "iconKey": "economy_credits",
-          "id": "hud_slot_1_econ_credits",
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
           "order": 1,
           "premium": false,
           "showRate": true
@@ -2940,21 +2923,6 @@
           "showRate": false
         },
         {
-          "compactLabel": "Energy",
-          "economyId": "ECON-CIVILIZATION-ENERGY",
-          "formatting": {
-            "decimals": 0,
-            "prefix": "",
-            "style": "compact",
-            "suffix": ""
-          },
-          "iconKey": "economy_civilization_energy",
-          "id": "hud_slot_3_econ_civilization_energy",
-          "order": 3,
-          "premium": false,
-          "showRate": true
-        },
-        {
           "compactLabel": "Research",
           "economyId": "ECON-RESEARCH",
           "formatting": {
@@ -2964,8 +2932,8 @@
             "suffix": ""
           },
           "iconKey": "economy_research",
-          "id": "hud_slot_4_econ_research",
-          "order": 4,
+          "id": "hud_slot_3_econ_research",
+          "order": 3,
           "premium": false,
           "showRate": true
         },
@@ -2979,8 +2947,8 @@
             "suffix": ""
           },
           "iconKey": "economy_premium_crystals",
-          "id": "hud_slot_5_econ_premium_crystals",
-          "order": 5,
+          "id": "hud_slot_4_econ_premium_crystals",
+          "order": 4,
           "premium": true,
           "showRate": false
         }
@@ -2999,24 +2967,23 @@
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
       "primaryHudResources": [
-        "ECON-CREDITS",
+        "ECON-LABOR",
         "ECON-POPULATION",
-        "ECON-CIVILIZATION-ENERGY",
         "ECON-RESEARCH",
         "ECON-PREMIUM-CRYSTALS"
       ],
       "primaryHudSlots": [
         {
-          "compactLabel": "Credits",
-          "economyId": "ECON-CREDITS",
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
           "formatting": {
             "decimals": 0,
             "prefix": "",
             "style": "compact",
             "suffix": ""
           },
-          "iconKey": "economy_credits",
-          "id": "hud_slot_1_econ_credits",
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
           "order": 1,
           "premium": false,
           "showRate": true
@@ -3037,21 +3004,6 @@
           "showRate": false
         },
         {
-          "compactLabel": "Energy",
-          "economyId": "ECON-CIVILIZATION-ENERGY",
-          "formatting": {
-            "decimals": 0,
-            "prefix": "",
-            "style": "compact",
-            "suffix": ""
-          },
-          "iconKey": "economy_civilization_energy",
-          "id": "hud_slot_3_econ_civilization_energy",
-          "order": 3,
-          "premium": false,
-          "showRate": true
-        },
-        {
           "compactLabel": "Research",
           "economyId": "ECON-RESEARCH",
           "formatting": {
@@ -3061,8 +3013,8 @@
             "suffix": ""
           },
           "iconKey": "economy_research",
-          "id": "hud_slot_4_econ_research",
-          "order": 4,
+          "id": "hud_slot_3_econ_research",
+          "order": 3,
           "premium": false,
           "showRate": true
         },
@@ -3076,8 +3028,8 @@
             "suffix": ""
           },
           "iconKey": "economy_premium_crystals",
-          "id": "hud_slot_5_econ_premium_crystals",
-          "order": 5,
+          "id": "hud_slot_4_econ_premium_crystals",
+          "order": 4,
           "premium": true,
           "showRate": false
         }
@@ -3096,24 +3048,23 @@
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
       "primaryHudResources": [
-        "ECON-CREDITS",
+        "ECON-LABOR",
         "ECON-POPULATION",
-        "ECON-CIVILIZATION-ENERGY",
         "ECON-RESEARCH",
         "ECON-PREMIUM-CRYSTALS"
       ],
       "primaryHudSlots": [
         {
-          "compactLabel": "Credits",
-          "economyId": "ECON-CREDITS",
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
           "formatting": {
             "decimals": 0,
             "prefix": "",
             "style": "compact",
             "suffix": ""
           },
-          "iconKey": "economy_credits",
-          "id": "hud_slot_1_econ_credits",
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
           "order": 1,
           "premium": false,
           "showRate": true
@@ -3134,21 +3085,6 @@
           "showRate": false
         },
         {
-          "compactLabel": "Energy",
-          "economyId": "ECON-CIVILIZATION-ENERGY",
-          "formatting": {
-            "decimals": 0,
-            "prefix": "",
-            "style": "compact",
-            "suffix": ""
-          },
-          "iconKey": "economy_civilization_energy",
-          "id": "hud_slot_3_econ_civilization_energy",
-          "order": 3,
-          "premium": false,
-          "showRate": true
-        },
-        {
           "compactLabel": "Research",
           "economyId": "ECON-RESEARCH",
           "formatting": {
@@ -3158,8 +3094,8 @@
             "suffix": ""
           },
           "iconKey": "economy_research",
-          "id": "hud_slot_4_econ_research",
-          "order": 4,
+          "id": "hud_slot_3_econ_research",
+          "order": 3,
           "premium": false,
           "showRate": true
         },
@@ -3173,8 +3109,8 @@
             "suffix": ""
           },
           "iconKey": "economy_premium_crystals",
-          "id": "hud_slot_5_econ_premium_crystals",
-          "order": 5,
+          "id": "hud_slot_4_econ_premium_crystals",
+          "order": 4,
           "premium": true,
           "showRate": false
         }
@@ -3193,24 +3129,23 @@
       "futureUpgradeTeaserCount": 2,
       "lockedOpacity": 0.45,
       "primaryHudResources": [
-        "ECON-CREDITS",
+        "ECON-LABOR",
         "ECON-POPULATION",
-        "ECON-CIVILIZATION-ENERGY",
         "ECON-RESEARCH",
         "ECON-PREMIUM-CRYSTALS"
       ],
       "primaryHudSlots": [
         {
-          "compactLabel": "Credits",
-          "economyId": "ECON-CREDITS",
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
           "formatting": {
             "decimals": 0,
             "prefix": "",
             "style": "compact",
             "suffix": ""
           },
-          "iconKey": "economy_credits",
-          "id": "hud_slot_1_econ_credits",
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
           "order": 1,
           "premium": false,
           "showRate": true
@@ -3231,21 +3166,6 @@
           "showRate": false
         },
         {
-          "compactLabel": "Energy",
-          "economyId": "ECON-CIVILIZATION-ENERGY",
-          "formatting": {
-            "decimals": 0,
-            "prefix": "",
-            "style": "compact",
-            "suffix": ""
-          },
-          "iconKey": "economy_civilization_energy",
-          "id": "hud_slot_3_econ_civilization_energy",
-          "order": 3,
-          "premium": false,
-          "showRate": true
-        },
-        {
           "compactLabel": "Research",
           "economyId": "ECON-RESEARCH",
           "formatting": {
@@ -3255,8 +3175,8 @@
             "suffix": ""
           },
           "iconKey": "economy_research",
-          "id": "hud_slot_4_econ_research",
-          "order": 4,
+          "id": "hud_slot_3_econ_research",
+          "order": 3,
           "premium": false,
           "showRate": true
         },
@@ -3270,8 +3190,8 @@
             "suffix": ""
           },
           "iconKey": "economy_premium_crystals",
-          "id": "hud_slot_5_econ_premium_crystals",
-          "order": 5,
+          "id": "hud_slot_4_econ_premium_crystals",
+          "order": 4,
           "premium": true,
           "showRate": false
         }
@@ -3290,24 +3210,23 @@
       "futureUpgradeTeaserCount": 3,
       "lockedOpacity": 0.55,
       "primaryHudResources": [
-        "ECON-CREDITS",
+        "ECON-LABOR",
         "ECON-POPULATION",
-        "ECON-CIVILIZATION-ENERGY",
         "ECON-RESEARCH",
         "ECON-PREMIUM-CRYSTALS"
       ],
       "primaryHudSlots": [
         {
-          "compactLabel": "Credits",
-          "economyId": "ECON-CREDITS",
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
           "formatting": {
             "decimals": 0,
             "prefix": "",
             "style": "compact",
             "suffix": ""
           },
-          "iconKey": "economy_credits",
-          "id": "hud_slot_1_econ_credits",
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
           "order": 1,
           "premium": false,
           "showRate": true
@@ -3328,21 +3247,6 @@
           "showRate": false
         },
         {
-          "compactLabel": "Energy",
-          "economyId": "ECON-CIVILIZATION-ENERGY",
-          "formatting": {
-            "decimals": 0,
-            "prefix": "",
-            "style": "compact",
-            "suffix": ""
-          },
-          "iconKey": "economy_civilization_energy",
-          "id": "hud_slot_3_econ_civilization_energy",
-          "order": 3,
-          "premium": false,
-          "showRate": true
-        },
-        {
           "compactLabel": "Research",
           "economyId": "ECON-RESEARCH",
           "formatting": {
@@ -3352,8 +3256,8 @@
             "suffix": ""
           },
           "iconKey": "economy_research",
-          "id": "hud_slot_4_econ_research",
-          "order": 4,
+          "id": "hud_slot_3_econ_research",
+          "order": 3,
           "premium": false,
           "showRate": true
         },
@@ -3367,8 +3271,8 @@
             "suffix": ""
           },
           "iconKey": "economy_premium_crystals",
-          "id": "hud_slot_5_econ_premium_crystals",
-          "order": 5,
+          "id": "hud_slot_4_econ_premium_crystals",
+          "order": 4,
           "premium": true,
           "showRate": false
         }
@@ -3472,6 +3376,69 @@
     },
     {
       "category": "global_economy",
+      "color": "#c084fc",
+      "description": "Galactic-scale diplomatic and civilization reach used for alliances, governance, federation scale, and endgame expansion.",
+      "displayName": "Influence",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_influence",
+      "id": "ECON-INFLUENCE",
+      "maximum": null,
+      "minimum": 0,
+      "name": "influence",
+      "premium": false,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "galactic diplomacy",
+        "alliances",
+        "federation scale",
+        "endgame governance",
+        "galactic missions"
+      ],
+      "valueType": "currency",
+      "visibility": "when_unlocked"
+    },
+    {
+      "category": "global_economy",
+      "color": "#f59e0b",
+      "description": "Early and mid-game work capacity used for manual production, construction pacing, and civilization effort before mature credit economies dominate.",
+      "displayName": "Labor",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_labor",
+      "id": "ECON-LABOR",
+      "maximum": null,
+      "minimum": 0,
+      "name": "labor",
+      "premium": false,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 1,
+      "status": "canonical",
+      "usage": [
+        "early construction",
+        "manual production",
+        "building costs",
+        "survival progression",
+        "ancient progression",
+        "medieval progression"
+      ],
+      "valueType": "currency",
+      "visibility": "always"
+    },
+    {
+      "category": "global_economy",
       "color": "#7dd3fc",
       "description": "Civilization-wide population counter used for growth, workers, era unlocks, settlement scale, and progression checks.",
       "displayName": "Population",
@@ -3557,6 +3524,37 @@
       ],
       "valueType": "currency",
       "visibility": "always"
+    },
+    {
+      "category": "global_economy",
+      "color": "#38bdf8",
+      "description": "Renaissance-era trade economy used for routes, markets, diplomacy, commerce, and pre-industrial economic expansion.",
+      "displayName": "Trade",
+      "formatting": {
+        "decimals": 0,
+        "prefix": "",
+        "style": "compact",
+        "suffix": ""
+      },
+      "iconKey": "economy_trade",
+      "id": "ECON-TRADE",
+      "maximum": null,
+      "minimum": 0,
+      "name": "trade",
+      "premium": false,
+      "spendable": true,
+      "startingAmount": 0,
+      "startingRate": 0,
+      "status": "canonical",
+      "usage": [
+        "trade routes",
+        "markets",
+        "renaissance progression",
+        "diplomacy",
+        "commerce missions"
+      ],
+      "valueType": "currency",
+      "visibility": "when_unlocked"
     }
   ],
   "eras": [
@@ -3725,8 +3723,8 @@
   ],
   "metadata": {
     "accessLevel": "public-published",
-    "checksum": "459fee404eac0972255345ccebf8f71ba622645e25b61d133663db1c9f592a8f",
-    "contentVersion": 5,
+    "checksum": "b74d663ef62306d3f9dc00afe232bb1c1b0a240d389afb7842f3e6eab1e044c1",
+    "contentVersion": 7,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

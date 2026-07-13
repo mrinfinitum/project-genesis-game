@@ -2097,7 +2097,7 @@ function dashboardDataAudit(model: DashboardModel) {
   return [
     { label: "civilization name", source: model.playerState.civilizationName ? model.playerState.source : "missing source", value: model.playerState.civilizationName ?? "missing" },
     { label: "current era", source: "canonical Studio definition", value: model.currentEra.displayName },
-    { label: "HUD definitions", source: "clientProfiles.default.primaryHudResources", value: `${model.hudResources.length} economy resources` },
+    { label: "HUD definitions", source: "current era economy profile", value: `${model.hudResources.length} economy resources` },
     { label: "economy warnings", source: model.economyWarnings.length ? "canonical runtime validation" : "canonical runtime", value: model.economyWarnings.length ? model.economyWarnings.join("; ") : "none" },
     { label: "economy amounts/rates", source: model.hudResources.length ? model.playerState.source : "missing source/default zero", value: model.hudResources.length ? model.playerState.sourceLabel : "default zero" },
     { label: "click power", source: model.playerState.clickOutput ? model.playerState.source : "missing source", value: model.playerState.clickOutput ? compactNumber(model.playerState.clickOutput.amount) : "missing" },
@@ -2427,6 +2427,7 @@ function DashboardDataArtInspector({
             <div>content v{playerRuntime.contentVersion}</div>
             <div className="col-span-2 truncate">last save {playerRuntime.updatedAt}</div>
             <div className="col-span-2 truncate">last sim {playerRuntime.lastSimulationAt}</div>
+            <div className="col-span-2 truncate">economy profile {playerRuntime.civilization.currentEraId}: {model.hudResources.map((resource) => resource.label).join(", ")}</div>
             <div className="col-span-2 truncate">objective {playerRuntime.objectives.activeObjectiveId ?? "none"}</div>
             <div className="col-span-2 truncate">event {playerRuntime.events.activeEventId ?? "none"}</div>
             <div>boosts {playerRuntime.boosts.active.length}</div>

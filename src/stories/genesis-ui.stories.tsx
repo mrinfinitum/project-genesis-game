@@ -77,8 +77,8 @@ function usePanelStoryModel(overrides: Partial<DashboardPlayerState> = {}) {
     resourceRates: {},
     upgradeLevels: {},
     clickOutput: {
-      resourceId: "ECON-CIVILIZATION-ENERGY",
-      label: "Civilization Energy",
+      resourceId: "ECON-LABOR",
+      label: "Labor",
       amount: 1250000000,
       perClickLabel: "Per Click"
     },
@@ -867,8 +867,8 @@ export const ClickPowerHighValue: Story = {
   render: () => {
     const { data, model, art } = usePanelStoryModel({
       clickOutput: {
-        resourceId: "ECON-CIVILIZATION-ENERGY",
-        label: "Civilization Energy",
+        resourceId: "ECON-LABOR",
+        label: "Labor",
         amount: 987500000000,
         perClickLabel: "Per Click"
       }
@@ -888,8 +888,8 @@ export const ClickPowerCriticalPulse: Story = {
   render: () => {
     const { data, model, art } = usePanelStoryModel({
       clickOutput: {
-        resourceId: "ECON-CIVILIZATION-ENERGY",
-        label: "Civilization Energy",
+        resourceId: "ECON-LABOR",
+        label: "Labor",
         amount: 2500000000,
         perClickLabel: "Critical Click"
       }

@@ -172,12 +172,12 @@ export function evaluateVisibilityRules(upgrade: UpgradeDefinition, currentEraId
   return rules.defaultState !== "hidden";
 }
 
-export function getDashboardHudResourceConfig(content: GameRuntimeData) {
-  return getPrimaryHudResources(content);
+export function getDashboardHudResourceConfig(content: GameRuntimeData, currentEraId?: string) {
+  return getPrimaryHudResources(content, currentEraId);
 }
 
-function buildHudResources(content: GameRuntimeData, player: DashboardPlayerState): DashboardHudResource[] {
-  return getDashboardHudResourceConfig(content)
+function buildHudResources(content: GameRuntimeData, player: DashboardPlayerState, currentEraId?: string): DashboardHudResource[] {
+  return getDashboardHudResourceConfig(content, currentEraId)
     .map((resource) => {
       const hasPlayerAmount = Object.prototype.hasOwnProperty.call(player.economyBalances ?? {}, resource.id);
       const hasPlayerRate = Object.prototype.hasOwnProperty.call(player.economyRates ?? {}, resource.id);
@@ -278,7 +278,7 @@ export function createDashboardModel(
     playerState,
     currentEra,
     journey: getCurrentJourney(content.eras, currentEra.id),
-    hudResources: buildHudResources(content, playerState),
+    hudResources: buildHudResources(content, playerState, currentEra.id),
     upgradeRows: buildUpgradeRows(content, playerState, currentEra.id, activeCategoryId),
     alignment: alignment.alignment,
     alignmentLabel: alignment.label,

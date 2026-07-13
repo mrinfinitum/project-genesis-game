@@ -4,6 +4,7 @@ import {
   advanceSimulation,
   createNewPlayerRuntimeState,
   getInventoryResources,
+  getEconomyResourceIds,
   getPrimaryHudResourceIds,
   getStartingEraId,
   getUpgradeViewState,
@@ -22,6 +23,7 @@ import {
   selectPopulation,
   type PlayerRuntimeState
 } from "@/lib/player-runtime";
+import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID, RESEARCH_ECONOMY_ID } from "@/lib/player-runtime/economy";
 import { PLAYER_RUNTIME_SAVE_KEY } from "@/lib/player-runtime/local-save";
 import { MemoryKeyValueStore, readJson } from "@/lib/connected-single-player/storage";
 
@@ -35,39 +37,9 @@ function fixedDate() {
   return new Date("2026-01-02T03:04:05.000Z");
 }
 
-function withCanonicalEconomy(runtime: GameRuntimeData): GameRuntimeData {
-  const primaryHudResources = [
-    "ECON-CREDITS",
-    "ECON-POPULATION",
-    "ECON-CIVILIZATION-ENERGY",
-    "ECON-RESEARCH",
-    "ECON-CIVILIZATION-POINTS",
-    "ECON-PREMIUM-CRYSTALS"
-  ];
-
-  return {
-    ...runtime,
-    clientProfiles: {
-      ...runtime.clientProfiles,
-      default: {
-        ...runtime.clientProfiles.default,
-        primaryHudResources
-      }
-    },
-    economyDefinitions: [
-      { id: "ECON-CIVILIZATION-ENERGY", label: "Civilization Energy", iconKey: "economy-energy", artKey: "economy-energy", color: "#11cdef", startingValue: 10, startingRate: 0 },
-      { id: "ECON-CREDITS", label: "Credits", iconKey: "economy-credits", artKey: "economy-credits", color: "#f5c542", startingValue: 20 },
-      { id: "ECON-RESEARCH", label: "Research", iconKey: "economy-research", artKey: "economy-research", color: "#a78bfa", startingValue: 30 },
-      { id: "ECON-POPULATION", label: "Population", iconKey: "economy-population", artKey: "economy-population", color: "#34d399", startingValue: 125 },
-      { id: "ECON-CIVILIZATION-POINTS", label: "Civilization Points", iconKey: "economy-civ-points", artKey: "economy-civ-points", color: "#fb7185", startingValue: 0 },
-      { id: "ECON-PREMIUM-CRYSTALS", label: "Premium Crystals", iconKey: "economy-premium-crystals", artKey: "economy-premium-crystals", color: "#22d3ee", startingValue: 5 }
-    ]
-  };
-}
-
 describe("canonical player runtime", () => {
   it("creates a deterministic new-game state from canonical balance and the first canonical era", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const state = createNewPlayerRuntimeState(runtime, {
       now: fixedDate(),
       playerId: "test-player",
@@ -98,22 +70,24 @@ describe("canonical player runtime", () => {
       }
     });
     expect(getStartingEraId(runtime)).toBe("survival");
-    expect(Object.keys(state.economy.balances)).toEqual(getPrimaryHudResourceIds(runtime));
-    expect(state.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBe(10);
-    expect(state.economy.rates["ECON-CREDITS"]).toBe(1);
-    expect(state.economy.rates["ECON-CIVILIZATION-ENERGY"]).toBe(0);
-    expect(state.economy.balances["ECON-PREMIUM-CRYSTALS"]).toBe(5);
+    expect(getPrimaryHudResourceIds(runtime, "survival")).toEqual([LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
+    expect(getPrimaryHudResourceIds(runtime, "survival")).not.toContain(CREDITS_ECONOMY_ID);
+    expect(Object.keys(state.economy.balances).sort()).toEqual(getEconomyResourceIds(runtime).sort());
+    expect(state.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
+    expect(state.economy.rates[LABOR_ECONOMY_ID]).toBe(1);
+    expect(state.economy.balances[POPULATION_ECONOMY_ID]).toBe(125);
+    expect(state.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
     expect(Object.keys(state.resources.inventory)).toEqual(getInventoryResources(runtime).map((resource) => resource.id));
-    expect(Object.keys(state.resources.inventory)).not.toContain("ECON-CIVILIZATION-ENERGY");
+    expect(Object.keys(state.resources.inventory)).not.toContain(LABOR_ECONOMY_ID);
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
   });
 
   it("persists explicit saves, autosaves, resets, exports, and imports through the local service", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const store = new MemoryKeyValueStore();
     const service = new PlayerRuntimeLocalSaveService(runtime, store);
     const state = service.loadOrCreate();
-    state.economy.balances["ECON-CIVILIZATION-ENERGY"] = 321;
+    state.economy.balances[LABOR_ECONOMY_ID] = 321;
 
     const saved = service.save(state);
     const reloaded = new PlayerRuntimeLocalSaveService(runtime, store).loadOrCreate();
@@ -123,16 +97,16 @@ describe("canonical player runtime", () => {
     const reset = service.reset();
 
     expect(saved.revision).toBeGreaterThan(state.revision);
-    expect(reloaded.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBe(321);
+    expect(reloaded.economy.balances[LABOR_ECONOMY_ID]).toBe(321);
     expect(autosaved.revision).toBeGreaterThan(reloaded.revision);
     expect(imported.ok).toBe(true);
-    expect(imported.state?.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBe(321);
-    expect(reset.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBe(10);
+    expect(imported.state?.economy.balances[LABOR_ECONOMY_ID]).toBe(321);
+    expect(reset.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
     expect(readJson<PlayerRuntimeState | null>(store, PLAYER_RUNTIME_SAVE_KEY, null)?.saveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
   });
 
   it("migrates content versions and preserves unknown canonical ids in unresolved buckets", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const state = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "legacy-player" });
     const legacy = {
       ...state,
@@ -140,7 +114,7 @@ describe("canonical player runtime", () => {
       contentVersion: 1,
       civilization: { ...state.civilization, currentEraId: "lost-era" },
       economy: {
-        balances: { ...state.economy.balances, "ECON-POPULATION": 0, "ECON-LOST": 42 },
+        balances: { ...state.economy.balances, [POPULATION_ECONOMY_ID]: 0, [LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID]: 42, "ECON-LOST": 99 },
         rates: { ...state.economy.rates, "ECON-LOST": 3 }
       },
       resources: {
@@ -161,9 +135,11 @@ describe("canonical player runtime", () => {
     expect(migrated.contentVersion).toBe(runtime.metadata.contentVersion);
     expect(migrated.unresolved.currentEraId).toBe("lost-era");
     expect(migrated.civilization.currentEraId).toBe("survival");
-    expect(migrated.economy.balances["ECON-POPULATION"]).toBe(runtime.balance.startingPopulation);
-    expect(migrated.unresolved.migrationNotes).toContain("Migrated ECON-POPULATION from civilization.population.");
-    expect(migrated.unresolved.economy["ECON-LOST"]).toBe(42);
+    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(runtime.balance.startingPopulation);
+    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(42);
+    expect(migrated.unresolved.migrationNotes).toContain(`Migrated ${POPULATION_ECONOMY_ID} from civilization.population.`);
+    expect(migrated.unresolved.migrationNotes).toContain(`Migrated legacy ${LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID} balance into ${LABOR_ECONOMY_ID}.`);
+    expect(migrated.unresolved.economy["ECON-LOST"]).toBe(99);
     expect(migrated.unresolved.economyRates["ECON-LOST"]).toBe(3);
     expect(migrated.unresolved.resources["RES-LOST"]).toBe(99);
     expect(migrated.unresolved.resourceRates["RES-LOST"]).toBe(2);
@@ -177,7 +153,7 @@ describe("canonical player runtime", () => {
   });
 
   it("routes manual and auto labor to Civilization Energy instead of the first HUD slot", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
     const clicked = performManualLaborClick(runtime, state, { now: fixedDate() });
     const autoUpgrade = runtime.upgrades.find((upgrade) => upgrade.effectType.toLowerCase().includes("auto"));
@@ -195,41 +171,42 @@ describe("canonical player runtime", () => {
     };
     const advanced = advanceSimulation(runtime, autoState, { seconds: 10, now: new Date("2026-01-02T03:04:15.000Z") });
 
-    expect(clicked.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBeGreaterThan(state.economy.balances["ECON-CIVILIZATION-ENERGY"] ?? 0);
-    expect(clicked.economy.balances["ECON-CREDITS"]).toBe(state.economy.balances["ECON-CREDITS"]);
+    expect(clicked.economy.balances[LABOR_ECONOMY_ID]).toBeGreaterThan(state.economy.balances[LABOR_ECONOMY_ID] ?? 0);
+    expect(clicked.economy.balances[CREDITS_ECONOMY_ID]).toBe(state.economy.balances[CREDITS_ECONOMY_ID]);
     expect(clicked.production.lastClickGain).toBe(1);
     expect(clicked.production.totalManualClicks).toBe(1);
     expect(clicked.civilization.discoveryPoints).toBeGreaterThanOrEqual(1);
     expect(advanced.production.autoClickPower).toBeGreaterThan(0);
-    expect(advanced.economy.rates["ECON-CIVILIZATION-ENERGY"]).toBeGreaterThanOrEqual(1);
-    expect(advanced.economy.balances["ECON-CIVILIZATION-ENERGY"]).toBeGreaterThan(clicked.economy.balances["ECON-CIVILIZATION-ENERGY"]);
-    expect(advanced.economy.rates["ECON-CREDITS"]).toBe(1);
-    expect(advanced.economy.balances["ECON-CREDITS"]).toBeGreaterThan(clicked.economy.balances["ECON-CREDITS"]);
-    expect(advanced.economy.rates["ECON-PREMIUM-CRYSTALS"]).toBe(0);
+    expect(advanced.economy.rates[LABOR_ECONOMY_ID]).toBeGreaterThanOrEqual(1);
+    expect(advanced.economy.balances[LABOR_ECONOMY_ID]).toBeGreaterThan(clicked.economy.balances[LABOR_ECONOMY_ID]);
+    expect(advanced.economy.rates[CREDITS_ECONOMY_ID]).toBe(0);
+    expect(advanced.economy.balances[CREDITS_ECONOMY_ID]).toBe(clicked.economy.balances[CREDITS_ECONOMY_ID]);
+    expect(advanced.economy.rates[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
     expect(advanced.civilization.eraProgress).toBeGreaterThan(state.civilization.eraProgress);
   });
 
   it("exposes canonical runtime selectors for HUD economy and labor stats", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const clicked = performManualLaborClick(runtime, createNewPlayerRuntimeState(runtime, { now: fixedDate() }), { now: fixedDate() });
 
-    expect(selectHudEconomySlots(runtime).map((slot) => slot.id)).toEqual(getPrimaryHudResourceIds(runtime));
-    expect(selectEconomyBalance(clicked, "ECON-CIVILIZATION-ENERGY")).toBe(11);
-    expect(selectEconomyRate(clicked, "ECON-CREDITS")).toBe(1);
+    expect(selectHudEconomySlots(runtime, "survival").map((slot) => slot.id)).toEqual(getPrimaryHudResourceIds(runtime, "survival"));
+    expect(selectHudEconomySlots(runtime, "survival").map((slot) => slot.id)).not.toContain(CREDITS_ECONOMY_ID);
+    expect(selectEconomyBalance(clicked, LABOR_ECONOMY_ID)).toBe(1);
+    expect(selectEconomyRate(clicked, CREDITS_ECONOMY_ID)).toBe(0);
     expect(selectClickPower(clicked)).toBe(1);
     expect(selectLastClickGain(clicked)).toBe(1);
     expect(selectPopulation(clicked)).toBe(125);
   });
 
   it("derives dashboard selectors without live objective, event, or fabricated boost fallbacks", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
     const playerState = playerRuntimeToDashboardPlayerState(runtime, state);
 
     expect(playerState.source).toBe("player-runtime");
     expect(playerState.currentEraId).toBe("survival");
-    expect(playerState.clickOutput?.resourceId).toBe("ECON-CIVILIZATION-ENERGY");
-    expect(playerState.economyBalances?.["ECON-POPULATION"]).toBe(125);
+    expect(playerState.clickOutput?.resourceId).toBe(LABOR_ECONOMY_ID);
+    expect(playerState.economyBalances?.[POPULATION_ECONOMY_ID]).toBe(125);
     expect(playerState.objective).toBeUndefined();
     expect(playerState.activeEvent).toBeUndefined();
     expect(playerState.leaderboard).toBeUndefined();
@@ -238,7 +215,7 @@ describe("canonical player runtime", () => {
   });
 
   it("resolves canonical alignment identities only when client profile definitions exist", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
     const aligned = { ...state, alignment: { ...state.alignment, technology: 5 } };
     const withIdentity = {
@@ -259,7 +236,7 @@ describe("canonical player runtime", () => {
   });
 
   it("derives upgrade visibility and affordability from canonical definitions plus player inventory", async () => {
-    const runtime = withCanonicalEconomy(await bundledRuntime());
+    const runtime = await bundledRuntime();
     const state = grantTestResources(runtime, createNewPlayerRuntimeState(runtime, { now: fixedDate() }), 1_000_000);
     const upgrade = runtime.upgrades.find((item) => item.visibilityRules?.defaultState === "available") ?? runtime.upgrades[0];
     const view = getUpgradeViewState(runtime, state, upgrade.id);

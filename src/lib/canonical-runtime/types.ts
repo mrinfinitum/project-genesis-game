@@ -148,12 +148,17 @@ export interface BalanceDefinition {
 
 export interface PrimaryHudResourceDefinition {
   id: string;
+  economyId?: string;
+  compactLabel?: string;
   label?: string;
   displayName?: string;
   name?: string;
   iconKey?: string;
   artKey?: string;
   color?: string;
+  order?: number;
+  showRate?: boolean;
+  formatting?: Record<string, unknown>;
   balanceKey?: keyof BalanceDefinition | string;
   startingValue?: number;
   startingAmount?: number;
