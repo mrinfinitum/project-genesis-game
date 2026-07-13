@@ -254,7 +254,7 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.unresolved.migrationNotes.push(`Repaired hidden Survival ${CREDITS_ECONOMY_ID} passive balance into ${LABOR_ECONOMY_ID}.`);
     }
   }
-  if (previousSaveVersion < 8) {
+  if (previousSaveVersion < 9) {
     const seedPopulation = seed.economy.balances[POPULATION_ECONOMY_ID] ?? seed.civilization.population;
     const legacyPopulation = next.economy.balances[POPULATION_ECONOMY_ID];
     const legacyCivilizationPopulation = next.civilization.population;

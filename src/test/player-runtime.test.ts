@@ -331,6 +331,32 @@ describe("canonical player runtime", () => {
     expect(migrated.unresolved.migrationNotes).toContain("Repaired stale untouched ECON-POPULATION from 125 to 5.");
   });
 
+  it("repairs deployed v8 untouched Population 125 saves before the HUD renders", async () => {
+    const runtime = await bundledRuntime();
+    const stale = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "v8-stale-population" });
+    const legacy = {
+      ...stale,
+      saveVersion: 8,
+      contentVersion: 10,
+      civilization: { ...stale.civilization, population: 125 },
+      economy: {
+        ...stale.economy,
+        balances: { ...stale.economy.balances, [POPULATION_ECONOMY_ID]: 125 }
+      },
+      production: {
+        ...stale.production,
+        totalManualClicks: 0
+      }
+    };
+
+    const migrated = migratePlayerRuntimeState(legacy, runtime);
+
+    expect(migrated.saveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
+    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
+    expect(migrated.civilization.population).toBe(5);
+    expect(migrated.unresolved.migrationNotes).toContain("Repaired stale untouched ECON-POPULATION from 125 to 5.");
+  });
+
   it("preserves established Population 125 saves", async () => {
     const runtime = await bundledRuntime();
     const established = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "established-population" });
