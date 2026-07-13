@@ -1433,12 +1433,12 @@ function EraProgressionNode({
 }) {
   void assets;
   const hexPath = dashboardImagePath(art.era_progression_hex);
-  const dimensions = size === "large" ? "h-[46px] w-[46px]" : size === "medium" ? "h-[38px] w-[38px]" : "h-[14px] w-[14px]";
+  const dimensions = size === "large" ? "h-[64px] w-[64px]" : size === "medium" ? "h-[50px] w-[50px]" : "h-[14px] w-[14px]";
   const current = state === "current";
   const preview = state === "preview";
   const locked = state === "locked";
   const completed = state === "completed";
-  const radius = 22;
+  const radius = 30;
   const circumference = 2 * Math.PI * radius;
   const progressOffset = circumference - (Math.max(0, Math.min(100, progressPercent)) / 100) * circumference;
 
@@ -1456,9 +1456,9 @@ function EraProgressionNode({
       aria-label={`${current ? "Current" : completed ? "Completed" : locked ? "Locked" : "Preview"} era ${era.displayName}`}
     >
       {current ? (
-        <svg className="absolute inset-[-5px] h-[56px] w-[56px] -rotate-90 overflow-visible" viewBox="0 0 56 56" aria-hidden="true" data-testid="era-node-progress-ring">
-          <circle cx="28" cy="28" r={radius} fill="none" stroke="rgba(125,249,255,0.18)" strokeWidth="3" />
-          <circle cx="28" cy="28" r={radius} fill="none" stroke="rgba(52,245,106,0.95)" strokeWidth="3" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={progressOffset} className="transition-[stroke-dashoffset] duration-500 ease-out drop-shadow-[0_0_8px_rgba(52,245,106,0.8)]" />
+        <svg className="absolute inset-[-7px] h-[78px] w-[78px] -rotate-90 overflow-visible" viewBox="0 0 78 78" aria-hidden="true" data-testid="era-node-progress-ring">
+          <circle cx="39" cy="39" r={radius} fill="none" stroke="rgba(125,249,255,0.2)" strokeWidth="4" />
+          <circle cx="39" cy="39" r={radius} fill="none" stroke="rgba(52,245,106,0.95)" strokeWidth="4" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={progressOffset} className="transition-[stroke-dashoffset] duration-500 ease-out drop-shadow-[0_0_10px_rgba(52,245,106,0.9)]" />
         </svg>
       ) : null}
       {hexPath ? (
@@ -1478,9 +1478,9 @@ function EraProgressionNode({
       ) : (
         <Hexagon className={`absolute inset-0 h-full w-full ${current ? "text-emerald-200" : locked ? "text-cyan-100/38" : "text-emerald-100/78"}`} />
       )}
-      <span className={`relative font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)] ${size === "large" ? "text-[1.05rem]" : size === "medium" ? "text-[0.9rem]" : "text-[0.48rem]"}`}>{era.index}</span>
-      {completed && size !== "small" ? <Check className="absolute bottom-[7px] right-[7px] h-3.5 w-3.5 rounded-full bg-emerald-300 p-0.5 text-slate-950" /> : null}
-      {locked && size !== "small" ? <Lock data-testid={`era-lock-inside-${era.id}`} className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-950/76 p-0.5 text-cyan-100/72" /> : null}
+      <span className={`relative font-black text-white [text-shadow:0_2px_7px_rgba(0,0,0,0.88)] ${size === "large" ? "text-[1.65rem]" : size === "medium" ? "text-[1.22rem]" : "text-[0.48rem]"}`}>{era.index}</span>
+      {completed && size !== "small" ? <Check className="absolute bottom-[8px] right-[8px] h-4 w-4 rounded-full bg-emerald-300 p-0.5 text-slate-950" /> : null}
+      {locked && size !== "small" ? <Lock data-testid={`era-lock-inside-${era.id}`} className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-950/76 p-0.5 text-cyan-100/72" /> : null}
     </button>
   );
 }
@@ -1520,19 +1520,18 @@ export function CivilizationEraCarousel({
   reducedMotion?: boolean;
 }) {
   void visibleEraCount;
+  void fullTimelineEnabled;
+  void initialPreviewEraId;
   const orderedEras = [...eras].sort((a, b) => a.index - b.index);
-  const [previewEraId, setPreviewEraId] = useState(initialPreviewEraId);
   const [hoverEraId, setHoverEraId] = useState<string | undefined>(undefined);
   const activeIndex = Math.max(0, orderedEras.findIndex((era) => era.id === activeEraId));
   const trackProgress = eraTrackProgress(orderedEras, activeEraId, progressPercent);
   const railLeft = 52;
   const railRight = 808;
-  const railTop = 43;
-  const labelTop = 76;
+  const railTop = 47;
+  const labelTop = 86;
   const railWidth = railRight - railLeft;
-  const selectedEra = orderedEras.find((era) => era.id === previewEraId);
   const hoveredEra = orderedEras.find((era) => era.id === hoverEraId);
-  const selectedIndex = selectedEra ? orderedEras.findIndex((era) => era.id === selectedEra.id) : -1;
   const hoveredIndex = hoveredEra ? orderedEras.findIndex((era) => era.id === hoveredEra.id) : -1;
 
   function nodeCenter(index: number) {
@@ -1547,10 +1546,6 @@ export function CivilizationEraCarousel({
     if (index === activeIndex) return "current";
     if (index < activeIndex) return "completed";
     return "locked";
-  }
-
-  function togglePreview(eraId: string) {
-    setPreviewEraId((current) => (current === eraId ? undefined : eraId));
   }
 
   return (
@@ -1574,10 +1569,9 @@ export function CivilizationEraCarousel({
         const state = nodeState(index);
         const current = state === "current";
         const completed = state === "completed";
-        const selected = previewEraId === era.id;
-        const size = current ? 46 : 38;
+        const size = current ? 64 : 50;
         const left = nodeCenter(index) - size / 2;
-        const top = current ? 20 : 24;
+        const top = current ? 15 : 22;
         return (
           <Fragment key={era.id}>
             <EraProgressionNode
@@ -1587,15 +1581,14 @@ export function CivilizationEraCarousel({
               assets={assets}
               art={art}
               progressPercent={current ? progressPercent : 0}
-              className={`${selected ? "ring-1 ring-cyan-100/70" : ""} ${current ? "" : completed ? "" : "opacity-62"}`}
+              className={current ? "" : completed ? "" : "opacity-62"}
               style={{ left, top }}
               layoutRect={`${left},${top},${size},${size}`}
               testId={`era-rail-node-${era.id}`}
-              onClick={() => togglePreview(era.id)}
               onMouseEnter={() => setHoverEraId(era.id)}
               onMouseLeave={() => setHoverEraId(undefined)}
             />
-            <div className={`pointer-events-none absolute w-[74px] -translate-x-1/2 truncate text-center text-[8px] font-black uppercase leading-none ${current ? "text-emerald-100" : completed ? "text-cyan-50/64" : "text-cyan-50/34"}`} style={{ left: nodeCenter(index), top: labelTop }} data-testid={`era-rail-label-${era.id}`}>
+            <div className={`pointer-events-none absolute w-[92px] -translate-x-1/2 truncate text-center text-[9px] font-black uppercase leading-none ${current ? "text-emerald-100" : completed ? "text-cyan-50/70" : "text-cyan-50/40"}`} style={{ left: nodeCenter(index), top: labelTop }} data-testid={`era-rail-label-${era.id}`}>
               {shortEraName(era)}
             </div>
           </Fragment>
@@ -1603,23 +1596,27 @@ export function CivilizationEraCarousel({
       })}
 
       {hoveredEra ? (
-        <div data-testid="era-hover-tooltip" className="pointer-events-none absolute z-40 w-[178px] rounded-sm border border-cyan-100/18 bg-slate-950/88 px-3 py-2 text-center shadow-[0_0_22px_rgba(45,212,255,0.14)] backdrop-blur-sm" style={{ left: panelLeft(hoveredIndex, 178), top: -46 }}>
-          <div className="text-[9px] font-black uppercase leading-none text-emerald-200/82">Era {hoveredEra.index}</div>
-          <div className="mt-1 truncate text-[12px] font-black uppercase leading-none text-white">{shortEraName(hoveredEra)}</div>
-          <div className="mt-1 truncate text-[9px] font-bold uppercase leading-none text-cyan-50/58">{eraUnlockSummary(hoveredEra, orderedEras, hoveredIndex)}</div>
-        </div>
-      ) : null}
-
-      {selectedEra ? (
-        <div data-testid="era-floating-preview-panel" className="absolute z-30 w-[220px] rounded-sm border border-emerald-100/22 bg-slate-950/86 px-3 py-2 text-center shadow-[0_0_24px_rgba(52,245,106,0.14)] backdrop-blur-sm" style={{ left: panelLeft(selectedIndex, 220), top: -78 }}>
-          <div className="text-[9px] font-black uppercase leading-none text-emerald-200/82">Era {selectedEra.index} Preview</div>
-          <div className="mt-1 truncate text-[15px] font-black uppercase leading-none text-white">{shortEraName(selectedEra)}</div>
-          <div className="mt-1 truncate text-[9px] font-bold uppercase leading-none text-cyan-50/58">{eraUnlockSummary(selectedEra, orderedEras, selectedIndex)}</div>
-          {fullTimelineEnabled ? (
-            <a href="/civilization" className="mt-2 inline-flex h-5 items-center rounded-full border border-cyan-100/16 bg-black/28 px-2 text-[8px] font-black uppercase leading-none text-cyan-100/58 transition hover:bg-cyan-300/10">
-              Timeline
-            </a>
-          ) : null}
+        <div data-testid="era-hover-tooltip" className="era-hover-hud pointer-events-none absolute z-40 w-[248px] overflow-hidden rounded-sm border border-cyan-100/34 bg-[linear-gradient(135deg,rgba(2,12,24,0.96),rgba(4,30,44,0.9)_58%,rgba(4,12,24,0.98))] px-4 py-3 text-left shadow-[0_0_28px_rgba(45,212,255,0.26),inset_0_0_24px_rgba(125,249,255,0.08)] backdrop-blur-md before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[linear-gradient(90deg,transparent,rgba(125,249,255,0.9),transparent)] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(180deg,rgba(125,249,255,0.07)_0,rgba(125,249,255,0.07)_1px,transparent_1px,transparent_8px)] after:opacity-25" style={{ left: panelLeft(hoveredIndex, 248), top: -88 }}>
+          <div className="relative z-10 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[9px] font-black uppercase leading-none tracking-[0.18em] text-cyan-200/72">Era {hoveredEra.index}</div>
+              <div className="mt-1 truncate text-[18px] font-black uppercase leading-none text-white [text-shadow:0_0_14px_rgba(125,249,255,0.34)]">{shortEraName(hoveredEra)}</div>
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center border border-emerald-200/36 bg-emerald-300/12 text-[16px] font-black text-emerald-100 shadow-[0_0_16px_rgba(52,245,106,0.22)]">{hoveredEra.index}</div>
+          </div>
+          <div className="relative z-10 mt-3 grid grid-cols-[1fr_auto] items-center gap-2 border-y border-cyan-100/12 py-2">
+            <span className="text-[8px] font-black uppercase tracking-[0.16em] text-cyan-100/54">Unlock Requirements</span>
+            <span className="max-w-[124px] truncate text-right text-[10px] font-black uppercase text-cyan-50/82">{eraUnlockSummary(hoveredEra, orderedEras, hoveredIndex)}</span>
+          </div>
+          <div className="relative z-10 mt-2">
+            <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-[0.16em] text-cyan-100/50">
+              <span>Progress Channel</span>
+              <span>{hoveredIndex < activeIndex ? "Complete" : hoveredIndex === activeIndex ? `${Math.round(progressPercent)}%` : "Locked"}</span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-cyan-950/80">
+              <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(52,245,106,0.95),rgba(125,249,255,0.86))] shadow-[0_0_12px_rgba(52,245,106,0.52)]" style={{ width: `${hoveredIndex < activeIndex ? 100 : hoveredIndex === activeIndex ? Math.max(8, Math.min(100, progressPercent)) : 8}%` }} />
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

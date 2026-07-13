@@ -44,7 +44,7 @@ describe("dashboard era rail", () => {
     expect(screen.queryByTestId("era-preview-control-row")).toBeNull();
   });
 
-  it("emphasizes the current era about twenty percent larger with a progress ring", async () => {
+  it("emphasizes the current era with larger hexes, larger numbers, and a progress ring", async () => {
     const data = await bundledRuntime();
     renderEraRail(data, { activeEraId: "renaissance", progressPercent: 42 });
 
@@ -54,9 +54,12 @@ describe("dashboard era rail", () => {
     const adjacentRect = rectFrom(adjacent);
 
     expect(current).toHaveAttribute("data-era-state", "current");
-    expect(currentRect.width / adjacentRect.width).toBeCloseTo(46 / 38, 2);
+    expect(currentRect.width / adjacentRect.width).toBeCloseTo(64 / 50, 2);
+    expect(currentRect.width).toBe(64);
+    expect(adjacentRect.width).toBe(50);
     expect(current).toContainElement(screen.getByTestId("era-node-progress-ring"));
     expect(current.querySelector(".genesis-era-current-card")).toBeTruthy();
+    expect(current.querySelector("span")?.className).toContain("text-[1.65rem]");
   });
 
   it("marks completed and future eras with distinct states", async () => {
@@ -77,26 +80,28 @@ describe("dashboard era rail", () => {
     expect(screen.getByTestId("era-rail-connector-sweep")).toHaveClass("genesis-era-sweep");
   });
 
-  it("opens only a floating preview panel when an era is clicked", async () => {
+  it("does not open a click preview panel when an era is clicked", async () => {
     const data = await bundledRuntime();
     renderEraRail(data, { activeEraId: "renaissance" });
 
     fireEvent.click(screen.getByTestId("era-rail-node-industrial"));
 
-    expect(screen.getByTestId("era-floating-preview-panel")).toHaveTextContent("Era 5 Preview");
-    expect(screen.getByTestId("era-floating-preview-panel")).toHaveTextContent("Industrial");
+    expect(screen.queryByTestId("era-floating-preview-panel")).toBeNull();
     expect(screen.queryByText(/preview only/i)).toBeNull();
   });
 
-  it("shows era, name, and unlock requirements on hover", async () => {
+  it("shows a high-tech hover HUD with era, name, unlock requirements, and progress", async () => {
     const data = await bundledRuntime();
     renderEraRail(data, { activeEraId: "renaissance" });
 
     fireEvent.mouseEnter(screen.getByTestId("era-rail-node-industrial"));
 
     const tooltip = screen.getByTestId("era-hover-tooltip");
+    expect(tooltip).toHaveClass("era-hover-hud");
     expect(tooltip).toHaveTextContent("Era 5");
     expect(tooltip).toHaveTextContent("Industrial");
+    expect(tooltip).toHaveTextContent("Unlock Requirements");
+    expect(tooltip).toHaveTextContent("Progress Channel");
     expect(tooltip.textContent).toMatch(/Complete|Requires|Starting/);
   });
 });
