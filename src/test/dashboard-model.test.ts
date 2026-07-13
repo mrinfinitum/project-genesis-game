@@ -40,10 +40,10 @@ function runtimeState(runtime: GameRuntimeData, configuredMode: RuntimeContentSt
 }
 
 describe("dashboard canonical model", () => {
-  it("loads contentVersion 8 and resolves the canonical nine-era journey", async () => {
+  it("loads contentVersion 10 and resolves the canonical nine-era journey", async () => {
     const runtime = await bundledRuntime();
 
-    expect(runtime.metadata.contentVersion).toBe(8);
+    expect(runtime.metadata.contentVersion).toBe(10);
     expect(runtime.eras).toHaveLength(9);
 
     expect(getCurrentJourney(runtime.eras, "survival")).toMatchObject({
@@ -69,6 +69,7 @@ describe("dashboard canonical model", () => {
 
     const expectedHudIds = [
       "ECON-LABOR",
+      "ECON-CREDITS",
       "ECON-POPULATION",
       "ECON-RESEARCH",
       "ECON-PREMIUM-CRYSTALS"
@@ -76,13 +77,25 @@ describe("dashboard canonical model", () => {
 
     expect(getDashboardHudResourceConfig(runtime, "survival").map((resource) => resource.id)).toEqual(expectedHudIds);
     expect(model.hudResources.map((resource) => resource.resourceId)).toEqual(expectedHudIds);
+    expect(model.hudResources.map((resource) => resource.iconKey)).toEqual([
+      "economy_labor",
+      "economy_credits",
+      "economy_population",
+      "economy_research",
+      "economy_premium_crystals"
+    ]);
     expect(model.hudResources[0]).toMatchObject({
       resourceId: "ECON-LABOR",
       label: "Labor",
       amount: 0,
       provenance: "canonical-definition+default-zero"
     });
-    expect(model.hudResources.some((resource) => resource.resourceId === "ECON-CREDITS")).toBe(false);
+    expect(model.hudResources[1]).toMatchObject({
+      resourceId: "ECON-CREDITS",
+      label: "Credits",
+      amount: 0,
+      provenance: "canonical-definition+default-zero"
+    });
     expect(runtime.resources.some((resource) => expectedHudIds.includes(resource.id))).toBe(false);
     expect(model.economyWarnings).toEqual([]);
   });

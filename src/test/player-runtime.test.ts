@@ -72,8 +72,7 @@ describe("canonical player runtime", () => {
       }
     });
     expect(getStartingEraId(runtime)).toBe("survival");
-    expect(getPrimaryHudResourceIds(runtime, "survival")).toEqual([LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
-    expect(getPrimaryHudResourceIds(runtime, "survival")).not.toContain(CREDITS_ECONOMY_ID);
+    expect(getPrimaryHudResourceIds(runtime, "survival")).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
     expect(Object.keys(state.economy.balances).sort()).toEqual(getEconomyResourceIds(runtime).sort());
     expect(state.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
     expect(state.economy.rates[LABOR_ECONOMY_ID]).toBe(1);
@@ -87,18 +86,24 @@ describe("canonical player runtime", () => {
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
   });
 
-  it("verifies the Studio v8 Survival economy contract", async () => {
+  it("verifies the Studio v10 fixed Survival economy contract", async () => {
     const runtime = await bundledRuntime();
     const laborDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === LABOR_ECONOMY_ID) as Record<string, unknown> | undefined;
+    const creditsDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === CREDITS_ECONOMY_ID) as Record<string, unknown> | undefined;
+    const populationDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === POPULATION_ECONOMY_ID) as Record<string, unknown> | undefined;
     const survivalHudIds = getPrimaryHudResourceIds(runtime, "survival");
+    const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
-    expect(runtime.metadata.contentVersion).toBe(8);
-    expect(runtime.metadata.checksum).toBe("61611149e51645ea566e6779f9eab2d2ce3ebc48edc774baac63fcdc59426566");
+    expect(runtime.metadata.contentVersion).toBe(10);
+    expect(runtime.metadata.checksum).toBe("869b72f7e627beedffb856c55191ee695d7068e8d9b13b110396c660bf097b8d");
     expect(resolvePrimaryEconomyIdForCurrentEra(runtime, "survival")).toBe(LABOR_ECONOMY_ID);
-    expect(survivalHudIds).toEqual([LABOR_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
-    expect(survivalHudIds).not.toContain(CREDITS_ECONOMY_ID);
+    expect(survivalHudIds).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
+    expect(survivalIconKeys).toEqual(["economy_labor", "economy_credits", "economy_population", "economy_research", "economy_premium_crystals"]);
     expect(laborDefinition?.startingRate).toBe(1);
     expect(laborDefinition?.manualClickTarget).toBe(true);
+    expect(creditsDefinition?.startingAmount).toBe(0);
+    expect(creditsDefinition?.startingRate).toBe(0);
+    expect(populationDefinition?.startingAmount).toBe(5);
   });
 
   it("persists explicit saves, autosaves, resets, exports, and imports through the local service", async () => {
@@ -228,19 +233,19 @@ describe("canonical player runtime", () => {
     expect(migrated.unresolved.migrationNotes).toContain("Migrated untouched starter ECON-POPULATION from 125 to 5.");
   });
 
-  it("migrates clearly mistaken legacy Survival Credits click buckets into Labor", async () => {
+  it("preserves visible v10 Credits balances when migrating older Survival saves", async () => {
     const runtime = await bundledRuntime();
-    const mistaken = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "credits-click-bucket" });
+    const oldCredits = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "credits-preserved" });
     const legacy = {
-      ...mistaken,
+      ...oldCredits,
       saveVersion: 5,
-      contentVersion: 8,
+      contentVersion: 9,
       economy: {
-        ...mistaken.economy,
-        balances: { ...mistaken.economy.balances, [CREDITS_ECONOMY_ID]: 75, [LABOR_ECONOMY_ID]: 0 }
+        ...oldCredits.economy,
+        balances: { ...oldCredits.economy.balances, [CREDITS_ECONOMY_ID]: 75, [LABOR_ECONOMY_ID]: 0 }
       },
       production: {
-        ...mistaken.production,
+        ...oldCredits.production,
         totalManualClicks: 75,
         lifetimeLaborGenerated: 50
       }
@@ -248,24 +253,24 @@ describe("canonical player runtime", () => {
 
     const migrated = migratePlayerRuntimeState(legacy, runtime);
 
-    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(50);
-    expect(migrated.economy.balances[CREDITS_ECONOMY_ID]).toBe(25);
-    expect(migrated.unresolved.migrationNotes).toContain(`Migrated 50 mistaken Survival click ${CREDITS_ECONOMY_ID} into ${LABOR_ECONOMY_ID}.`);
+    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
+    expect(migrated.economy.balances[CREDITS_ECONOMY_ID]).toBe(75);
+    expect(migrated.unresolved.migrationNotes).not.toContain(`Migrated 50 mistaken Survival click ${CREDITS_ECONOMY_ID} into ${LABOR_ECONOMY_ID}.`);
   });
 
-  it("repairs v6 Survival saves with hidden passive Credits into Labor", async () => {
+  it("preserves v6 Survival Credits now that Credits are a canonical fixed HUD slot", async () => {
     const runtime = await bundledRuntime();
-    const hiddenCredits = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "hidden-passive-credits" });
+    const visibleCredits = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "visible-credits" });
     const legacy = {
-      ...hiddenCredits,
+      ...visibleCredits,
       saveVersion: 6,
-      contentVersion: 8,
+      contentVersion: 9,
       economy: {
-        ...hiddenCredits.economy,
-        balances: { ...hiddenCredits.economy.balances, [CREDITS_ECONOMY_ID]: 12, [LABOR_ECONOMY_ID]: 0 }
+        ...visibleCredits.economy,
+        balances: { ...visibleCredits.economy.balances, [CREDITS_ECONOMY_ID]: 12, [LABOR_ECONOMY_ID]: 0 }
       },
       production: {
-        ...hiddenCredits.production,
+        ...visibleCredits.production,
         totalManualClicks: 0,
         totalAutoClicks: 0,
         lifetimeLaborGenerated: 0,
@@ -276,9 +281,9 @@ describe("canonical player runtime", () => {
     const migrated = migratePlayerRuntimeState(legacy, runtime);
 
     expect(migrated.saveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
-    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(12);
-    expect(migrated.economy.balances[CREDITS_ECONOMY_ID]).toBe(0);
-    expect(migrated.unresolved.migrationNotes).toContain(`Repaired hidden Survival ${CREDITS_ECONOMY_ID} passive balance into ${LABOR_ECONOMY_ID}.`);
+    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
+    expect(migrated.economy.balances[CREDITS_ECONOMY_ID]).toBe(12);
+    expect(migrated.unresolved.migrationNotes).not.toContain(`Repaired hidden Survival ${CREDITS_ECONOMY_ID} passive balance into ${LABOR_ECONOMY_ID}.`);
   });
 
   it("preserves established Population 125 saves", async () => {
@@ -404,7 +409,7 @@ describe("canonical player runtime", () => {
     const clicked = performManualLaborClick(runtime, createNewPlayerRuntimeState(runtime, { now: fixedDate() }), { now: fixedDate() });
 
     expect(selectHudEconomySlots(runtime, "survival").map((slot) => slot.id)).toEqual(getPrimaryHudResourceIds(runtime, "survival"));
-    expect(selectHudEconomySlots(runtime, "survival").map((slot) => slot.id)).not.toContain(CREDITS_ECONOMY_ID);
+    expect(selectHudEconomySlots(runtime, "survival").map((slot) => slot.id)).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
     expect(selectEconomyBalance(clicked, LABOR_ECONOMY_ID)).toBe(1);
     expect(selectEconomyRate(clicked, CREDITS_ECONOMY_ID)).toBe(0);
     expect(selectClickPower(clicked)).toBe(1);

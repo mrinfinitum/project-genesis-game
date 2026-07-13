@@ -132,6 +132,17 @@ function findAsset(assets: AssetDefinition[], key?: string) {
   return assets.find((asset) => asset.artKey === key || asset.id === key || asset.name === key);
 }
 
+const canonicalEconomyIconAssetAliases: Record<string, string> = {
+  economy_credits: "credits_icon",
+  economy_population: "population_icon",
+  economy_research: "research_icon",
+  economy_premium_crystals: "civilization_points_icon"
+};
+
+function findCanonicalIconAsset(assets: AssetDefinition[], iconKey?: string, artKey?: string) {
+  return findAsset(assets, iconKey) ?? findAsset(assets, iconKey ? canonicalEconomyIconAssetAliases[iconKey] : undefined) ?? findAsset(assets, artKey);
+}
+
 function panelClasses(extra = "") {
   return `rounded-[var(--genesis-radius-panel)] border border-[var(--genesis-panel-line)] bg-[image:var(--genesis-panel-gradient)] shadow-[var(--genesis-shadow-panel)] ring-1 ring-white/[0.03] ${extra}`;
 }
@@ -671,16 +682,6 @@ const bevel = "[clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-1
 type DashboardArtMap = Record<DashboardArtKey, DashboardArtResolution>;
 
 const topbarIconKeys: DashboardArtKey[] = ["topbar_calendar_icon", "topbar_trophy_icon", "topbar_settings_icon"];
-const hudIconKeys: DashboardArtKey[] = ["hud_credits_icon", "hud_population_icon", "hud_civilization_energy_icon", "hud_research_icon", "hud_civilization_points_icon"];
-const economyHudIconMap: Record<string, DashboardArtKey> = {
-  "ECON-CREDITS": "hud_credits_icon",
-  "ECON-POPULATION": "hud_population_icon",
-  "ECON-LABOR": "hud_civilization_energy_icon",
-  "ECON-CIVILIZATION-ENERGY": "hud_civilization_energy_icon",
-  "ECON-RESEARCH": "hud_research_icon",
-  "ECON-PREMIUM-CRYSTALS": "hud_civilization_points_icon",
-  "ECON-CIVILIZATION-POINTS": "hud_civilization_points_icon"
-};
 const menuIconKeys: DashboardArtKey[] = [
   "navigation_overview_icon",
   "navigation_buildings_icon",
@@ -1108,11 +1109,7 @@ function hudIconForResource(resource: { category: string; label: string }) {
   return Hexagon;
 }
 
-function hudArtForResource(resource: DashboardModel["hudResources"][number], art: DashboardArtMap, fallbackIndex: number) {
-  return art[economyHudIconMap[resource.resourceId] ?? hudIconKeys[fallbackIndex]];
-}
-
-function RobloxTopHud({ model, art, showDevWarnings = false }: { model: DashboardModel; art: DashboardArtMap; showDevWarnings?: boolean }) {
+function RobloxTopHud({ model, assets, art, showDevWarnings = false }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean }) {
   const resourceSlots = [
     { x: 515, w: 230, iconX: 27, valueX: 94, textW: 132 },
     { x: 755, w: 230, iconX: 21, valueX: 88, textW: 132 },
@@ -1150,14 +1147,22 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
       {hudResources.map((resource, index) => {
         const slot = resourceSlots[index];
           const Icon = hudIconForResource(resource);
-          const iconArt = hudArtForResource(resource, art, index);
+          const iconArt = resolveRuntimeAsset(
+            {
+              name: resource.label,
+              displayName: resource.label,
+              iconKey: resource.iconKey,
+              artKey: resource.artKey
+            },
+            findCanonicalIconAsset(assets, resource.iconKey, resource.artKey)
+          );
           return (
           <div key={resource.resourceId} className="absolute top-0 h-full min-w-0" style={{ left: `${(slot.x / 1920) * 100}%`, width: `${(slot.w / 1920) * 100}%` }}>
-            {iconArt && dashboardImagePath(iconArt) ? (
-              <img src={dashboardImagePath(iconArt)} alt="" data-testid={`top-hud-economy-icon-${resource.resourceId}`} data-art-key={iconArt.key} className="absolute h-[58px] w-[58px] object-contain" style={{ left: slot.iconX, top: 23 }} />
+            {iconArt.path ? (
+              <img src={iconArt.path} alt="" data-testid={`top-hud-economy-icon-${resource.resourceId}`} data-icon-key={resource.iconKey} data-art-kind={iconArt.kind} className="absolute h-[58px] w-[58px] object-contain" style={{ left: slot.iconX, top: 23 }} />
             ) : (
-              <div className="absolute flex h-[58px] w-[58px] items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-cyan-100" style={{ left: slot.iconX, top: 23 }}>
-                <Icon className="h-[1.45rem] w-[1.45rem]" />
+              <div data-testid={`top-hud-economy-icon-${resource.resourceId}`} data-icon-key={resource.iconKey} data-art-kind={iconArt.kind} className={`absolute flex h-[58px] w-[58px] items-center justify-center rounded-full border border-cyan-100/24 bg-gradient-to-br ${iconArt.className} text-[0.7rem] font-black text-cyan-50/80 shadow-[inset_0_0_18px_rgba(255,255,255,0.08)]`} style={{ left: slot.iconX, top: 23 }}>
+                {iconArt.artworkNeeded ? iconArt.label : <Icon className="h-[1.45rem] w-[1.45rem]" />}
               </div>
             )}
             <div className="absolute truncate text-[2.1rem] font-semibold leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.25)]" style={{ left: slot.valueX, top: 17, width: slot.textW }}>{compactNumber(resource.amount)}</div>
@@ -2571,7 +2576,7 @@ export function GameShell({
       <GameViewportScaler explicitScale={frameScale} embedded={embedded} assetWarnings={scaleAssetWarnings}>
           {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud)}>
-            <RobloxTopHud model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} />
+            <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} />
           </div>
           {dashboardDevToolsEnabled ? <RuntimeSourceBadge model={model} /> : null}
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar)}>

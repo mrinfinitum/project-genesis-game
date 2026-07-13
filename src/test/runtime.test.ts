@@ -30,7 +30,7 @@ describe("canonical runtime", () => {
 
     expect(validation.ok).toBe(true);
     expect(runtime.metadata.schemaVersion).toBe("game-runtime-v1");
-    expect(runtime.metadata.contentVersion).toBe(8);
+    expect(runtime.metadata.contentVersion).toBe(10);
     expect(runtime.eras).toHaveLength(9);
     expect(runtime.eras.map((era) => era.id)).toEqual([
       "survival",
@@ -83,11 +83,11 @@ describe("canonical runtime", () => {
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("cache");
-    expect(state.contentVersion).toBe(9);
+    expect(state.contentVersion).toBe(11);
     expect(state.cacheStatus).toBe("valid");
   });
 
-  it("clears a stale v4 cache instead of overriding bundled v8", async () => {
+  it("clears a stale v4 cache instead of overriding bundled v10", async () => {
     const cache = new MemoryRuntimeContentCache();
     const stale = cloneRuntime(await bundledRuntime());
     stale.metadata.contentVersion = 4;
@@ -97,7 +97,7 @@ describe("canonical runtime", () => {
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("bundled-snapshot");
-    expect(state.contentVersion).toBe(8);
+    expect(state.contentVersion).toBe(10);
     expect(state.cacheStatus).toBe("cleared");
     expect(await cache.read()).toBeNull();
   });
@@ -112,7 +112,7 @@ describe("canonical runtime", () => {
     const state = await manager.loadStartup();
 
     expect(state.activeSource).toBe("bundled-snapshot");
-    expect(state.contentVersion).toBe(8);
+    expect(state.contentVersion).toBe(10);
     expect(state.eras[3].id).toBe("renaissance");
     expect(await cache.read()).toBeNull();
   });

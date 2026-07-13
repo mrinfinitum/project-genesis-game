@@ -215,9 +215,11 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     const currentLabor = next.economy.balances[LABOR_ECONOMY_ID] ?? seedLabor;
     const generatedLaborHistory = Math.max(0, next.production.lifetimeLaborGenerated ?? 0, next.production.totalAutoLaborGenerated ?? 0);
     const creditDelta = currentCredits - seedCredits;
+    const survivalHudIds = new Set(getPrimaryHudResourceIds(content, "survival"));
     const mistakenCreditsClickBucket =
       primaryEconomyId === LABOR_ECONOMY_ID &&
       next.civilization.currentEraId === "survival" &&
+      !survivalHudIds.has(CREDITS_ECONOMY_ID) &&
       currentLabor <= seedLabor &&
       creditDelta > 0 &&
       generatedLaborHistory > 0;
