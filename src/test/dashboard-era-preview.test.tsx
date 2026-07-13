@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CivilizationEraCarousel } from "@/components/game-ui/genesis-ui";
 import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
@@ -9,7 +9,7 @@ async function bundledRuntime() {
   return runtime as GameRuntimeData;
 }
 
-function renderEraPreview(data: GameRuntimeData, options: { activeEraId?: string; previewEraId?: string; progressPercent?: number } = {}) {
+function renderEraRail(data: GameRuntimeData, options: { activeEraId?: string; previewEraId?: string; progressPercent?: number } = {}) {
   return render(
     <CivilizationEraCarousel
       eras={data.eras}
@@ -30,72 +30,73 @@ function rectFrom(element: HTMLElement) {
   return { x, y, width, height, right: x + width, bottom: y + height };
 }
 
-function overlaps(a: ReturnType<typeof rectFrom>, b: ReturnType<typeof rectFrom>) {
-  return a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y;
-}
-
 afterEach(() => cleanup());
 
-describe("dashboard era preview strip", () => {
-  it("keeps default state minimal with no preview-only controls or duplicate era labels", async () => {
+describe("dashboard era rail", () => {
+  it("renders all nine compact era positions without carousel controls", async () => {
     const data = await bundledRuntime();
-    renderEraPreview(data, { activeEraId: "renaissance", progressPercent: 42 });
+    renderEraRail(data, { activeEraId: "renaissance", progressPercent: 42 });
 
-    expect(screen.getByTestId("dashboard-era-preview-strip")).toHaveAttribute("data-previewing", "false");
-    expect(screen.queryByTestId("era-preview-control-row")).toBeNull();
+    expect(screen.getByTestId("dashboard-era-rail")).toHaveAttribute("data-era-count", "9");
+    expect(screen.getAllByTestId(/^era-rail-node-/)).toHaveLength(9);
+    expect(screen.getAllByTestId(/^era-rail-label-/)).toHaveLength(9);
     expect(screen.queryByText(/return to current/i)).toBeNull();
+    expect(screen.queryByTestId("era-preview-control-row")).toBeNull();
+  });
+
+  it("emphasizes the current era about twenty percent larger with a progress ring", async () => {
+    const data = await bundledRuntime();
+    renderEraRail(data, { activeEraId: "renaissance", progressPercent: 42 });
+
+    const current = screen.getByTestId("era-rail-node-renaissance");
+    const adjacent = screen.getByTestId("era-rail-node-medieval");
+    const currentRect = rectFrom(current);
+    const adjacentRect = rectFrom(adjacent);
+
+    expect(current).toHaveAttribute("data-era-state", "current");
+    expect(currentRect.width / adjacentRect.width).toBeCloseTo(46 / 38, 2);
+    expect(current).toContainElement(screen.getByTestId("era-node-progress-ring"));
+    expect(current.querySelector(".genesis-era-current-card")).toBeTruthy();
+  });
+
+  it("marks completed and future eras with distinct states", async () => {
+    const data = await bundledRuntime();
+    renderEraRail(data, { activeEraId: "renaissance" });
+
+    expect(screen.getByTestId("era-rail-node-medieval")).toHaveAttribute("data-era-state", "completed");
+    expect(screen.getByTestId("era-rail-node-industrial")).toHaveAttribute("data-era-state", "locked");
+    expect(screen.getByTestId("era-rail-node-industrial")).toContainElement(screen.getByTestId("era-lock-inside-industrial"));
+  });
+
+  it("uses a premium animated progression connector instead of a static line", async () => {
+    const data = await bundledRuntime();
+    renderEraRail(data, { activeEraId: "renaissance", progressPercent: 42 });
+
+    expect(screen.getByTestId("era-rail-connector")).toBeInTheDocument();
+    expect(screen.getByTestId("era-rail-connector-completed")).toBeInTheDocument();
+    expect(screen.getByTestId("era-rail-connector-sweep")).toHaveClass("genesis-era-sweep");
+  });
+
+  it("opens only a floating preview panel when an era is clicked", async () => {
+    const data = await bundledRuntime();
+    renderEraRail(data, { activeEraId: "renaissance" });
+
+    fireEvent.click(screen.getByTestId("era-rail-node-industrial"));
+
+    expect(screen.getByTestId("era-floating-preview-panel")).toHaveTextContent("Era 5 Preview");
+    expect(screen.getByTestId("era-floating-preview-panel")).toHaveTextContent("Industrial");
     expect(screen.queryByText(/preview only/i)).toBeNull();
-    expect(screen.queryByText(/^locked$/i)).toBeNull();
-    expect(screen.getAllByText(/^renaissance$/i)).toHaveLength(1);
-    expect(screen.getByTestId("era-center-meta")).toHaveTextContent("42%");
   });
 
-  it("uses one compact preview badge and one return action while previewing", async () => {
+  it("shows era, name, and unlock requirements on hover", async () => {
     const data = await bundledRuntime();
-    renderEraPreview(data, { activeEraId: "renaissance", previewEraId: "industrial", progressPercent: 52 });
+    renderEraRail(data, { activeEraId: "renaissance" });
 
-    expect(screen.getByTestId("dashboard-era-preview-strip")).toHaveAttribute("data-previewing", "true");
-    expect(screen.getByTestId("era-preview-control-row")).toBeInTheDocument();
-    expect(screen.getAllByText(/^preview$/i)).toHaveLength(1);
-    expect(screen.getByText(/return to current/i)).toBeInTheDocument();
-    expect(screen.queryByText(/preview only/i)).toBeNull();
-    expect(screen.getByTestId("era-center-label")).toHaveTextContent("Industrial");
-    expect(screen.getByTestId("era-center-meta")).toHaveTextContent("Era 5");
-  });
+    fireEvent.mouseEnter(screen.getByTestId("era-rail-node-industrial"));
 
-  it("renders locked future state inside the adjacent node instead of floating text", async () => {
-    const data = await bundledRuntime();
-    renderEraPreview(data, { activeEraId: "renaissance" });
-
-    const nextNode = screen.getByTestId("era-node-next");
-    const lock = screen.getByTestId("era-lock-inside-industrial");
-
-    expect(nextNode).toHaveAttribute("data-era-state", "locked");
-    expect(nextNode).toContainElement(lock);
-    expect(screen.queryByText(/^locked$/i)).toBeNull();
-  });
-
-  it("renders the nine-step track as a separate row with one current step", async () => {
-    const data = await bundledRuntime();
-    renderEraPreview(data, { activeEraId: "renaissance" });
-
-    expect(screen.getByTestId("era-progress-track")).toBeInTheDocument();
-    expect(screen.getAllByTestId("era-track-step-current")).toHaveLength(1);
-    expect(screen.getByTestId("era-progress-track")).not.toContainElement(screen.getByTestId("era-node-current"));
-  });
-
-  it("keeps preview controls outside the node cluster by measured bounds", async () => {
-    const data = await bundledRuntime();
-    renderEraPreview(data, { activeEraId: "renaissance", previewEraId: "industrial" });
-
-    const controls = rectFrom(screen.getByTestId("era-preview-control-row"));
-    const centerNode = rectFrom(screen.getByTestId("era-node-current"));
-    const previousNode = rectFrom(screen.getByTestId("era-node-previous"));
-    const nextNode = rectFrom(screen.getByTestId("era-node-next"));
-
-    expect(overlaps(controls, centerNode)).toBe(false);
-    expect(overlaps(controls, previousNode)).toBe(false);
-    expect(overlaps(controls, nextNode)).toBe(false);
-    expect(centerNode.y - controls.bottom).toBeGreaterThanOrEqual(16);
+    const tooltip = screen.getByTestId("era-hover-tooltip");
+    expect(tooltip).toHaveTextContent("Era 5");
+    expect(tooltip).toHaveTextContent("Industrial");
+    expect(tooltip.textContent).toMatch(/Complete|Requires|Starting/);
   });
 });

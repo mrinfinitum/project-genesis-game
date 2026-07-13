@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { AutoClickPanel, GameShell, RobloxNavigation } from "@/components/game-ui/genesis-ui";
+import { AutoClickPanel, ClickPowerPanel, GameShell, RobloxNavigation } from "@/components/game-ui/genesis-ui";
 import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT } from "@/lib/dashboard/dashboard-layout";
@@ -178,9 +178,24 @@ describe("Roblox left column geometry", () => {
     render(<GameShell data={data} />);
 
     expect(screen.getByTestId("roblox-nav-label-dashboard")).toHaveClass("text-[15px]");
-    expect(screen.getByText("Click Power")).toHaveClass("text-[18px]");
-    expect(screen.getByText("Auto Click")).toHaveClass("text-[18px]");
-    expect(screen.getByText("Critical Chance")).toHaveClass("text-[12px]");
+    expect(screen.getByText("Click Power")).toHaveClass("text-[28px]");
+    expect(screen.getByText("Auto Click")).toHaveClass("text-[28px]");
+    expect(screen.getByText("Critical Chance")).toHaveClass("text-[16px]");
+  });
+
+  it("keeps Click Power controls inside the canonical panel bounds", async () => {
+    const data = await bundledRuntime();
+    const model = createDashboardModel(data, {
+      activeEraId: data.eras[0]?.id ?? "survival",
+      activeCategoryId: data.upgradeCategories[0]?.id ?? "workforce"
+    });
+
+    render(<ClickPowerPanel data={data} model={model} art={createDashboardArtMap(data.assets)} />);
+
+    expectInside("0,0,350,320", screen.getByTestId("click-power-ring").getAttribute("data-rojo-rect") ?? "");
+    expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "34,88,126,126");
+    expect(screen.getByTestId("click-power-stat-block")).toHaveAttribute("data-rojo-rect", "198,76,118,145");
+    expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "39,250,272,45");
   });
 
   it("keeps Auto Click controls inside the canonical panel bounds", async () => {
@@ -197,6 +212,18 @@ describe("Roblox left column geometry", () => {
     expectInside("0,0,350,270", screen.getByTestId("auto-click-ring").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-stat-block").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-button").getAttribute("data-rojo-rect") ?? "");
+    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "45,83,116,116");
+    expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "200,74,116,112");
+    expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "43,208,272,45");
+  });
+
+  it("keeps Critical stats spacing aligned to the reference column", async () => {
+    render(<GameShell data={await bundledRuntime()} />);
+
+    expectInside("0,0,350,185", screen.getByTestId("critical-star-icon").getAttribute("data-rojo-rect") ?? "");
+    expectInside("0,0,350,185", screen.getByTestId("critical-stats-block").getAttribute("data-rojo-rect") ?? "");
+    expect(screen.getByTestId("critical-star-icon")).toHaveAttribute("data-rojo-rect", "47,34,86,86");
+    expect(screen.getByTestId("critical-stats-block")).toHaveAttribute("data-rojo-rect", "150,31,172,126");
   });
 
   it("does not introduce direct Roblox asset paths in JSX", () => {
