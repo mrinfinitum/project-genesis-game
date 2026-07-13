@@ -221,8 +221,18 @@ const boostFixtureSlots: BoostTraySlot[] = [
   }
 ];
 
-function BoostTrayStoryFrame({ children, compact = false }: { children: ReactNode; compact?: boolean }) {
-  const scale = compact ? 0.52 : 0.72;
+function BoostTrayStoryFrame({
+  children,
+  compact = false,
+  launcherHidden = false,
+  scaleOverride
+}: {
+  children: ReactNode;
+  compact?: boolean;
+  launcherHidden?: boolean;
+  scaleOverride?: number;
+}) {
+  const scale = scaleOverride ?? (compact ? 0.52 : 0.72);
   return (
     <StoryCanvas>
       <div className="h-[720px] w-full overflow-auto bg-slate-950 p-4">
@@ -231,7 +241,7 @@ function BoostTrayStoryFrame({ children, compact = false }: { children: ReactNod
           style={{ width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: "top left" }}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.12),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)]" />
-          <button className="absolute left-[866px] top-[1010px] h-[58px] w-[230px] rounded-md border border-cyan-100/30 bg-black/50 text-xl font-black uppercase text-white" type="button">
+          <button className={`absolute left-[866px] top-[1010px] h-[58px] w-[230px] rounded-md border border-cyan-100/30 bg-black/50 text-xl font-black uppercase text-white transition duration-[220ms] ${launcherHidden ? "pointer-events-none opacity-0" : ""}`} type="button" aria-hidden={launcherHidden}>
             Boosts <span className="text-cyan-100">0</span>
           </button>
           {children}
@@ -1058,12 +1068,24 @@ export const RobloxParityMainDashboard: Story = {
 };
 
 export const BoostsTrayClosed: Story = {
-  render: () => <BoostTrayStoryFrame>{null}</BoostTrayStoryFrame>
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray open={false} onClose={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayOpeningTransition: Story = {
+  render: () => (
+    <BoostTrayStoryFrame launcherHidden>
+      <BoostsTray open slots={boostFixtureSlots.slice(0, 3)} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
 };
 
 export const BoostsTrayOpenNoBoosts: Story = {
   render: () => (
-    <BoostTrayStoryFrame>
+    <BoostTrayStoryFrame launcherHidden>
       <BoostsTray open onClose={() => undefined} />
     </BoostTrayStoryFrame>
   )
@@ -1071,7 +1093,7 @@ export const BoostsTrayOpenNoBoosts: Story = {
 
 export const BoostsTrayAvailableBoosts: Story = {
   render: () => (
-    <BoostTrayStoryFrame>
+    <BoostTrayStoryFrame launcherHidden>
       <BoostsTray open slots={boostFixtureSlots.filter((slot) => slot.state === "available")} onClose={() => undefined} onActivate={() => undefined} />
     </BoostTrayStoryFrame>
   )
@@ -1079,7 +1101,7 @@ export const BoostsTrayAvailableBoosts: Story = {
 
 export const BoostsTrayOneActiveBoost: Story = {
   render: () => (
-    <BoostTrayStoryFrame>
+    <BoostTrayStoryFrame launcherHidden>
       <BoostsTray
         open
         activeBoosts={[{
@@ -1098,7 +1120,7 @@ export const BoostsTrayOneActiveBoost: Story = {
 
 export const BoostsTrayLockedBoosts: Story = {
   render: () => (
-    <BoostTrayStoryFrame>
+    <BoostTrayStoryFrame launcherHidden>
       <BoostsTray open slots={boostFixtureSlots.filter((slot) => slot.state === "locked")} onClose={() => undefined} />
     </BoostTrayStoryFrame>
   )
@@ -1106,7 +1128,7 @@ export const BoostsTrayLockedBoosts: Story = {
 
 export const BoostsTrayCooldown: Story = {
   render: () => (
-    <BoostTrayStoryFrame>
+    <BoostTrayStoryFrame launcherHidden>
       <BoostsTray open slots={boostFixtureSlots.filter((slot) => slot.state === "cooldown")} onClose={() => undefined} />
     </BoostTrayStoryFrame>
   )
@@ -1114,16 +1136,32 @@ export const BoostsTrayCooldown: Story = {
 
 export const BoostsTrayCompactViewport: Story = {
   render: () => (
-    <BoostTrayStoryFrame compact>
+    <BoostTrayStoryFrame compact launcherHidden>
       <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayClosingTransition: Story = {
+  render: () => (
+    <BoostTrayStoryFrame launcherHidden>
+      <BoostsTray open={false} slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
     </BoostTrayStoryFrame>
   )
 };
 
 export const BoostsTrayReducedMotion: Story = {
   render: () => (
-    <BoostTrayStoryFrame>
+    <BoostTrayStoryFrame launcherHidden>
       <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} reducedMotion />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayScaled4KViewport: Story = {
+  render: () => (
+    <BoostTrayStoryFrame launcherHidden scaleOverride={0.42}>
+      <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
     </BoostTrayStoryFrame>
   )
 };

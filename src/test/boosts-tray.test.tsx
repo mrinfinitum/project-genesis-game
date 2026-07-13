@@ -44,19 +44,31 @@ const fixtureSlots: BoostTraySlot[] = [
 afterEach(() => cleanup());
 
 describe("dashboard boosts tray", () => {
-  it("opens and closes from the compact BOOSTS control", async () => {
+  it("shows the compact BOOSTS launcher while closed", async () => {
+    render(<GameShell data={await bundledRuntime()} />);
+
+    const trigger = screen.getByRole("button", { name: /toggle boosts tray/i });
+    expect(trigger).toBeVisible();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed");
+  });
+
+  it("opens from the compact BOOSTS control and hides the launcher while open", async () => {
     const user = userEvent.setup();
     render(<GameShell data={await bundledRuntime()} />);
 
     const trigger = screen.getByRole("button", { name: /toggle boosts tray/i });
-    expect(screen.queryByTestId("boosts-tray")).not.toBeInTheDocument();
+    expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed");
 
     await user.click(trigger);
-    expect(screen.getByTestId("boosts-tray")).toBeInTheDocument();
+    expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "open");
     expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(trigger).toHaveAttribute("aria-hidden", "true");
+    expect(trigger).toHaveAttribute("tabindex", "-1");
+    expect(screen.queryByRole("button", { name: /toggle boosts tray/i })).not.toBeInTheDocument();
 
-    await user.click(trigger);
-    expect(screen.queryByTestId("boosts-tray")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /close boosts tray/i }));
+    await waitFor(() => expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed"));
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
@@ -66,11 +78,12 @@ describe("dashboard boosts tray", () => {
 
     const trigger = screen.getByRole("button", { name: /toggle boosts tray/i });
     await user.click(trigger);
-    expect(screen.getByTestId("boosts-tray")).toBeInTheDocument();
+    expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "open");
+    await waitFor(() => expect(screen.getByRole("button", { name: /close boosts tray/i })).toHaveFocus());
 
     await user.keyboard("{Escape}");
 
-    await waitFor(() => expect(screen.queryByTestId("boosts-tray")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed"));
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 
@@ -81,11 +94,11 @@ describe("dashboard boosts tray", () => {
     const trigger = screen.getByRole("button", { name: /toggle boosts tray/i });
     await user.click(trigger);
     await user.click(document.body);
-    await waitFor(() => expect(screen.queryByTestId("boosts-tray")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed"));
 
     await user.click(trigger);
     await user.click(screen.getByRole("button", { name: /close boosts tray/i }));
-    await waitFor(() => expect(screen.queryByTestId("boosts-tray")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-state", "closed"));
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 
@@ -96,8 +109,10 @@ describe("dashboard boosts tray", () => {
     await user.click(screen.getByRole("button", { name: /toggle boosts tray/i }));
 
     expect(screen.getByText("No boosts available")).toBeInTheDocument();
-    expect(screen.getByText("Boost definitions will appear here when published from Project Genesis Studio.")).toBeInTheDocument();
+    expect(screen.getByText("Boosts will appear here when published.")).toBeInTheDocument();
     expect(screen.queryByText("Work Frenzy")).not.toBeInTheDocument();
+    expect(screen.queryByText(/runtime tray/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^close$/i)).not.toBeInTheDocument();
   });
 
   it("renders Storybook/mock fixture slots only when provided", () => {
@@ -121,6 +136,43 @@ describe("dashboard boosts tray", () => {
     expect(screen.getByText(/click system boost/i)).toBeInTheDocument();
   });
 
+  it("positions the drawer from the Roblox closed and open tray coordinates", () => {
+    const { rerender } = render(<BoostsTray open={false} slots={fixtureSlots} onClose={() => undefined} />);
+    const closedTray = screen.getByTestId("boosts-tray");
+
+    expect(closedTray).toHaveAttribute("data-state", "closed");
+    expect(closedTray).toHaveAttribute("data-open-position", "12,859");
+    expect(closedTray).toHaveAttribute("data-closed-position", "12,1166");
+    expect(closedTray).toHaveStyle({
+      left: "12px",
+      top: "859px",
+      width: "1897px",
+      height: "157px",
+      transform: "translateY(307px)",
+      opacity: "0"
+    });
+
+    rerender(<BoostsTray open slots={fixtureSlots} onClose={() => undefined} />);
+    expect(screen.getByTestId("boosts-tray")).toHaveStyle({
+      transform: "translateY(0)",
+      opacity: "1"
+    });
+  });
+
+  it("keeps the open drawer inside the 1920 by 1080 game frame", () => {
+    render(<BoostsTray open slots={fixtureSlots} onClose={() => undefined} />);
+    const tray = screen.getByTestId("boosts-tray");
+    const left = Number.parseFloat(tray.style.left);
+    const top = Number.parseFloat(tray.style.top);
+    const width = Number.parseFloat(tray.style.width);
+    const height = Number.parseFloat(tray.style.height);
+
+    expect(left).toBeGreaterThanOrEqual(0);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(left + width).toBeLessThanOrEqual(1920);
+    expect(top + height).toBeLessThanOrEqual(1080);
+  });
+
   it("exposes a dedicated overlay layer so the tray is not clipped by dashboard panels", () => {
     render(<BoostsTray open slots={fixtureSlots} onClose={() => undefined} />);
 
@@ -136,5 +188,6 @@ describe("dashboard boosts tray", () => {
     render(<BoostsTray open slots={fixtureSlots} onClose={() => undefined} reducedMotion />);
 
     expect(screen.getByTestId("boosts-tray")).toHaveAttribute("data-transition", "none");
+    expect(screen.getByTestId("boosts-tray")).toHaveStyle({ transition: "none" });
   });
 });

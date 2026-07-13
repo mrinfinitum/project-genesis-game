@@ -1773,14 +1773,17 @@ function RobloxBoostBar({
       ref={triggerRef}
       type="button"
       aria-label={`Toggle boosts tray, ${boostValue} boosts available`}
+      aria-hidden={open}
       aria-expanded={open}
       aria-controls={controlsId}
+      data-testid="boosts-launcher"
+      tabIndex={open ? -1 : 0}
       onClick={onToggle}
-      className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50 active:translate-y-px ${open ? "border-cyan-100/65 shadow-[0_0_28px_rgba(45,212,255,0.25),inset_0_0_18px_rgba(45,212,255,0.09)]" : ""} ${primaryBoost || boostValue > 0 ? "" : "opacity-90"}`}
+      className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 transition duration-[220ms] ease-out hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50 active:translate-y-px ${open ? "pointer-events-none opacity-0" : primaryBoost || boostValue > 0 ? "" : "opacity-90"}`}
     >
       <Zap className={`h-6 w-6 shrink-0 ${primaryBoost ? "text-cyan-100" : "text-cyan-100/45"}`} />
       <div className="min-w-0 truncate text-center">
-        <span className="text-[1.35rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">{open ? "Close" : "Boosts"}</span>
+        <span className="text-[1.35rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">Boosts</span>
         {typeof primaryBoost?.remainingSeconds === "number" ? <div className="text-[0.55rem] font-black uppercase text-cyan-100/55">{primaryBoost.remainingSeconds}s</div> : null}
       </div>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100/32 bg-black/35 text-[1.25rem] font-black text-white">{boostValue}</div>
@@ -1802,18 +1805,18 @@ function BoostSlotCard({ slot, onActivate }: { slot: BoostTraySlot; onActivate?:
   const actionLabel = slot.state === "active" ? "Active" : slot.state === "locked" ? "Locked" : slot.state === "cooldown" ? "Cooling" : slot.state === "unavailable" ? "Unavailable" : "Activate";
 
   return (
-    <article className={`relative flex h-[7.2rem] min-w-[14.35rem] flex-col overflow-hidden rounded-md border bg-[linear-gradient(180deg,rgba(7,18,36,0.94),rgba(2,8,18,0.96))] p-3 shadow-[inset_0_0_20px_rgba(45,212,255,0.05)] ${boostAccentClasses[accent]} ${slot.state === "locked" || slot.state === "unavailable" ? "opacity-58" : ""}`}>
-      <div className="flex min-h-0 items-start gap-3">
-        <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-md border bg-black/35 text-sm font-black uppercase ${boostAccentClasses[accent]}`}>
+    <article className={`relative flex h-full min-w-[13.5rem] flex-col overflow-hidden rounded-md border bg-[linear-gradient(180deg,rgba(7,18,36,0.94),rgba(2,8,18,0.96))] p-2.5 shadow-[inset_0_0_18px_rgba(45,212,255,0.045)] ${boostAccentClasses[accent]} ${slot.state === "locked" || slot.state === "unavailable" ? "opacity-58" : ""}`}>
+      <div className="flex min-h-0 items-start gap-2.5">
+        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-md border bg-black/35 text-xs font-black uppercase ${boostAccentClasses[accent]}`}>
           {slot.multiplier ?? slot.targetSystem?.slice(0, 2).toUpperCase() ?? "BX"}
         </div>
         <div className="min-w-0">
-          <h3 className="truncate text-[0.8rem] font-black uppercase leading-tight text-white">{slot.name}</h3>
-          <p className="mt-1 line-clamp-2 text-[0.64rem] font-bold uppercase leading-snug text-cyan-50/62">{slot.shortEffect}</p>
+          <h3 className="truncate text-[0.72rem] font-black uppercase leading-tight text-white">{slot.name}</h3>
+          <p className="mt-0.5 line-clamp-2 text-[0.58rem] font-bold uppercase leading-snug text-cyan-50/62">{slot.shortEffect}</p>
         </div>
       </div>
       <div className="mt-auto grid grid-cols-[1fr_auto] items-end gap-2">
-        <div className="min-w-0 space-y-1 text-[0.6rem] font-black uppercase text-cyan-100/54">
+        <div className="min-w-0 space-y-0.5 text-[0.56rem] font-black uppercase text-cyan-100/54">
           <div className="truncate">{slot.remainingTime ? `Remaining ${slot.remainingTime}` : slot.duration ? `Duration ${slot.duration}` : "Duration pending"}</div>
           <div className="truncate">{slot.cost ? `Cost ${slot.cost}` : slot.state === "active" ? "Runtime active" : "Cost pending"}</div>
         </div>
@@ -1821,7 +1824,7 @@ function BoostSlotCard({ slot, onActivate }: { slot: BoostTraySlot; onActivate?:
           type="button"
           disabled={disabled}
           onClick={() => onActivate?.(slot.id)}
-          className="h-8 rounded-sm border border-cyan-100/24 bg-cyan-300/10 px-3 text-[0.62rem] font-black uppercase text-cyan-50 transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-cyan-100/42"
+          className="h-7 rounded-sm border border-cyan-100/24 bg-cyan-300/10 px-2.5 text-[0.58rem] font-black uppercase text-cyan-50 transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-cyan-100/42"
         >
           {actionLabel}
         </button>
@@ -1850,8 +1853,14 @@ export function BoostsTray({
   reducedMotion?: boolean;
 }) {
   const trayRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion(reducedMotion);
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!open) return;
+    window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+  }, [open]);
 
   useEffect(() => {
     if (!open || activeBoosts.length === 0) return;
@@ -1885,10 +1894,19 @@ export function BoostsTray({
     };
   }, [onClose, open, triggerRef]);
 
-  if (!open) return null;
-
   const runtimeSlots = runtimeBoostsToSlots(activeBoosts, now);
   const visibleSlots = slots.length ? slots : runtimeSlots;
+  const activeCount = visibleSlots.filter((slot) => slot.state === "active").length;
+  const availableCount = visibleSlots.filter((slot) => slot.state === "available").length;
+  const trayStyle: CSSProperties = {
+    left: 12,
+    top: 859,
+    width: 1897,
+    height: 157,
+    transform: open ? "translateY(0)" : "translateY(307px)",
+    opacity: open ? 1 : 0,
+    transition: prefersReducedMotion ? "none" : "transform 220ms cubic-bezier(.25,.46,.45,.94), opacity 220ms cubic-bezier(.25,.46,.45,.94)"
+  };
   const tray = (
     <div className="absolute inset-0 pointer-events-none" data-dashboard-overlay="boosts" style={{ zIndex: DASHBOARD_OVERLAY_Z_INDEX }}>
       <section
@@ -1896,31 +1914,41 @@ export function BoostsTray({
         ref={trayRef}
         role="dialog"
         aria-modal="false"
+        aria-hidden={!open}
         aria-labelledby="dashboard-boosts-tray-title"
         data-testid="boosts-tray"
-        data-transition={prefersReducedMotion ? "none" : "fade-slide"}
-        className={`pointer-events-auto absolute left-1/2 top-[858px] max-h-[170px] w-[calc(100%_-_24px)] max-w-[1904px] -translate-x-1/2 overflow-hidden rounded-md border border-cyan-100/30 bg-[linear-gradient(180deg,rgba(9,22,45,0.96),rgba(3,8,18,0.98))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.38),0_0_34px_rgba(45,212,255,0.15),inset_0_0_28px_rgba(45,212,255,0.06)] ${prefersReducedMotion ? "" : "animate-[boostTrayIn_220ms_cubic-bezier(.2,.8,.2,1)]"}`}
+        data-state={open ? "open" : "closed"}
+        data-open-position="12,859"
+        data-closed-position="12,1166"
+        data-transition={prefersReducedMotion ? "none" : "transform-opacity"}
+        className={`absolute overflow-hidden rounded-md border border-cyan-100/30 bg-[linear-gradient(180deg,rgba(9,22,45,0.96),rgba(3,8,18,0.98))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.34),0_0_26px_rgba(45,212,255,0.12),inset_0_0_24px_rgba(45,212,255,0.055)] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        style={trayStyle}
       >
-        <style>{`@keyframes boostTrayIn{from{opacity:0;transform:translate(-50%,18px) scale(.985)}to{opacity:1;transform:translate(-50%,0) scale(1)}}`}</style>
-        <div className="flex h-full min-h-0 gap-3">
-          <header className="flex w-[13.5rem] shrink-0 flex-col justify-between rounded-md border border-cyan-100/16 bg-black/24 p-3">
-            <div>
-              <div className="text-[0.62rem] font-black uppercase text-cyan-100/55">Runtime Tray</div>
-              <h2 id="dashboard-boosts-tray-title" className="mt-1 text-2xl font-black uppercase tracking-normal text-white [text-shadow:0_0_18px_rgba(45,212,255,0.42)]">Boosts</h2>
+        <div className="flex h-full min-h-0 flex-col gap-2">
+          <header className="flex h-9 shrink-0 items-center justify-between border-b border-cyan-100/14 px-1 pb-2">
+            <div className="flex min-w-0 items-baseline gap-3">
+              <h2 id="dashboard-boosts-tray-title" className="text-[1.22rem] font-black uppercase leading-none tracking-normal text-white [text-shadow:0_0_14px_rgba(45,212,255,0.34)]">Boosts</h2>
+              <div className="text-[0.68rem] font-black uppercase text-cyan-100/58">{availableCount} available · {activeCount} active</div>
             </div>
-            <button type="button" onClick={() => { onClose(); window.requestAnimationFrame(() => triggerRef?.current?.focus()); }} className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-cyan-100/24 bg-cyan-300/10 text-cyan-50 transition hover:bg-cyan-300/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50" aria-label="Close boosts tray">
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={() => { onClose(); window.requestAnimationFrame(() => triggerRef?.current?.focus()); }}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-sm border border-cyan-100/24 bg-cyan-300/10 text-cyan-50 transition hover:bg-cyan-300/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50"
+              aria-label="Close boosts tray"
+            >
               <X className="h-4 w-4" />
             </button>
           </header>
           {visibleSlots.length ? (
-            <div className="grid min-w-0 flex-1 grid-flow-col auto-cols-[minmax(14.35rem,1fr)] gap-3 overflow-x-auto overflow-y-hidden pr-1" data-testid="boosts-slot-list">
+            <div className="grid min-h-0 min-w-0 flex-1 grid-flow-col auto-cols-[minmax(13.5rem,1fr)] gap-3 overflow-x-auto overflow-y-hidden pr-1" data-testid="boosts-slot-list">
               {visibleSlots.map((slot) => <BoostSlotCard key={slot.id} slot={slot} onActivate={onActivate} />)}
             </div>
           ) : (
-            <div className="flex min-w-0 flex-1 items-center justify-center rounded-md border border-cyan-100/14 bg-black/22 px-5 text-center" data-testid="boosts-empty-state">
+            <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center px-5 text-center" data-testid="boosts-empty-state">
               <div>
-                <div className="text-xl font-black uppercase text-white">No boosts available</div>
-                <p className="mt-2 max-w-[38rem] text-sm font-bold text-cyan-100/62">Boost definitions will appear here when published from Project Genesis Studio.</p>
+                <div className="text-[1.05rem] font-black uppercase leading-none text-white">No boosts available</div>
+                <p className="mt-2 max-w-[24rem] text-[0.78rem] font-bold text-cyan-100/62">Boosts will appear here when published.</p>
               </div>
             </div>
           )}
