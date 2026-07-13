@@ -583,6 +583,10 @@ export const EraCarouselSurvival: Story = {
   }
 };
 
+export const EraPreviewSurvivalDefault: Story = {
+  render: EraCarouselSurvival.render
+};
+
 export const EraCarouselMiddleEra: Story = {
   render: () => {
     const { data } = useGenesisStoryContent();
@@ -592,6 +596,10 @@ export const EraCarouselMiddleEra: Story = {
       </CarouselStoryFrame>
     );
   }
+};
+
+export const EraPreviewMiddleEraDefault: Story = {
+  render: EraCarouselMiddleEra.render
 };
 
 export const EraCarouselRenaissance: Story = {
@@ -616,6 +624,10 @@ export const EraCarouselGalactic: Story = {
   }
 };
 
+export const EraPreviewGalacticDefault: Story = {
+  render: EraCarouselGalactic.render
+};
+
 export const EraCarouselPreviewPrevious: Story = {
   render: () => {
     const { data } = useGenesisStoryContent();
@@ -625,6 +637,10 @@ export const EraCarouselPreviewPrevious: Story = {
       </CarouselStoryFrame>
     );
   }
+};
+
+export const EraPreviewPrevious: Story = {
+  render: EraCarouselPreviewPrevious.render
 };
 
 export const EraCarouselPreviewNext: Story = {
@@ -638,12 +654,45 @@ export const EraCarouselPreviewNext: Story = {
   }
 };
 
+export const EraPreviewNext: Story = {
+  render: EraCarouselPreviewNext.render
+};
+
+export const EraPreviewLockedNextEra: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="modern" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={33} />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
 export const EraCarouselReducedMotion: Story = {
   render: () => {
     const { data } = useGenesisStoryContent();
     return (
       <CarouselStoryFrame reducedMotion>
         <CivilizationEraCarousel eras={data.eras} activeEraId="modern" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={33} reducedMotion />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraPreviewReducedMotion: Story = {
+  render: EraCarouselReducedMotion.render
+};
+
+export const EraPreviewCompactViewport: Story = {
+  parameters: {
+    viewport: { defaultViewport: "tablet768" }
+  },
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="renaissance" assets={data.assets} art={carouselArt(data)} visibleEraCount={2} progressPercent={48} />
       </CarouselStoryFrame>
     );
   }
