@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 
 const projectRoot = process.cwd();
@@ -7,6 +8,8 @@ const publicRoot = path.join(projectRoot, "public");
 const distRoot = path.join(projectRoot, "dist");
 const vercelPath = path.join(projectRoot, "vercel.json");
 const validExtensions = new Set([".gif", ".jpg", ".jpeg", ".png", ".svg", ".webp"]);
+const liveBaseUrl = process.env.DASHBOARD_ASSET_BASE_URL?.replace(/\/$/, "");
+const summaryOnly = process.env.DASHBOARD_ASSET_REPORT === "summary";
 
 function readText(filePath) {
   return readFileSync(filePath, "utf8");
@@ -87,13 +90,64 @@ function duplicatePaths(entries) {
   return counts;
 }
 
-function verify() {
+async function checkLive(entry) {
+  if (!liveBaseUrl) return undefined;
+
+  const finalUrl = `${liveBaseUrl}${entry.localPath}`;
+
+  try {
+    const headerText = execFileSync("curl", ["-sS", "-I", "--max-time", "20", finalUrl], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    });
+    const headerLines = headerText.split(/\r?\n/).filter(Boolean);
+    const statusLine = headerLines.find((line) => line.startsWith("HTTP/")) ?? "";
+    const status = Number(statusLine.match(/\s(\d{3})\s?/)?.[1] ?? 0);
+    const headers = new Map(
+      headerLines
+        .filter((line) => line.includes(":"))
+        .map((line) => {
+          const index = line.indexOf(":");
+          return [line.slice(0, index).trim().toLowerCase(), line.slice(index + 1).trim()];
+        })
+    );
+    const contentType = headers.get("content-type") ?? "";
+    const contentLength = headers.get("content-length") ?? "";
+    const location = headers.get("location") ?? "";
+
+    return {
+      url: finalUrl,
+      status,
+      contentType,
+      contentLength,
+      location,
+      isImage: contentType.startsWith("image/"),
+      isHtml: contentType.includes("text/html"),
+      isVercelSso: status >= 300 && status < 400 && location.includes("vercel.com/sso-api")
+    };
+  } catch (error) {
+    return {
+      url: finalUrl,
+      status: "fetch-failed",
+      contentType: "",
+      contentLength: "",
+      location: "",
+      isImage: false,
+      isHtml: false,
+      isVercelSso: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+async function verify() {
   const entries = registryEntries();
   const counts = duplicatePaths(entries);
-  const report = entries.map((entry) => {
+  const report = await Promise.all(entries.map(async (entry) => {
     const publicCheck = findCaseSensitivePath(publicRoot, entry.localPath);
     const distCheck = existsSync(distRoot) ? findCaseSensitivePath(distRoot, entry.localPath) : undefined;
     const extension = path.extname(entry.localPath).toLowerCase();
+    const live = await checkLive(entry);
 
     return {
       registryKey: entry.key,
@@ -111,20 +165,36 @@ function verify() {
         entry.localPath.startsWith("../"),
       vercelRewriteSwallows: rewriteWouldSwallow(entry.localPath),
       distExists: distCheck?.exists,
-      distCaseMismatch: distCheck?.caseMismatch
+      distCaseMismatch: distCheck?.caseMismatch,
+      liveStatus: live?.status,
+      liveContentType: live?.contentType,
+      liveContentLength: live?.contentLength,
+      liveFinalUrl: live?.url,
+      liveLocation: live?.location,
+      liveIsImage: live?.isImage,
+      liveIsHtml: live?.isHtml,
+      liveIsVercelSso: live?.isVercelSso
     };
-  });
+  }));
 
   const failures = report.filter((entry) => {
     const distFailure = existsSync(distRoot) && (entry.distExists === false || entry.distCaseMismatch === true);
-    return !entry.exists || entry.caseMismatch || entry.invalidExtension || entry.malformedUrl || entry.vercelRewriteSwallows || distFailure;
+    const liveFailure = liveBaseUrl && (entry.liveStatus !== 200 || !entry.liveIsImage);
+    return !entry.exists || entry.caseMismatch || entry.invalidExtension || entry.malformedUrl || entry.vercelRewriteSwallows || distFailure || liveFailure;
   });
 
-  console.log(JSON.stringify({ ok: failures.length === 0, checked: report.length, failures, report }, null, 2));
+  console.log(JSON.stringify({
+    ok: failures.length === 0,
+    checked: report.length,
+    liveBaseUrl: liveBaseUrl ?? null,
+    failureCount: failures.length,
+    failures: summaryOnly ? failures.slice(0, 10) : failures,
+    report: summaryOnly ? undefined : report
+  }, null, 2));
 
   if (failures.length) {
     process.exitCode = 1;
   }
 }
 
-verify();
+void verify();
