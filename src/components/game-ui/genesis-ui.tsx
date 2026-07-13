@@ -1027,23 +1027,38 @@ const robloxNavItems = [
 ];
 
 const ROBLOX_NAV_GEOMETRY = {
+  contentTop: 18,
+  contentBottom: 918,
   paddingX: 8,
   itemWidth: 144,
-  itemHeight: 103.84,
   iconLeft: 35.5,
-  iconTop: 8.3,
   iconWidth: 72,
   iconHeight: 62,
+  iconLabelGap: 8,
   labelLeft: 0,
-  labelTop: 68,
   labelWidth: 144,
-  labelHeight: 28
+  labelHeight: 28,
+  separatorLeft: 27,
+  separatorWidth: 106
 } as const;
 
-const ROBLOX_NAV_SLOT_TOPS = [18, 134, 264, 398, 530, 663, 755, 846] as const;
+const ROBLOX_NAV_SLOT_HEIGHT = (ROBLOX_NAV_GEOMETRY.contentBottom - ROBLOX_NAV_GEOMETRY.contentTop) / robloxNavItems.length;
+const ROBLOX_NAV_GROUP_TOP = (ROBLOX_NAV_SLOT_HEIGHT - ROBLOX_NAV_GEOMETRY.iconHeight - ROBLOX_NAV_GEOMETRY.iconLabelGap - ROBLOX_NAV_GEOMETRY.labelHeight) / 2;
 
 function robloxNavItemTop(index: number) {
-  return ROBLOX_NAV_SLOT_TOPS[index] ?? ROBLOX_NAV_SLOT_TOPS[ROBLOX_NAV_SLOT_TOPS.length - 1];
+  return ROBLOX_NAV_GEOMETRY.contentTop + index * ROBLOX_NAV_SLOT_HEIGHT;
+}
+
+function robloxNavIconTop(index: number) {
+  return robloxNavItemTop(index) + ROBLOX_NAV_GROUP_TOP;
+}
+
+function robloxNavLabelTop(index: number) {
+  return robloxNavIconTop(index) + ROBLOX_NAV_GEOMETRY.iconHeight + ROBLOX_NAV_GEOMETRY.iconLabelGap;
+}
+
+function robloxNavSeparatorTop(index: number) {
+  return ROBLOX_NAV_GEOMETRY.contentTop + (index + 1) * ROBLOX_NAV_SLOT_HEIGHT;
 }
 
 const LEFT_COLUMN_GEOMETRY = {
@@ -1184,6 +1199,19 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
           className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill"
         />
       ) : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
+      {robloxNavItems.slice(0, -1).map((item, index) => (
+        <span
+          key={`separator-${item.id}`}
+          data-testid={`roblox-nav-separator-${index}`}
+          aria-hidden="true"
+          className="pointer-events-none absolute z-10 block h-[1px] bg-[linear-gradient(90deg,transparent,rgba(78,168,218,0.28)_8%,rgba(112,204,255,0.66)_50%,rgba(78,168,218,0.28)_92%,transparent)] shadow-[0_0_7px_rgba(66,180,255,0.28)]"
+          style={{
+            left: ROBLOX_NAV_GEOMETRY.separatorLeft,
+            top: robloxNavSeparatorTop(index),
+            width: ROBLOX_NAV_GEOMETRY.separatorWidth
+          }}
+        />
+      ))}
       {robloxNavItems.map((item, index) => {
         const Icon = item.icon;
         const isActive = item.id === current;
@@ -1191,7 +1219,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
         const itemTop = robloxNavItemTop(index);
         const iconStyle = {
           left: ROBLOX_NAV_GEOMETRY.paddingX + ROBLOX_NAV_GEOMETRY.iconLeft,
-          top: itemTop + ROBLOX_NAV_GEOMETRY.iconTop,
+          top: robloxNavIconTop(index),
           width: ROBLOX_NAV_GEOMETRY.iconWidth,
           height: ROBLOX_NAV_GEOMETRY.iconHeight,
           opacity: 1,
@@ -1199,7 +1227,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
         };
         const labelStyle = {
           left: ROBLOX_NAV_GEOMETRY.paddingX + ROBLOX_NAV_GEOMETRY.labelLeft,
-          top: itemTop + ROBLOX_NAV_GEOMETRY.labelTop,
+          top: robloxNavLabelTop(index),
           width: ROBLOX_NAV_GEOMETRY.labelWidth,
           height: ROBLOX_NAV_GEOMETRY.labelHeight,
           opacity: 1
@@ -1236,7 +1264,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
                 left: ROBLOX_NAV_GEOMETRY.paddingX,
                 top: itemTop,
                 width: ROBLOX_NAV_GEOMETRY.itemWidth,
-                height: ROBLOX_NAV_GEOMETRY.itemHeight
+                height: ROBLOX_NAV_SLOT_HEIGHT
               }}
             />
           </Fragment>

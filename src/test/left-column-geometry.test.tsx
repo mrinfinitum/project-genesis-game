@@ -34,7 +34,7 @@ describe("Roblox left column geometry", () => {
     expect(ROBLOX_DASHBOARD_LAYOUT.leftColumn).toEqual({ x: 184, y: 126, width: 350, height: 823 });
   });
 
-  it("uses the registered Roblox sidebar background without CSS divider duplication", async () => {
+  it("uses the registered Roblox sidebar background with one measured separator between each slot", async () => {
     const data = await bundledRuntime();
     const { container } = render(<RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />);
 
@@ -47,7 +47,15 @@ describe("Roblox left column geometry", () => {
     expect(background).toHaveAttribute("data-background-position", "0 0");
     expect(background).toHaveAttribute("data-repeat", "no-repeat");
     expect(background).toHaveClass("object-fill");
-    expect(container.querySelectorAll("span[class*='h-px'], [data-testid='nav-css-divider']")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-testid='nav-css-divider']")).toHaveLength(0);
+    const separators = screen.getAllByTestId(/roblox-nav-separator-/);
+    expect(separators).toHaveLength(7);
+    expect(separators[0]).toHaveStyle({
+      left: "27px",
+      top: "130.5px",
+      width: "106px"
+    });
+    expect(Number.parseFloat(separators[6].style.top)).toBeCloseTo(805.5);
   });
 
   it("renders nav icons above decorative background layers", async () => {
@@ -60,16 +68,48 @@ describe("Roblox left column geometry", () => {
       left: "8px",
       top: "18px",
       width: "144px",
-      height: "103.84px"
+      height: "112.5px"
     });
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveAttribute("data-z-layer", "icon-above-background");
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveClass("z-20");
     const dashboardLabelStyle = screen.getByTestId("roblox-nav-label-dashboard").style;
     expect(Number.parseFloat(dashboardLabelStyle.left)).toBeCloseTo(8);
-    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(86);
+    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(95.25);
     expect(Number.parseFloat(dashboardLabelStyle.width)).toBeCloseTo(144);
     expect(Number.parseFloat(dashboardLabelStyle.height)).toBeCloseTo(28);
-    expect(Number.parseFloat(screen.getByTestId("roblox-nav-label-events").style.top)).toBeCloseTo(731);
+    expect(Number.parseFloat(screen.getByTestId("roblox-nav-label-events").style.top)).toBeCloseTo(657.75);
+  });
+
+  it("keeps every left nav item in an identical vertical slot", async () => {
+    const data = await bundledRuntime();
+    render(<RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />);
+
+    const items = [
+      "dashboard",
+      "production",
+      "research",
+      "upgrades",
+      "civilization",
+      "events",
+      "galaxy",
+      "spaceport"
+    ].map((id) => screen.getByTestId(`roblox-nav-item-${id}`));
+    const itemTops = items.map((item) => Number.parseFloat(item.style.top));
+    const labelTops = [
+      "dashboard",
+      "production",
+      "research",
+      "upgrades",
+      "civilization",
+      "events",
+      "galaxy",
+      "spaceport"
+    ].map((id) => Number.parseFloat(screen.getByTestId(`roblox-nav-label-${id}`).style.top));
+
+    for (let index = 1; index < itemTops.length; index += 1) {
+      expect(itemTops[index] - itemTops[index - 1]).toBeCloseTo(112.5);
+      expect(labelTops[index] - labelTops[index - 1]).toBeCloseTo(112.5);
+    }
   });
 
   it("uses independent icon and label overlays instead of per-item visual containers", async () => {
