@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import type { ReactNode } from "react";
 import { createDashboardArtMap } from "@/lib/canonical-runtime";
 import { createDashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import { calculateGameViewportScale } from "@/lib/dashboard/viewport-scaling";
 import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
 import {
   AlignmentPanel,
@@ -959,6 +960,45 @@ export const MainDashboard: Story = {
     const { data, selectedEra, selectedCategory } = useGenesisStoryContent();
     return <GameShell data={data} activeScreen="dashboard" activeEraId={selectedEra.id} activeCategoryId={selectedCategory.id} />;
   }
+};
+
+function DashboardViewportStory({ width, height }: { width: number; height: number }) {
+  const { data } = useGenesisStoryContent();
+  const scale = calculateGameViewportScale({ viewportWidth: width, viewportHeight: height }).scale;
+  return (
+    <StoryCanvas>
+      <div className="h-[calc(100dvh-2rem)] w-full overflow-auto bg-slate-950 p-4">
+        <div className="mb-3 inline-flex rounded-sm border border-cyan-200/20 bg-black/35 px-3 py-2 text-xs font-black uppercase text-cyan-50">
+          {width} x {height} · scale {scale.toFixed(3)}
+        </div>
+        <GameShell data={data} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" frameScale={scale} embedded />
+      </div>
+    </StoryCanvas>
+  );
+}
+
+export const DashboardViewport1366x768: Story = {
+  render: () => <DashboardViewportStory width={1366} height={768} />
+};
+
+export const DashboardViewport1440x900: Story = {
+  render: () => <DashboardViewportStory width={1440} height={900} />
+};
+
+export const DashboardViewport1920x1080: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} />
+};
+
+export const DashboardViewport2560x1440: Story = {
+  render: () => <DashboardViewportStory width={2560} height={1440} />
+};
+
+export const DashboardViewport3440x1440: Story = {
+  render: () => <DashboardViewportStory width={3440} height={1440} />
+};
+
+export const DashboardViewport3840x2160: Story = {
+  render: () => <DashboardViewportStory width={3840} height={2160} />
 };
 
 export const Production: Story = {

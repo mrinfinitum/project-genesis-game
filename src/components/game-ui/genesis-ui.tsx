@@ -39,6 +39,7 @@ import type { AssetDefinition, EraDefinition, GameRuntimeData, ResourceDefinitio
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
+import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
 import robloxReferenceManifest from "../../design-reference/roblox/reference-manifest.json";
@@ -1965,27 +1966,255 @@ function dashboardDataAudit(model: DashboardModel) {
   ];
 }
 
-function getDashboardFrameScale() {
-  if (typeof window === "undefined") return 1;
-  return Math.min(window.innerWidth / ROBLOX_DASHBOARD_REFERENCE.width, window.innerHeight / ROBLOX_DASHBOARD_REFERENCE.height, 1);
+const dashboardScaleAssetAudit = [
+  { key: "dashboard_background", label: "HUD background", designWidth: 1920, designHeight: 1080, nativeWidth: 1920, nativeHeight: 1080 },
+  { key: "dashboard_city_hero", label: "Hero artwork", designWidth: ROBLOX_DASHBOARD_LAYOUT.hero.width, designHeight: ROBLOX_DASHBOARD_LAYOUT.hero.height, nativeWidth: 910, nativeHeight: 517 },
+  { key: "sidebar_frame", label: "Sidebar frame", designWidth: ROBLOX_DASHBOARD_LAYOUT.sidebar.width, designHeight: ROBLOX_DASHBOARD_LAYOUT.sidebar.height, nativeWidth: 160, nativeHeight: 790 },
+  { key: "dashboard_top_hud", label: "Top HUD", designWidth: 1920, designHeight: 108, nativeWidth: 1920, nativeHeight: 104 },
+  { key: "clicker_hud_background", label: "Clicker panel", designWidth: 350, designHeight: 823, nativeWidth: 350, nativeHeight: 780 },
+  { key: "dashboard_click_button", label: "Click button", designWidth: 312, designHeight: 66, nativeWidth: 329, nativeHeight: 81 },
+  { key: "dashboard_auto_button_on", label: "Auto button on", designWidth: 312, designHeight: 55, nativeWidth: 329, nativeHeight: 62 },
+  { key: "upgrade_panel_structure", label: "Upgrade panel", designWidth: ROBLOX_DASHBOARD_LAYOUT.upgrades.width, designHeight: ROBLOX_DASHBOARD_LAYOUT.upgrades.height, nativeWidth: 920, nativeHeight: 420 },
+  { key: "leaderboard_panel", label: "Leaderboard panel", designWidth: 425, designHeight: 422, nativeWidth: 852, nativeHeight: 606 },
+  { key: "active_event_panel", label: "Event panel", designWidth: 425, designHeight: 201, nativeWidth: 1005, nativeHeight: 510 },
+  { key: "alignment_panel", label: "Alignment panel", designWidth: 425, designHeight: 365, nativeWidth: 1000, nativeHeight: 929 }
+] as const;
+
+function getDashboardScaleAssetWarnings(targetScale = 2) {
+  return dashboardScaleAssetAudit
+    .map((asset) => {
+      const requiredWidth = Math.ceil(asset.designWidth * targetScale);
+      const requiredHeight = Math.ceil(asset.designHeight * targetScale);
+      const widthRatio = asset.nativeWidth / requiredWidth;
+      const heightRatio = asset.nativeHeight / requiredHeight;
+      const ratio = Math.min(widthRatio, heightRatio);
+      return { ...asset, requiredWidth, requiredHeight, ratio };
+    })
+    .filter((asset) => asset.ratio < 0.98);
 }
 
-function useDashboardFrameScale(explicitScale?: number) {
-  const [autoScale, setAutoScale] = useState(getDashboardFrameScale);
+function useGameDisplayPreferences() {
+  const [preferences, setPreferences] = useState(loadGameDisplayPreferences);
 
   useEffect(() => {
-    if (typeof explicitScale === "number") return;
+    saveGameDisplayPreferences(preferences);
+  }, [preferences]);
 
-    function updateScale() {
-      setAutoScale(getDashboardFrameScale());
+  return [preferences, setPreferences] as const;
+}
+
+function useViewportScale(
+  viewportRef: RefObject<HTMLDivElement | null>,
+  preferences: GameDisplayPreferences,
+  explicitScale?: number
+) {
+  const [viewportSize, setViewportSize] = useState<{ width: number; height: number }>(() => ({
+    width: ROBLOX_DASHBOARD_REFERENCE.width,
+    height: ROBLOX_DASHBOARD_REFERENCE.height
+  }));
+
+  useEffect(() => {
+    if (explicitScale !== undefined) return;
+    const node = viewportRef.current;
+    if (!node) return;
+    let frame = 0;
+    const update = (width: number, height: number) => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        setViewportSize((current) => {
+          if (Math.abs(current.width - width) < 1 && Math.abs(current.height - height) < 1) return current;
+          return { width, height };
+        });
+      });
+    };
+    const measure = () => update(node.clientWidth || window.innerWidth, node.clientHeight || window.innerHeight);
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver((entries) => {
+        const rect = entries[0]?.contentRect;
+        if (rect) update(rect.width, rect.height);
+      });
+      observer.observe(node);
+      measure();
+      return () => {
+        window.cancelAnimationFrame(frame);
+        observer.disconnect();
+      };
     }
 
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, [explicitScale]);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measure);
+    };
+  }, [explicitScale, viewportRef]);
 
-  return explicitScale ?? autoScale;
+  if (explicitScale !== undefined) {
+    const renderedWidth = ROBLOX_DASHBOARD_REFERENCE.width * explicitScale;
+    const renderedHeight = ROBLOX_DASHBOARD_REFERENCE.height * explicitScale;
+    return {
+      viewportWidth: renderedWidth,
+      viewportHeight: renderedHeight,
+      availableWidth: renderedWidth,
+      availableHeight: renderedHeight,
+      scale: explicitScale,
+      rawScale: explicitScale,
+      renderedWidth,
+      renderedHeight,
+      displayMode: "actual" as GameDisplayMode,
+      minScale: preferences.minScale,
+      maxScale: preferences.maxScale,
+      outerPadding: preferences.outerPadding
+    } satisfies GameViewportScaleResult;
+  }
+
+  return calculateGameViewportScale({
+    viewportWidth: viewportSize.width,
+    viewportHeight: viewportSize.height,
+    displayMode: preferences.displayMode,
+    minScale: preferences.minScale,
+    maxScale: preferences.maxScale,
+    outerPadding: preferences.outerPadding
+  });
+}
+
+function GameViewportDiagnostics({
+  scale,
+  preferences,
+  onPreferencesChange,
+  onFullscreenToggle,
+  fullscreenActive,
+  assetWarnings
+}: {
+  scale: GameViewportScaleResult;
+  preferences: GameDisplayPreferences;
+  onPreferencesChange: (preferences: GameDisplayPreferences) => void;
+  onFullscreenToggle: () => void;
+  fullscreenActive: boolean;
+  assetWarnings: ReturnType<typeof getDashboardScaleAssetWarnings>;
+}) {
+  return (
+    <aside className="absolute left-4 top-4 z-[95] max-w-[24rem] rounded-md border border-cyan-200/25 bg-slate-950/92 p-3 text-[0.64rem] font-black uppercase text-cyan-50 shadow-[0_18px_48px_rgba(0,0,0,0.42)]">
+      <div className="text-xs text-cyan-100">Display Scale</div>
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-cyan-100/64">
+        <span>Viewport</span><span className="text-right text-white">{Math.round(scale.viewportWidth)} x {Math.round(scale.viewportHeight)}</span>
+        <span>Available</span><span className="text-right text-white">{Math.round(scale.availableWidth)} x {Math.round(scale.availableHeight)}</span>
+        <span>Scale</span><span className="text-right text-white">{scale.scale.toFixed(3)}</span>
+        <span>Rendered</span><span className="text-right text-white">{Math.round(scale.renderedWidth)} x {Math.round(scale.renderedHeight)}</span>
+        <span>DPR</span><span className="text-right text-white">{typeof window === "undefined" ? "1" : window.devicePixelRatio.toFixed(2)}</span>
+        <span>Mode</span><span className="text-right text-white">{preferences.displayMode}</span>
+        <span>Max</span><span className="text-right text-white">{preferences.maxScale.toFixed(2)}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-4 gap-1">
+        {(["auto", "fit", "fill", "actual"] as const).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => onPreferencesChange({ ...preferences, displayMode: mode })}
+            className={`rounded-sm border px-2 py-1 ${preferences.displayMode === mode ? "border-cyan-100/50 bg-cyan-300/18 text-white" : "border-cyan-100/18 bg-black/30 text-cyan-100/64"}`}
+          >
+            {mode}
+          </button>
+        ))}
+      </div>
+      <button type="button" onClick={onFullscreenToggle} className="mt-2 w-full rounded-sm border border-cyan-100/24 bg-cyan-300/10 px-2 py-1 text-cyan-50">
+        {fullscreenActive ? "Exit Fullscreen" : "Fullscreen"}
+      </button>
+      {assetWarnings.length ? (
+        <div className="mt-3 border-t border-cyan-100/12 pt-2 text-cyan-100/58">
+          <div className="text-cyan-100">2x asset warnings</div>
+          <div className="mt-1 max-h-20 overflow-auto">
+            {assetWarnings.slice(0, 5).map((asset) => (
+              <div key={asset.key} className="truncate">{asset.label}: {asset.nativeWidth}x{asset.nativeHeight} / needs {asset.requiredWidth}x{asset.requiredHeight}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
+function GameViewportScaler({
+  children,
+  explicitScale,
+  embedded = false,
+  assetWarnings = []
+}: {
+  children: ReactNode;
+  explicitScale?: number;
+  embedded?: boolean;
+  assetWarnings?: ReturnType<typeof getDashboardScaleAssetWarnings>;
+}) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [preferences, setPreferences] = useGameDisplayPreferences();
+  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const scale = useViewportScale(viewportRef, preferences, explicitScale);
+
+  useEffect(() => {
+    if (embedded || typeof document === "undefined") return;
+    const update = () => setFullscreenActive(document.fullscreenElement === viewportRef.current);
+    document.addEventListener("fullscreenchange", update);
+    return () => document.removeEventListener("fullscreenchange", update);
+  }, [embedded]);
+
+  async function toggleFullscreen() {
+    const node = viewportRef.current;
+    if (!node || typeof document === "undefined") return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.();
+      setPreferences({ ...preferences, fullscreenPreferred: false });
+      return;
+    }
+    await node.requestFullscreen?.();
+    setPreferences({ ...preferences, fullscreenPreferred: true });
+  }
+
+  return (
+    <div
+      ref={viewportRef}
+      className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} relative flex items-center justify-center overflow-auto`}
+      data-game-viewport
+      data-display-mode={preferences.displayMode}
+      data-game-scale={scale.scale.toFixed(4)}
+      style={{
+        ["--game-scale" as string]: scale.scale,
+        ...(embedded ? { width: scale.renderedWidth, height: scale.renderedHeight } : undefined)
+      }}
+    >
+      <div
+        className="relative shrink-0 overflow-hidden"
+        data-game-stage-shell
+        style={{
+          width: scale.renderedWidth,
+          height: scale.renderedHeight
+        }}
+      >
+        <div
+          className="relative overflow-hidden border border-cyan-200/30 bg-[#06111f] shadow-[0_0_70px_rgba(45,212,255,0.16),inset_0_0_60px_rgba(0,0,0,0.54)]"
+          data-game-stage
+          style={{
+            width: ROBLOX_DASHBOARD_REFERENCE.width,
+            height: ROBLOX_DASHBOARD_REFERENCE.height,
+            transform: "scale(var(--game-scale))",
+            transformOrigin: "top left"
+          }}
+        >
+          {children}
+        </div>
+      </div>
+      {dashboardDevToolsEnabled && !embedded ? (
+        <GameViewportDiagnostics
+          scale={scale}
+          preferences={preferences}
+          onPreferencesChange={setPreferences}
+          onFullscreenToggle={() => void toggleFullscreen()}
+          fullscreenActive={fullscreenActive}
+          assetWarnings={assetWarnings}
+        />
+      ) : null}
+    </div>
+  );
 }
 
 function DashboardDataArtInspector({
@@ -2118,36 +2347,33 @@ export function GameShell({
   frameScale?: number;
   embedded?: boolean;
 }) {
-  const resolvedFrameScale = useDashboardFrameScale(frameScale);
   const category = data.upgradeCategories.find((item) => item.id === activeCategoryId) ?? data.upgradeCategories[0];
   const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
   const artAudit = useMemo(() => getDashboardArtAudit(data.assets), [data.assets]);
+  const scaleAssetWarnings = useMemo(() => getDashboardScaleAssetWarnings(2), []);
   const [boostsTrayOpen, setBoostsTrayOpen] = useState(false);
   const boostTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [boostOverlayRoot, setBoostOverlayRoot] = useState<HTMLDivElement | null>(null);
   const activeRuntimeBoosts = playerRuntime?.boosts.active ?? [];
   const boostCount = model.playerState.boosts?.length ?? 0;
   useDashboardAssetDiagnostics(artAudit);
+  const embeddedScale = frameScale ?? 1;
 
   return (
-    <main className={`flex ${embedded ? "h-[1080px] w-[1920px]" : "min-h-screen"} items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]`} style={shellStyle}>
-      <div
-        className="relative overflow-hidden"
-        style={{
-          width: ROBLOX_DASHBOARD_REFERENCE.width * resolvedFrameScale,
-          height: ROBLOX_DASHBOARD_REFERENCE.height * resolvedFrameScale
-        }}
-      >
-        <div
-          className="relative overflow-hidden border border-cyan-200/30 bg-[#06111f] shadow-[0_0_70px_rgba(45,212,255,0.16),inset_0_0_60px_rgba(0,0,0,0.54)]"
-          style={{
-            width: ROBLOX_DASHBOARD_REFERENCE.width,
-            height: ROBLOX_DASHBOARD_REFERENCE.height,
-            transform: `scale(${resolvedFrameScale})`,
-            transformOrigin: "top left"
-          }}
-        >
+    <main
+      className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]`}
+      style={{
+        ...shellStyle,
+        ...(embedded
+          ? {
+              width: ROBLOX_DASHBOARD_REFERENCE.width * embeddedScale,
+              height: ROBLOX_DASHBOARD_REFERENCE.height * embeddedScale
+            }
+          : undefined)
+      }}
+    >
+      <GameViewportScaler explicitScale={frameScale} embedded={embedded} assetWarnings={scaleAssetWarnings}>
           {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud)}>
             <RobloxTopHud model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} />
@@ -2188,8 +2414,7 @@ export function GameShell({
             onActivate={playerRuntimeActions?.activateBoost}
           />
           {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
-        </div>
-      </div>
+      </GameViewportScaler>
     </main>
   );
 }
