@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type WheelEvent } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -6,6 +6,8 @@ import {
   Bot,
   Building2,
   CalendarDays,
+  Check,
+  ChevronLeft,
   ChevronRight,
   CircleHelp,
   Coins,
@@ -1209,42 +1211,275 @@ function HeroCityScene({ art, fallbackArt }: { art: RuntimeAssetResolution; fall
   );
 }
 
-function RobloxEraRail({
+function eraProgressPercent(model: DashboardModel) {
+  const objective = model.playerState.objective;
+  if (typeof objective?.discoveryPercent === "number") return Math.max(0, Math.min(100, objective.discoveryPercent));
+  if (typeof objective?.progressCurrent === "number" && typeof objective?.progressTarget === "number" && objective.progressTarget > 0) {
+    return Math.max(0, Math.min(100, (objective.progressCurrent / objective.progressTarget) * 100));
+  }
+  return 0;
+}
+
+function eraTrackProgress(eras: EraDefinition[], activeEraId: string, progressPercent: number) {
+  if (eras.length <= 1) return 100;
+  const activeIndex = Math.max(0, eras.findIndex((era) => era.id === activeEraId));
+  if (activeIndex >= eras.length - 1) return 100;
+  return Math.max(0, Math.min(100, ((activeIndex + progressPercent / 100) / (eras.length - 1)) * 100));
+}
+
+function EraCarouselArtwork({ era, assets, art, active, muted = false }: { era: EraDefinition; assets: AssetDefinition[]; art: DashboardArtMap; active: boolean; muted?: boolean }) {
+  const runtimeArt = resolveRuntimeAsset(era, findAsset(assets, era.artKey ?? era.iconKey));
+  const hexPath = dashboardImagePath(art.era_progression_hex);
+
+  return (
+    <div className={`relative flex shrink-0 items-center justify-center ${active ? "h-[74px] w-[74px]" : "h-[54px] w-[54px]"}`}>
+      {hexPath ? (
+        <img src={hexPath} alt="" className={`absolute inset-0 h-full w-full object-contain ${active ? "brightness-150 hue-rotate-[55deg]" : muted ? "opacity-45 saturate-50" : "opacity-75 hue-rotate-[35deg]"}`} />
+      ) : (
+        <Hexagon className={`absolute inset-0 h-full w-full ${active ? "text-emerald-200" : muted ? "text-cyan-100/45" : "text-emerald-100/75"}`} />
+      )}
+      {runtimeArt.path && !runtimeArt.artworkNeeded ? (
+        <img src={runtimeArt.path} alt="" className={`relative h-[58%] w-[58%] object-contain ${muted ? "opacity-55 grayscale" : "opacity-90"}`} />
+      ) : (
+        <span className={`relative font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)] ${active ? "text-[1.45rem]" : "text-[1.05rem]"}`}>{era.index}</span>
+      )}
+    </div>
+  );
+}
+
+function EraCarouselCard({
+  era,
+  state,
+  role,
+  assets,
+  art,
+  progressPercent,
+  nextEra,
+  action,
+  onPreview
+}: {
+  era: EraDefinition;
+  state: "completed" | "current" | "locked" | "preview";
+  role: "previous" | "center" | "next";
+  assets: AssetDefinition[];
+  art: DashboardArtMap;
+  progressPercent: number;
+  nextEra?: EraDefinition;
+  action?: ReactNode;
+  onPreview?: () => void;
+}) {
+  const active = role === "center";
+  const locked = state === "locked";
+  const completed = state === "completed";
+  const preview = state === "preview";
+  const eraColor = genesisTokens.era[era.id as keyof typeof genesisTokens.era] ?? genesisTokens.color.cyan;
+  const statusLabel = completed ? "Completed" : preview ? "Preview" : locked ? "Locked" : "Current Era";
+  const card = (
+    <div
+      className={`relative h-full overflow-hidden border bg-[linear-gradient(180deg,rgba(8,23,43,0.9),rgba(2,8,18,0.92))] text-left shadow-[inset_0_0_22px_rgba(45,212,255,0.08)] transition-all duration-500 ease-out [clip-path:polygon(7%_0,100%_0,100%_76%,92%_100%,0_100%,0_24%)] ${
+        active
+          ? "genesis-era-current-card border-emerald-200/55 opacity-100 shadow-[0_0_34px_rgba(52,245,106,0.34),inset_0_0_28px_rgba(45,212,255,0.12)]"
+          : locked
+            ? "border-cyan-100/16 opacity-48 saturate-75"
+            : "border-emerald-100/25 opacity-68"
+      }`}
+      style={{ borderColor: active ? eraColor : undefined }}
+    >
+      {active ? <div className="genesis-era-sweep absolute inset-y-0 left-[-45%] w-[36%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)]" /> : null}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(45,212,255,0.16),transparent_7rem)]" />
+      <div className={`relative flex h-full items-center ${active ? "gap-4 px-5" : "gap-3 px-4"}`}>
+        <EraCarouselArtwork era={era} assets={assets} art={art} active={active} muted={locked} />
+        <div className="min-w-0 flex-1">
+          <div className={`font-black uppercase leading-none ${active ? "text-[12px] text-emerald-200" : "text-[10px] text-cyan-100/56"}`}>
+            Era {era.index} · {statusLabel}
+          </div>
+          <div className={`mt-1 truncate font-black uppercase leading-none text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] ${active ? "text-[28px]" : "text-[17px]"}`}>{shortEraName(era)}</div>
+          {active ? (
+            <>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-cyan-950/90">
+                  <div className="h-full rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(52,245,106,0.48)]" style={{ width: `${state === "current" ? progressPercent : 0}%` }} />
+                </div>
+                <span className="w-10 text-right text-[12px] font-black text-emerald-100">{state === "current" ? Math.round(progressPercent) : 0}%</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="min-w-0 truncate text-[11px] font-bold uppercase text-cyan-50/60">
+                  {preview ? "Preview only - player era unchanged" : nextEra ? `Next unlock: ${shortEraName(nextEra)}` : "Final era reached"}
+                </div>
+                {action ? <div className="shrink-0">{action}</div> : null}
+              </div>
+            </>
+          ) : (
+            <div className="mt-2 flex items-center gap-1 text-[10px] font-black uppercase text-cyan-50/55">
+              {completed ? <Check className="h-3.5 w-3.5 text-emerald-200" /> : <Lock className="h-3.5 w-3.5 text-cyan-100/48" />}
+              <span>{completed ? "Complete" : "Future"}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!onPreview || active) return card;
+
+  return (
+    <button type="button" className="h-full w-full transition hover:opacity-95 active:scale-[0.99]" onClick={onPreview} aria-label={`Preview ${era.displayName}`}>
+      {card}
+    </button>
+  );
+}
+
+export function CivilizationEraCarousel({
   eras,
   activeEraId,
+  assets,
   art,
-  visibleEraCount
+  visibleEraCount,
+  progressPercent,
+  fullTimelineEnabled = true,
+  initialPreviewEraId,
+  reducedMotion = false
 }: {
   eras: EraDefinition[];
   activeEraId: string;
+  assets: AssetDefinition[];
   art: DashboardArtMap;
   visibleEraCount: number;
+  progressPercent: number;
+  fullTimelineEnabled?: boolean;
+  initialPreviewEraId?: string;
+  reducedMotion?: boolean;
 }) {
-  const focusedEras = getFocusedDashboardEras(eras, activeEraId, visibleEraCount);
+  const [previewState, setPreviewState] = useState({
+    activeEraId,
+    initialPreviewEraId,
+    previewEraId: initialPreviewEraId
+  });
+  const activeIndex = Math.max(0, eras.findIndex((era) => era.id === activeEraId));
+  const previewEraId =
+    previewState.activeEraId === activeEraId && previewState.initialPreviewEraId === initialPreviewEraId
+      ? previewState.previewEraId
+      : initialPreviewEraId;
+  const displayEraId = previewEraId && eras.some((era) => era.id === previewEraId) ? previewEraId : activeEraId;
+  const displayIndex = Math.max(0, eras.findIndex((era) => era.id === displayEraId));
+  const focusedEras = getFocusedDashboardEras(eras, displayEraId, visibleEraCount);
+  const centerEra = eras[displayIndex] ?? eras[activeIndex] ?? eras[0];
+  const previousEra = focusedEras.find((item) => item.sourceIndex < displayIndex)?.era;
+  const nextEra = focusedEras.find((item) => item.sourceIndex > displayIndex)?.era;
+  const nextCurrentEra = activeIndex < eras.length - 1 ? eras[activeIndex + 1] : undefined;
+  const trackProgress = eraTrackProgress(eras, activeEraId, progressPercent);
+  const isPreviewing = displayEraId !== activeEraId;
+
+  function setPreviewEraId(nextPreviewEraId: string | undefined) {
+    setPreviewState({ activeEraId, initialPreviewEraId, previewEraId: nextPreviewEraId });
+  }
+
+  function previewOffset(offset: -1 | 1) {
+    const target = eras[displayIndex + offset];
+    if (target) setPreviewEraId(target.id);
+  }
+
+  function cardState(index: number) {
+    if (index === activeIndex) return isPreviewing ? "preview" : "current";
+    return index < activeIndex ? "completed" : "locked";
+  }
+
+  function handleWheel(event: WheelEvent<HTMLDivElement>) {
+    if (Math.abs(event.deltaX) + Math.abs(event.deltaY) < 22) return;
+    event.preventDefault();
+    previewOffset(event.deltaY > 0 || event.deltaX > 0 ? 1 : -1);
+  }
 
   return (
-    <div className="absolute h-[86px] w-[860px]" style={{ left: 25, top: 392 }}>
-      <div className="absolute left-[255px] right-[255px] top-[34px] h-[3px] bg-cyan-100/18 shadow-[0_0_14px_rgba(45,212,255,0.16)]" />
-      {focusedEras.map(({ era, state }, index) => {
-        const active = state === "current";
-        const future = state === "locked";
-        const denominator = Math.max(focusedEras.length - 1, 1);
-        const x = focusedEras.length === 1 ? 0.5 : 0.26 + (index / denominator) * 0.48;
-        const canonicalIndex = Number.isFinite(era.index) ? era.index : eras.findIndex((item) => item.id === era.id) + 1;
-        return (
-          <div key={era.id} className={`absolute top-0 h-full ${active ? "w-[112px]" : "w-[92px]"}`} style={{ left: `calc(${x * 100}% - ${active ? 56 : 46}px)` }}>
-            <div className={`absolute top-[6px] ${active ? "left-[20px] h-[72px] w-[74px]" : "left-[14px] h-[62px] w-[64px]"}`}>
-              {dashboardImagePath(art.era_progression_hex) ? (
-                <img src={dashboardImagePath(art.era_progression_hex)} alt="" className={`h-full w-full object-contain drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "opacity-100 brightness-150 hue-rotate-[55deg] drop-shadow-[0_0_22px_rgba(52,245,106,0.42)]" : future ? "opacity-38 saturate-50" : "opacity-78 hue-rotate-[35deg]"}`} />
-              ) : (
-                <Hexagon className={`h-full w-full drop-shadow-[0_0_15px_rgba(45,212,255,0.24)] ${active ? "text-emerald-200 opacity-100 brightness-150" : future ? "text-cyan-100 opacity-38" : "text-emerald-100 opacity-78"}`} />
-              )}
-              <span className={`absolute inset-0 flex items-center justify-center font-black text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.8)] ${active ? "text-[1.7rem]" : "text-[1.45rem]"}`}>{canonicalIndex}</span>
-            </div>
-            <span className={`absolute left-0 top-[78px] block w-full truncate text-center font-black uppercase leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] ${active ? "text-[13px] text-emerald-300" : future ? "text-[12px] text-white/52" : "text-[12px] text-emerald-100/86"}`}>{shortEraName(era)}</span>
-          </div>
-        );
-      })}
+    <div
+      className={`absolute h-[154px] w-[860px] overflow-hidden ${reducedMotion ? "genesis-motion-disabled" : ""}`}
+      style={{ left: 25, top: 342 }}
+      onWheel={handleWheel}
+      aria-label="Civilization era carousel"
+    >
+      <div className="absolute inset-x-0 bottom-0 h-[128px] bg-[linear-gradient(180deg,transparent,rgba(3,7,19,0.62)_32%,rgba(3,7,19,0.88))]" />
+      <div className="pointer-events-none absolute inset-x-0 top-[18px] h-[92px] bg-[radial-gradient(circle_at_50%_46%,rgba(52,245,106,0.2),transparent_16rem)]" />
+      <button
+        type="button"
+        disabled={displayIndex <= 0}
+        className="absolute left-[190px] top-[42px] z-20 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-100/24 bg-black/42 text-cyan-100/80 transition hover:bg-cyan-300/12 disabled:opacity-25"
+        onClick={() => previewOffset(-1)}
+        aria-label="Preview previous era"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        disabled={displayIndex >= eras.length - 1}
+        className="absolute right-[190px] top-[42px] z-20 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-100/24 bg-black/42 text-cyan-100/80 transition hover:bg-cyan-300/12 disabled:opacity-25"
+        onClick={() => previewOffset(1)}
+        aria-label="Preview next era"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+
+      {previousEra ? (
+        <div className="absolute left-[-42px] top-[34px] h-[80px] w-[250px]">
+          <EraCarouselCard era={previousEra} state={cardState(eras.findIndex((era) => era.id === previousEra.id))} role="previous" assets={assets} art={art} progressPercent={progressPercent} onPreview={() => setPreviewEraId(previousEra.id)} />
+        </div>
+      ) : null}
+      <div key={centerEra.id} className="absolute left-[250px] top-[12px] h-[112px] w-[360px]">
+        <EraCarouselCard
+          era={centerEra}
+          state={isPreviewing ? "preview" : cardState(displayIndex)}
+          role="center"
+          assets={assets}
+          art={art}
+          progressPercent={progressPercent}
+          nextEra={isPreviewing ? undefined : nextCurrentEra}
+          action={
+            isPreviewing ? (
+              <button type="button" className="h-6 rounded-sm border border-emerald-100/34 bg-emerald-300/12 px-2 text-[9px] font-black uppercase leading-none text-emerald-100 transition hover:bg-emerald-300/20" onClick={() => setPreviewEraId(undefined)}>
+                Return to Current Era
+              </button>
+            ) : fullTimelineEnabled ? (
+              <a href="/civilization" className="inline-flex h-6 items-center rounded-sm border border-cyan-100/24 bg-black/34 px-2 text-[9px] font-black uppercase leading-none text-cyan-100/74 transition hover:bg-cyan-300/12">
+                View Full Timeline
+              </a>
+            ) : undefined
+          }
+        />
+      </div>
+      {nextEra ? (
+        <div className="absolute right-[-42px] top-[34px] h-[80px] w-[250px]">
+          <EraCarouselCard era={nextEra} state={cardState(eras.findIndex((era) => era.id === nextEra.id))} role="next" assets={assets} art={art} progressPercent={progressPercent} onPreview={() => setPreviewEraId(nextEra.id)} />
+        </div>
+      ) : null}
+
+      <div className="absolute bottom-[10px] left-[170px] right-[170px] h-[24px]">
+        <div className="absolute left-[14px] right-[14px] top-[10px] h-[3px] overflow-hidden rounded-full bg-cyan-100/18">
+          <div className="h-full rounded-full bg-emerald-300 shadow-[0_0_16px_rgba(52,245,106,0.58)] transition-[width] duration-500 ease-out" style={{ width: `${trackProgress}%` }} />
+        </div>
+        {eras.map((era, index) => {
+          const completed = index < activeIndex;
+          const current = index === activeIndex;
+          const previewed = index === displayIndex && isPreviewing;
+          const left = eras.length <= 1 ? 50 : (index / (eras.length - 1)) * 100;
+          return (
+            <button
+              key={era.id}
+              type="button"
+              className={`absolute top-0 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border text-[9px] font-black transition ${
+                current
+                  ? "border-emerald-100 bg-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(52,245,106,0.6)]"
+                  : completed
+                    ? "border-emerald-100/38 bg-emerald-300/30 text-emerald-50"
+                    : "border-cyan-100/22 bg-slate-950/80 text-cyan-50/48"
+              } ${previewed ? "ring-2 ring-cyan-100/60" : ""}`}
+              style={{ left: `${left}%` }}
+              onClick={() => setPreviewEraId(era.id)}
+              aria-label={`Preview ${era.displayName}`}
+            >
+              {era.index}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1277,7 +1512,15 @@ function RobloxHero({ data, model, art: dashboardArt }: { data: GameRuntimeData;
           {shortEraName(era)} Era · {focusResource?.displayName ?? "Missing Focus"} · {typeof objective?.discoveryPercent === "number" ? `${objective.discoveryPercent}%` : "No Discovery"}
         </div>
       ) : null}
-      <RobloxEraRail eras={data.eras} activeEraId={era.id} art={dashboardArt} visibleEraCount={dashboardEraVisibleCount(data)} />
+      <CivilizationEraCarousel
+        eras={data.eras}
+        activeEraId={era.id}
+        assets={data.assets}
+        art={dashboardArt}
+        visibleEraCount={dashboardEraVisibleCount(data)}
+        progressPercent={eraProgressPercent(model)}
+        fullTimelineEnabled={data.clientProfiles.default.eraNavigation?.fullTimelineEnabled ?? true}
+      />
     </section>
   );
 }

@@ -108,6 +108,33 @@ button:disabled {
   }
 }
 
+@keyframes genesis-era-card-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 12px rgba(52, 245, 106, 0.18));
+  }
+  50% {
+    filter: drop-shadow(0 0 22px rgba(52, 245, 106, 0.38));
+  }
+}
+
+@keyframes genesis-era-sweep {
+  0% {
+    transform: translateX(0) skewX(-18deg);
+    opacity: 0;
+  }
+  28% {
+    opacity: 0.45;
+  }
+  62% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: translateX(430%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
 .genesis-control-ring {
   animation: genesis-control-ring-spin var(--genesis-ring-duration, 11s) linear infinite;
 }
@@ -120,10 +147,26 @@ button:disabled {
   animation: genesis-control-pulse 0.28s ease-out;
 }
 
+.genesis-era-current-card {
+  animation: genesis-era-card-pulse 3.8s ease-in-out infinite;
+}
+
+.genesis-era-sweep {
+  animation: genesis-era-sweep 4.6s ease-in-out infinite;
+}
+
+.genesis-motion-disabled .genesis-era-current-card,
+.genesis-motion-disabled .genesis-era-sweep {
+  animation: none !important;
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .genesis-control-ring,
   .genesis-control-ring-reverse,
-  .genesis-control-pulse {
+  .genesis-control-pulse,
+  .genesis-era-current-card,
+  .genesis-era-sweep {
     animation: none !important;
   }
 }

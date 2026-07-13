@@ -9,6 +9,7 @@ import {
   AutoClickPanel,
   BoostBar,
   ClickPowerPanel,
+  CivilizationEraCarousel,
   CriticalStatsPanel,
   EraCard,
   EraProgressRail,
@@ -142,6 +143,28 @@ function AutoPanelStoryFrame({ children, reducedMotion = false }: { children: Re
       </div>
     </StoryCanvas>
   );
+}
+
+function CarouselStoryFrame({ children, reducedMotion = false }: { children: ReactNode; reducedMotion?: boolean }) {
+  return (
+    <StoryCanvas>
+      {reducedMotion ? <style>{".genesis-era-current-card,.genesis-era-sweep{animation:none!important;transition:none!important}"}</style> : null}
+      <div className="relative h-[190px] w-[910px] overflow-hidden rounded-md border border-cyan-200/20 bg-[linear-gradient(180deg,#10223b,#030713)]">
+        <div className="relative h-[510px] w-[910px] -translate-y-[320px]">
+          {children}
+        </div>
+      </div>
+    </StoryCanvas>
+  );
+}
+
+function carouselArt(data: ReturnType<typeof useGenesisStoryContent>["data"], missingArtwork = false) {
+  const art = createDashboardArtMap(data.assets);
+  if (!missingArtwork) return art;
+  return {
+    ...art,
+    era_progression_hex: { ...art.era_progression_hex, path: undefined, mappingStatus: "missing" as const, warnings: ["Story missing art"] }
+  };
 }
 
 export const TopResourceHudStartingState: Story = {
@@ -352,6 +375,94 @@ export const EraProgressRailGalacticLocked: Story = {
       <StoryCanvas>
         <EraProgressRail eras={data.eras} activeEraId="interstellar" lockedFromIndex={7} />
       </StoryCanvas>
+    );
+  }
+};
+
+export const EraCarouselSurvival: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="survival" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={14} />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselMiddleEra: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="industrial" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={42} />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselRenaissance: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="renaissance" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={67} />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselGalactic: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="galactic" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={100} />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselPreviewPrevious: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="renaissance" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={52} initialPreviewEraId="medieval" />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselPreviewNext: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="renaissance" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={52} initialPreviewEraId="industrial" />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselReducedMotion: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame reducedMotion>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="modern" assets={data.assets} art={carouselArt(data)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={33} reducedMotion />
+      </CarouselStoryFrame>
+    );
+  }
+};
+
+export const EraCarouselMissingArtworkFallback: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <CarouselStoryFrame>
+        <CivilizationEraCarousel eras={data.eras} activeEraId="space-age" assets={[]} art={carouselArt(data, true)} visibleEraCount={data.clientProfiles.default.eraNavigation?.visibleEraCount ?? 3} progressPercent={21} />
+      </CarouselStoryFrame>
     );
   }
 };
