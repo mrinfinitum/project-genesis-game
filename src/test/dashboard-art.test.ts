@@ -117,8 +117,8 @@ describe("dashboard art registry", () => {
   it("preserves the Rojo source dashboard coordinates", () => {
     expect(ROBLOX_DASHBOARD_LAYOUT).toMatchObject({
       topHud: { x: 0, y: 12, width: 1920, height: 108 },
-      sidebar: { x: 36, y: 139, width: 140, height: 927 },
-      leftColumn: { x: 209, y: 139, width: 336, height: 806 },
+      sidebar: { x: 12, y: 126, width: 160, height: 944 },
+      leftColumn: { x: 184, y: 126, width: 350, height: 823 },
       hero: { x: 572, y: 139, width: 910, height: 510 },
       upgrades: { x: 572, y: 658, width: 910, height: 407 },
       rightColumn: { x: 1514, y: 139, width: 425, height: 927 },

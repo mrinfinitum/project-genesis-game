@@ -152,6 +152,85 @@ function AutoPanelStoryFrame({ children, reducedMotion = false }: { children: Re
   );
 }
 
+type FocusedParityRect = {
+  label: string;
+  rect: { x: number; y: number; width: number; height: number };
+};
+
+const focusedParityRects = {
+  nav: { label: "Left Navigation", rect: { x: 12, y: 126, width: 160, height: 944 } },
+  click: { label: "Click Power", rect: { x: 184, y: 126, width: 350, height: 320 } },
+  auto: { label: "Auto Click", rect: { x: 184, y: 470, width: 350, height: 270 } },
+  critical: { label: "Critical Stats", rect: { x: 184, y: 764, width: 350, height: 185 } },
+  leftColumn: { label: "Complete Left Column", rect: { x: 12, y: 126, width: 522, height: 944 } }
+} satisfies Record<string, FocusedParityRect>;
+
+function FocusedParityCrop({
+  data,
+  focus,
+  mode,
+  opacity = 0.5
+}: {
+  data: ReturnType<typeof useGenesisStoryContent>["data"];
+  focus: FocusedParityRect;
+  mode: "reference" | "implementation" | "overlay" | "guides";
+  opacity?: number;
+}) {
+  const scale = focus.rect.width > 500 ? 0.56 : 0.72;
+  const cropStyle = { width: focus.rect.width * scale, height: focus.rect.height * scale };
+  const stageStyle = { width: 1920 * scale, height: 1080 * scale, left: -focus.rect.x * scale, top: -focus.rect.y * scale };
+  const reference = <img src="/design-reference/roblox/dashboard/dashboard-main-1920.png" alt="" className="absolute left-0 top-0 object-fill" style={{ width: 1920 * scale, height: 1080 * scale }} />;
+  const implementation = (
+    <div className="absolute left-0 top-0" style={{ width: 1920 * scale, height: 1080 * scale }}>
+      <GameShell data={data} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" embedded frameScale={scale} />
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="mb-2 text-[11px] font-black uppercase text-cyan-100/65">{focus.label} · {mode}</div>
+      <div className="relative overflow-hidden border border-cyan-200/18 bg-slate-950" style={cropStyle}>
+        <div className="absolute" style={stageStyle}>
+          {mode === "reference" ? reference : null}
+          {mode === "implementation" ? implementation : null}
+          {mode === "overlay" ? (
+            <>
+              {reference}
+              <div className="absolute left-0 top-0" style={{ opacity }}>{implementation}</div>
+            </>
+          ) : null}
+          {mode === "guides" ? (
+            <>
+              {reference}
+              <div className="absolute left-0 top-0" style={{ opacity }}>{implementation}</div>
+            </>
+          ) : null}
+        </div>
+        {mode === "guides" ? (
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-0 border border-emerald-300/70" />
+            <div className="absolute left-1/2 top-0 h-full w-px bg-cyan-200/45" />
+            <div className="absolute left-0 top-1/2 h-px w-full bg-cyan-200/45" />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function FocusedParityReview({ focus }: { focus: FocusedParityRect }) {
+  const { data } = useGenesisStoryContent();
+  return (
+    <StoryCanvas>
+      <div className="grid gap-4 bg-slate-950 p-4 text-white xl:grid-cols-4">
+        {(["reference", "implementation", "overlay", "guides"] as const).map((mode) => (
+          <FocusedParityCrop key={mode} data={data} focus={focus} mode={mode} />
+        ))}
+      </div>
+    </StoryCanvas>
+  );
+}
+
 function ActionButtonStoryFrame({ children }: { children: ReactNode }) {
   return (
     <StoryCanvas>
@@ -167,7 +246,7 @@ function ActionButtonStoryFrame({ children }: { children: ReactNode }) {
 function RobloxNavStoryFrame({ children }: { children: ReactNode }) {
   return (
     <StoryCanvas>
-      <div className="relative h-[927px] w-[140px] overflow-hidden bg-slate-950">
+      <div className="relative h-[944px] w-[160px] overflow-hidden bg-slate-950">
         {children}
       </div>
     </StoryCanvas>
@@ -840,6 +919,26 @@ export const AutoClickReducedMotion: Story = {
     });
     return <AutoPanelStoryFrame reducedMotion><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
   }
+};
+
+export const FocusedParityLeftNavigation: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.nav} />
+};
+
+export const FocusedParityClickPowerPanel: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.click} />
+};
+
+export const FocusedParityAutoClickPanel: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.auto} />
+};
+
+export const FocusedParityCriticalStatsPanel: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.critical} />
+};
+
+export const FocusedParityCompleteLeftColumn: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.leftColumn} />
 };
 
 export const RobloxNavigationOverviewActiveNoGlow: Story = {

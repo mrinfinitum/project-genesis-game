@@ -776,9 +776,11 @@ type BeveledActionButtonProps = {
   pressed?: boolean;
   onClick?: () => void;
   className?: string;
+  "data-testid"?: string;
+  "data-rojo-rect"?: string;
 };
 
-export function BeveledActionButton({ art, label, tone, disabled = false, active = false, pressed = false, onClick, className = "" }: BeveledActionButtonProps) {
+export function BeveledActionButton({ art, label, tone, disabled = false, active = false, pressed = false, onClick, className = "", "data-testid": dataTestId, "data-rojo-rect": dataRojoRect }: BeveledActionButtonProps) {
   const path = dashboardImagePath(art);
   const positionClass = /\babsolute\b/.test(className) ? "" : "relative";
   const imageButtonClasses = path
@@ -796,6 +798,8 @@ export function BeveledActionButton({ art, label, tone, disabled = false, active
       disabled={disabled}
       onClick={onClick}
       className={`${positionClass} overflow-hidden ${path ? "" : `${bevel} border ${toneClasses}`} ${imageButtonClasses} text-[23px] font-black uppercase tracking-normal transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 ${active ? "brightness-105" : ""} ${pressed ? "scale-[0.98] brightness-110" : ""} ${className}`}
+      data-testid={dataTestId}
+      data-rojo-rect={dataRojoRect}
     >
       {path ? <img src={path} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
       {!path ? <span className="relative z-10 [text-shadow:0_2px_6px_rgba(0,0,0,0.72)]">{label}</span> : null}
@@ -815,13 +819,15 @@ type RotatingControlRingProps = {
   pulseKey?: number;
   onActivate?: () => void;
   className?: string;
+  "data-testid"?: string;
+  "data-rojo-rect"?: string;
 };
 
 function ringDurationStyle(seconds: number): CSSProperties {
   return { "--genesis-ring-duration": `${seconds}s` } as CSSProperties;
 }
 
-export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, variant, active = true, disabled = false, pulseKey = 0, onActivate, className = "" }: RotatingControlRingProps) {
+export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, variant, active = true, disabled = false, pulseKey = 0, onActivate, className = "", "data-testid": dataTestId, "data-rojo-rect": dataRojoRect }: RotatingControlRingProps) {
   const outerPath = dashboardImagePath(outerArt);
   const middlePath = middleArt ? dashboardImagePath(middleArt) : undefined;
   const innerPath = innerArt ? dashboardImagePath(innerArt) : undefined;
@@ -836,6 +842,8 @@ export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, 
       onClick={onActivate}
       className={`group absolute flex items-center justify-center rounded-full transition active:scale-[0.96] disabled:opacity-50 ${className}`}
       aria-label={variant === "auto" ? "Toggle auto click" : "Click power"}
+      data-testid={dataTestId}
+      data-rojo-rect={dataRojoRect}
     >
       <span key={pulseKey} className={`absolute inset-0 rounded-full ${pulseKey > 0 ? "genesis-control-pulse" : ""}`} style={{ boxShadow: `0 0 30px ${active ? glow : "rgba(125,249,255,0.12)"}` }} />
       {outerPath ? (
@@ -912,7 +920,7 @@ export function ClickPowerPanel({
           click_interface_circle source missing
         </div>
       ) : null}
-      <h2 className="absolute left-[35px] top-[19px] h-[32px] w-[220px] text-[22px] font-black uppercase leading-7 text-cyan-100/90">Click Power</h2>
+      <h2 className="absolute left-[35px] top-[19px] h-[32px] w-[245px] text-[18px] font-black uppercase leading-6 text-cyan-100/90">Click Power</h2>
       <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[17px] top-[26px] h-[20px] w-[20px]" />
       <RotatingControlRing
         outerArt={art.dashboard_click_ring}
@@ -923,7 +931,8 @@ export function ClickPowerPanel({
         disabled={!hasClickState}
         pulseKey={pulseKey}
         onActivate={hasClickState ? onClick : undefined}
-        className="left-[42px] top-[92px] h-[156px] w-[156px]"
+        data-testid="click-power-ring"
+        className="left-[22px] top-[70px] h-[166px] w-[166px]"
       />
       <div className="absolute left-[182px] top-[77px] h-[142px] w-[133px] text-center">
         <div className="whitespace-pre-line text-[15px] font-black uppercase leading-[1.05] text-cyan-100/68">{formattedClickLabel(clickResourceLabel)}</div>
@@ -958,8 +967,8 @@ export function AutoClickPanel({
   const autoArt = autoEnabled ? art.dashboard_auto_button_on : art.dashboard_auto_button_off;
 
   return (
-    <section className="absolute left-0 top-[344px] h-[270px] w-full">
-      <h2 className="absolute left-[35px] top-[22px] h-[35px] w-[220px] text-[22px] font-black uppercase leading-7 text-cyan-100/90">Auto Click</h2>
+    <section data-testid="auto-click-panel" className="absolute left-0 top-[344px] h-[270px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.auto.x},${LEFT_COLUMN_GEOMETRY.auto.y},${LEFT_COLUMN_GEOMETRY.auto.width},${LEFT_COLUMN_GEOMETRY.auto.height}`}>
+      <h2 className="absolute left-[35px] top-[22px] h-[35px] w-[245px] text-[18px] font-black uppercase leading-6 text-cyan-100/90">Auto Click</h2>
       <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[17px] top-[27px] h-[20px] w-[20px]" />
       <RotatingControlRing
         outerArt={art.dashboard_auto_ring}
@@ -968,12 +977,14 @@ export function AutoClickPanel({
         active={autoEnabled}
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
-        className="left-[50px] top-[82px] h-[138px] w-[138px]"
+        data-testid="auto-click-ring"
+        data-rojo-rect="35,62,140,140"
+        className="left-[35px] top-[62px] h-[140px] w-[140px]"
       />
-      <div className="absolute left-[196px] top-[62px] h-[120px] w-[119px] text-center">
-        <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
-        <div className="mt-[10px] text-[30px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
-        <div className="mt-[11px] text-[14px] font-black uppercase leading-none text-cyan-200">Per/S</div>
+      <div data-testid="auto-click-stat-block" data-rojo-rect="196,62,119,120" className="absolute left-[196px] top-[62px] h-[120px] w-[119px] text-center">
+        <div className="text-[11px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
+        <div className="mt-[10px] text-[28px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
+        <div className="mt-[11px] text-[12px] font-black uppercase leading-none text-cyan-200">Per/S</div>
       </div>
       <BeveledActionButton
         art={autoArt}
@@ -982,6 +993,8 @@ export function AutoClickPanel({
         active={autoEnabled}
         disabled={!hasAutomation}
         onClick={hasAutomation ? onToggle : undefined}
+        data-testid="auto-click-button"
+        data-rojo-rect="19,206,312,55"
         className="absolute bottom-[9px] left-[19px] h-[55px] w-[312px]"
       />
     </section>
@@ -1012,6 +1025,28 @@ const robloxNavItems = [
   { id: "galaxy", label: "Galaxy", icon: Globe2, iconSize: 68, offsetY: -8 },
   { id: "spaceport", label: "Spaceport", icon: Rocket, iconSize: 66, offsetY: -14 }
 ];
+
+const ROBLOX_NAV_GEOMETRY = {
+  paddingTop: 10,
+  paddingX: 8,
+  itemWidth: 144,
+  itemHeight: 103.84,
+  itemGap: 11.328,
+  iconLeft: 43.2,
+  iconTop: 8.3,
+  iconWidth: 57.6,
+  iconHeight: 47.8,
+  labelLeft: 2.88,
+  labelTop: 60.2,
+  labelWidth: 138.24,
+  labelHeight: 29.1
+} as const;
+
+const LEFT_COLUMN_GEOMETRY = {
+  click: { x: 0, y: 0, width: 350, height: 320 },
+  auto: { x: 0, y: 344, width: 350, height: 270 },
+  critical: { x: 0, y: 638, width: 350, height: 185 }
+} as const;
 
 function WrenchIcon({ className }: { className?: string }) {
   return <Settings className={className} />;
@@ -1127,34 +1162,63 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
     journal: "spaceport"
   };
   const current = activeMap[active] ?? active;
-  const activeIndex = Math.max(0, robloxNavItems.findIndex((item) => item.id === current));
-  const slotHeightPx = ROBLOX_DASHBOARD_LAYOUT.sidebar.height / robloxNavItems.length;
 
   return (
     <nav className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.dashboard_nav_background) ? <img src={dashboardImagePath(art.dashboard_nav_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
-      <div
-        className="pointer-events-none absolute inset-x-[10px] rounded-[10px] border-2 border-cyan-200/75 bg-[linear-gradient(180deg,rgba(13,71,116,0.56),rgba(4,24,44,0.62))] shadow-[inset_0_0_12px_rgba(45,212,255,0.08)]"
-        style={{ top: `${(activeIndex * slotHeightPx - 2) / ROBLOX_DASHBOARD_LAYOUT.sidebar.height * 100}%`, height: `${(slotHeightPx + 2) / ROBLOX_DASHBOARD_LAYOUT.sidebar.height * 100}%` }}
-      />
+      {dashboardImagePath(art.dashboard_nav_background) ? (
+        <img
+          src={dashboardImagePath(art.dashboard_nav_background)}
+          alt=""
+          data-testid="roblox-sidebar-background"
+          data-art-key="dashboard_nav_background"
+          data-local-path={art.dashboard_nav_background.path}
+          data-native-size="160x790"
+          data-rendered-size={`${ROBLOX_DASHBOARD_LAYOUT.sidebar.width}x${ROBLOX_DASHBOARD_LAYOUT.sidebar.height}`}
+          data-background-size="100% 100%"
+          data-background-position="0 0"
+          data-repeat="no-repeat"
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill"
+        />
+      ) : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
       {robloxNavItems.map((item, index) => {
         const Icon = item.icon;
         const isActive = item.id === current;
         const iconArt = art[menuIconKeys[index]];
-        const slotHeight = 100 / robloxNavItems.length;
+        const itemTop = ROBLOX_NAV_GEOMETRY.paddingTop + index * (ROBLOX_NAV_GEOMETRY.itemHeight + ROBLOX_NAV_GEOMETRY.itemGap);
         return (
           <button
             key={item.id}
-            className={`absolute left-0 flex w-full flex-col items-center text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "text-white" : "text-blue-50/82"}`}
-            style={{ top: `${index * slotHeight}%`, height: `${slotHeight}%` }}
+            type="button"
+            data-testid={`roblox-nav-item-${item.id}`}
+            data-active={isActive}
+            data-rojo-size="1,0,0.11,0"
+            className={`absolute z-10 overflow-hidden rounded-[8px] border text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "border-2 border-cyan-200/95 bg-[rgb(8,84,126)] text-white" : "border border-cyan-300/24 bg-[rgb(5,25,42)] text-blue-50/82"}`}
+            style={{
+              left: ROBLOX_NAV_GEOMETRY.paddingX,
+              top: itemTop,
+              width: ROBLOX_NAV_GEOMETRY.itemWidth,
+              height: ROBLOX_NAV_GEOMETRY.itemHeight
+            }}
           >
-            {index > 0 ? <span className="absolute left-[18px] right-[18px] top-[-2px] h-px bg-cyan-100/14" /> : null}
+            <span className={`pointer-events-none absolute z-10 rounded-full border border-cyan-200/45 bg-[linear-gradient(180deg,rgba(15,85,130,0.94),rgba(4,24,48,0.94))] ${isActive ? "opacity-100" : "opacity-72"}`} style={{ left: ROBLOX_NAV_GEOMETRY.iconLeft, top: ROBLOX_NAV_GEOMETRY.iconTop, width: ROBLOX_NAV_GEOMETRY.iconWidth, height: ROBLOX_NAV_GEOMETRY.iconHeight }} />
             {iconArt && dashboardImagePath(iconArt) ? (
-              <img src={dashboardImagePath(iconArt)} alt="" className="mt-[14px] object-contain" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.72, filter: isActive ? "brightness(1.08)" : "none" }} />
+              <img
+                src={dashboardImagePath(iconArt)}
+                alt=""
+                data-testid={`roblox-nav-icon-${item.id}`}
+                data-z-layer="icon-above-background"
+                className="pointer-events-none absolute z-20 object-contain"
+                style={{ left: ROBLOX_NAV_GEOMETRY.iconLeft, top: ROBLOX_NAV_GEOMETRY.iconTop, width: ROBLOX_NAV_GEOMETRY.iconWidth, height: ROBLOX_NAV_GEOMETRY.iconHeight, opacity: isActive ? 1 : 0.72, filter: isActive ? "brightness(1.08)" : "none" }}
+              />
             ) : (
-              <Icon className={`mt-[14px] ${isActive ? "text-cyan-100" : "text-white/72"}`} style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)` }} />
+              <Icon
+                data-testid={`roblox-nav-icon-${item.id}`}
+                data-z-layer="icon-above-background"
+                className={`pointer-events-none absolute z-20 ${isActive ? "text-cyan-100" : "text-white/72"}`}
+                style={{ left: ROBLOX_NAV_GEOMETRY.iconLeft, top: ROBLOX_NAV_GEOMETRY.iconTop, width: ROBLOX_NAV_GEOMETRY.iconWidth, height: ROBLOX_NAV_GEOMETRY.iconHeight }}
+              />
             )}
-            <span className="mt-[-2px] w-full px-1 text-[14px] [text-shadow:0_1px_2px_rgba(0,0,0,0.68)]" style={{ transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.9 }}>{item.label}</span>
+            <span className="pointer-events-none absolute z-20 px-1 text-[11px] [text-shadow:0_1px_2px_rgba(0,0,0,0.66)]" style={{ left: ROBLOX_NAV_GEOMETRY.labelLeft, top: ROBLOX_NAV_GEOMETRY.labelTop, width: ROBLOX_NAV_GEOMETRY.labelWidth, height: ROBLOX_NAV_GEOMETRY.labelHeight, opacity: isActive ? 1 : 0.9 }}>{item.label}</span>
           </button>
         );
       })}
@@ -1196,19 +1260,34 @@ function RobloxLeftColumn({
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.dashboard_click_panel_background) ? <img src={dashboardImagePath(art.dashboard_click_panel_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
+      {dashboardImagePath(art.dashboard_click_panel_background) ? (
+        <img
+          src={dashboardImagePath(art.dashboard_click_panel_background)}
+          alt=""
+          data-testid="roblox-left-column-background"
+          data-art-key="dashboard_click_panel_background"
+          data-local-path={art.dashboard_click_panel_background.path}
+          data-native-size="350x780"
+          data-rendered-size={`${ROBLOX_DASHBOARD_LAYOUT.leftColumn.width}x${ROBLOX_DASHBOARD_LAYOUT.leftColumn.height}`}
+          data-background-size="100% 100%"
+          data-background-position="0 0"
+          data-repeat="no-repeat"
+          className="pointer-events-none absolute inset-0 h-full w-full object-fill"
+        />
+      ) : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
       <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} pressed={clickPressed} pulseKey={clickPulseKey} />
       <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
 
-      <section className="absolute left-0 top-[638px] h-[168px] w-full">
-        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[28px] top-[12px] h-[86px] w-[112px] object-contain" /> : <Star className="absolute left-[28px] top-[12px] h-[86px] w-[112px] text-amber-100" />}
+      <section data-testid="critical-stats-panel" className="absolute left-0 top-[638px] h-[185px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.critical.x},${LEFT_COLUMN_GEOMETRY.critical.y},${LEFT_COLUMN_GEOMETRY.critical.width},${LEFT_COLUMN_GEOMETRY.critical.height}`}>
+        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" className="absolute left-[28px] top-[13px] h-[89px] w-[112px] object-contain" /> : <Star className="absolute left-[28px] top-[13px] h-[89px] w-[112px] text-amber-100" />}
+        <div className="absolute left-[60px] top-[100px] w-[49px] text-center text-[14px] font-black leading-none text-cyan-700/75">-</div>
         <div className="absolute left-[142px] top-[15px] w-[170px]">
-          <div className="text-[14px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
-          <div className="mt-[7px] text-[25px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
-          <div className="mt-[16px] text-[14px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
-          <div className="mt-[7px] text-[25px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
+          <div className="text-[12px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
+          <div className="mt-[7px] text-[24px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
+          <div className="mt-[18px] text-[12px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
+          <div className="mt-[7px] text-[24px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
         </div>
-        <div className="absolute left-[28px] right-[34px] top-[139px] truncate text-[11px] font-black uppercase text-cyan-100/58">Next Milestone: Level Up Upgrades</div>
+        <div className="absolute left-[28px] right-[49px] top-[154px] truncate text-[11px] font-black uppercase text-cyan-100/58">Next Milestone: Level Up Upgrades</div>
       </section>
     </div>
   );
