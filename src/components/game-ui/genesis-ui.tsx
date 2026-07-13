@@ -1027,11 +1027,9 @@ const robloxNavItems = [
 ];
 
 const ROBLOX_NAV_GEOMETRY = {
-  paddingTop: 10,
   paddingX: 8,
   itemWidth: 144,
   itemHeight: 103.84,
-  itemGap: 11.328,
   iconLeft: 35.5,
   iconTop: 8.3,
   iconWidth: 72,
@@ -1042,8 +1040,10 @@ const ROBLOX_NAV_GEOMETRY = {
   labelHeight: 28
 } as const;
 
+const ROBLOX_NAV_SLOT_TOPS = [18, 134, 264, 398, 530, 663, 755, 846] as const;
+
 function robloxNavItemTop(index: number) {
-  return ROBLOX_NAV_GEOMETRY.paddingTop + index * (ROBLOX_NAV_GEOMETRY.itemHeight + ROBLOX_NAV_GEOMETRY.itemGap);
+  return ROBLOX_NAV_SLOT_TOPS[index] ?? ROBLOX_NAV_SLOT_TOPS[ROBLOX_NAV_SLOT_TOPS.length - 1];
 }
 
 const LEFT_COLUMN_GEOMETRY = {

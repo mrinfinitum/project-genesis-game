@@ -58,7 +58,7 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("roblox-nav-item-dashboard")).toHaveAttribute("data-active", "true");
     expect(screen.getByTestId("roblox-nav-item-dashboard")).toHaveStyle({
       left: "8px",
-      top: "10px",
+      top: "18px",
       width: "144px",
       height: "103.84px"
     });
@@ -66,9 +66,10 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveClass("z-20");
     const dashboardLabelStyle = screen.getByTestId("roblox-nav-label-dashboard").style;
     expect(Number.parseFloat(dashboardLabelStyle.left)).toBeCloseTo(8);
-    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(78);
+    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(86);
     expect(Number.parseFloat(dashboardLabelStyle.width)).toBeCloseTo(144);
     expect(Number.parseFloat(dashboardLabelStyle.height)).toBeCloseTo(28);
+    expect(Number.parseFloat(screen.getByTestId("roblox-nav-label-events").style.top)).toBeCloseTo(731);
   });
 
   it("uses independent icon and label overlays instead of per-item visual containers", async () => {
