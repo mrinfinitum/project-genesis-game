@@ -913,7 +913,7 @@ export function ClickPowerPanel({
   const lastClick = model.playerState.clickOutput?.amount ?? 0;
 
   return (
-    <section className="absolute left-0 top-0 h-[320px] w-full">
+    <section className="absolute left-0 top-0 h-[344px] w-full">
       {showDevWarnings && art.dashboard_click_interface.mappingStatus === "missing" ? (
         <div className="absolute right-5 top-11 z-10 rounded-sm border border-amber-200/45 bg-amber-950/80 px-2 py-1 text-[10px] font-black uppercase text-amber-100">
           click_interface_circle source missing
@@ -931,13 +931,13 @@ export function ClickPowerPanel({
         pulseKey={pulseKey}
         onActivate={hasClickState ? onClick : undefined}
         data-testid="click-power-ring"
-        data-rojo-rect="34,88,126,126"
-        className="left-[34px] top-[88px] h-[126px] w-[126px]"
+        data-rojo-rect="25,82,174,174"
+        className="left-[25px] top-[82px] h-[174px] w-[174px]"
       />
-      <div data-testid="click-power-stat-block" data-rojo-rect="198,76,118,145" className="absolute left-[198px] top-[76px] h-[145px] w-[118px] text-center">
+      <div data-testid="click-power-stat-block" data-rojo-rect="196,82,126,152" className="absolute left-[196px] top-[82px] h-[152px] w-[126px] text-center">
         <div className="whitespace-pre-line text-[18px] font-black uppercase leading-[1.04] text-cyan-100/68">{formattedClickLabel(clickResourceLabel)}</div>
-        <div className="mt-[13px] text-[34px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
-        <div className="mt-[16px] text-[20px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
+        <div className="mt-[15px] text-[38px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
+        <div className="mt-[18px] text-[21px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
         <div className={`mt-[8px] text-[20px] font-black uppercase leading-none text-cyan-300 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
       </div>
       <BeveledActionButton
@@ -948,8 +948,8 @@ export function ClickPowerPanel({
         pressed={pressed}
         onClick={hasClickState ? onClick : undefined}
         data-testid="click-power-button"
-        data-rojo-rect="39,250,272,45"
-        className="absolute left-[39px] top-[250px] h-[45px] w-[272px]"
+        data-rojo-rect="39,267,272,55"
+        className="absolute left-[39px] top-[267px] h-[55px] w-[272px]"
       />
     </section>
   );
@@ -980,13 +980,13 @@ export function AutoClickPanel({
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
         data-testid="auto-click-ring"
-        data-rojo-rect="45,83,116,116"
-        className="left-[45px] top-[83px] h-[116px] w-[116px]"
+        data-rojo-rect="35,76,150,150"
+        className="left-[35px] top-[76px] h-[150px] w-[150px]"
       />
-      <div data-testid="auto-click-stat-block" data-rojo-rect="200,74,116,112" className="absolute left-[200px] top-[74px] h-[112px] w-[116px] text-center">
-        <div className="text-[15px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
-        <div className="mt-[13px] text-[32px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
-        <div className="mt-[14px] text-[18px] font-black uppercase leading-none text-cyan-200">Per/S</div>
+      <div data-testid="auto-click-stat-block" data-rojo-rect="198,70,122,128" className="absolute left-[198px] top-[70px] h-[128px] w-[122px] text-center">
+        <div className="text-[16px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
+        <div className="mt-[15px] text-[36px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
+        <div className="mt-[16px] text-[20px] font-black uppercase leading-none text-cyan-200">Per/S</div>
       </div>
       <BeveledActionButton
         art={autoArt}
@@ -996,8 +996,8 @@ export function AutoClickPanel({
         disabled={!hasAutomation}
         onClick={hasAutomation ? onToggle : undefined}
         data-testid="auto-click-button"
-        data-rojo-rect="43,208,272,45"
-        className="absolute left-[43px] top-[208px] h-[45px] w-[272px]"
+        data-rojo-rect="33,206,286,55"
+        className="absolute left-[33px] top-[206px] h-[55px] w-[286px]"
       />
     </section>
   );
@@ -1343,13 +1343,13 @@ function RobloxLeftColumn({
       <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
 
       <section data-testid="critical-stats-panel" className="absolute left-0 top-[638px] h-[185px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.critical.x},${LEFT_COLUMN_GEOMETRY.critical.y},${LEFT_COLUMN_GEOMETRY.critical.width},${LEFT_COLUMN_GEOMETRY.critical.height}`}>
-        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="47,34,86,86" className="absolute left-[47px] top-[34px] h-[86px] w-[86px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="47,34,86,86" className="absolute left-[47px] top-[34px] h-[86px] w-[86px] text-amber-100" />}
-        <div className="absolute left-[76px] top-[121px] w-[29px] text-center text-[15px] font-black leading-none text-cyan-700/75">-</div>
-        <div data-testid="critical-stats-block" data-rojo-rect="150,31,172,126" className="absolute left-[150px] top-[31px] w-[172px]">
-          <div className="text-[16px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
-          <div className="mt-[10px] text-[30px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
-          <div className="mt-[29px] text-[16px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
-          <div className="mt-[10px] text-[30px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
+        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="42,30,104,104" className="absolute left-[42px] top-[30px] h-[104px] w-[104px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="42,30,104,104" className="absolute left-[42px] top-[30px] h-[104px] w-[104px] text-amber-100" />}
+        <div className="absolute left-[80px] top-[140px] w-[29px] text-center text-[17px] font-black leading-none text-cyan-700/75">-</div>
+        <div data-testid="critical-stats-block" data-rojo-rect="158,38,168,132" className="absolute left-[158px] top-[38px] w-[168px]">
+          <div className="text-[17px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
+          <div className="mt-[11px] text-[32px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
+          <div className="mt-[28px] text-[17px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
+          <div className="mt-[11px] text-[32px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
         </div>
       </section>
     </div>
