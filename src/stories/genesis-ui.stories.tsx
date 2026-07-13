@@ -158,11 +158,17 @@ type FocusedParityRect = {
 };
 
 const focusedParityRects = {
+  fullDashboard: { label: "Full Dashboard", rect: { x: 0, y: 0, width: 1920, height: 1080 } },
+  topHud: { label: "Top HUD", rect: { x: 0, y: 0, width: 1920, height: 116 } },
   nav: { label: "Left Navigation", rect: { x: 12, y: 126, width: 160, height: 944 } },
   click: { label: "Click Power", rect: { x: 184, y: 126, width: 350, height: 320 } },
   auto: { label: "Auto Click", rect: { x: 184, y: 470, width: 350, height: 270 } },
   critical: { label: "Critical Stats", rect: { x: 184, y: 764, width: 350, height: 185 } },
-  leftColumn: { label: "Complete Left Column", rect: { x: 12, y: 126, width: 522, height: 944 } }
+  leftColumn: { label: "Complete Left Column", rect: { x: 12, y: 126, width: 522, height: 944 } },
+  heroObjective: { label: "Hero + Objective", rect: { x: 572, y: 139, width: 910, height: 510 } },
+  upgrades: { label: "Upgrades", rect: { x: 572, y: 658, width: 910, height: 407 } },
+  rightColumn: { label: "Right Column", rect: { x: 1514, y: 139, width: 425, height: 927 } },
+  boosts: { label: "Boosts Drawer", rect: { x: 0, y: 850, width: 1920, height: 230 } }
 } satisfies Record<string, FocusedParityRect>;
 
 function FocusedParityCrop({
@@ -941,6 +947,30 @@ export const FocusedParityCriticalStatsPanel: Story = {
 
 export const FocusedParityCompleteLeftColumn: Story = {
   render: () => <FocusedParityReview focus={focusedParityRects.leftColumn} />
+};
+
+export const FocusedParityFullDashboard: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.fullDashboard} />
+};
+
+export const FocusedParityTopHud: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.topHud} />
+};
+
+export const FocusedParityHeroObjective: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.heroObjective} />
+};
+
+export const FocusedParityUpgrades: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.upgrades} />
+};
+
+export const FocusedParityRightColumn: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.rightColumn} />
+};
+
+export const FocusedParityBoosts: Story = {
+  render: () => <FocusedParityReview focus={focusedParityRects.boosts} />
 };
 
 export const RobloxNavigationOverviewActiveNoGlow: Story = {

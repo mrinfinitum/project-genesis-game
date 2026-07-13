@@ -801,7 +801,7 @@ export function BeveledActionButton({ art, label, tone, disabled = false, active
       data-testid={dataTestId}
       data-rojo-rect={dataRojoRect}
     >
-      {path ? <img src={path} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
+      {path ? <img src={path} alt="" data-art-key={art.key} className="pointer-events-none absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
       {!path ? <span className="relative z-10 [text-shadow:0_2px_6px_rgba(0,0,0,0.72)]">{label}</span> : null}
       <span className="sr-only">{label}</span>
     </button>
@@ -1192,7 +1192,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
             data-testid={`roblox-nav-item-${item.id}`}
             data-active={isActive}
             data-rojo-size="1,0,0.11,0"
-            className={`absolute z-10 overflow-hidden rounded-[8px] border text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "border-2 border-cyan-200/95 bg-[rgb(8,84,126)] text-white" : "border border-cyan-300/24 bg-[rgb(5,25,42)] text-blue-50/82"}`}
+            className={`absolute z-10 overflow-hidden rounded-[8px] border text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "border-cyan-100/90 bg-[rgba(8,84,126,0.68)] text-white shadow-[inset_0_0_16px_rgba(125,249,255,0.22),0_0_12px_rgba(45,212,255,0.12)]" : "border-transparent bg-transparent text-blue-50/76 shadow-none"}`}
             style={{
               left: ROBLOX_NAV_GEOMETRY.paddingX,
               top: itemTop,
@@ -1200,11 +1200,11 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
               height: ROBLOX_NAV_GEOMETRY.itemHeight
             }}
           >
-            <span className={`pointer-events-none absolute z-10 rounded-full border border-cyan-200/45 bg-[linear-gradient(180deg,rgba(15,85,130,0.94),rgba(4,24,48,0.94))] ${isActive ? "opacity-100" : "opacity-72"}`} style={{ left: ROBLOX_NAV_GEOMETRY.iconLeft, top: ROBLOX_NAV_GEOMETRY.iconTop, width: ROBLOX_NAV_GEOMETRY.iconWidth, height: ROBLOX_NAV_GEOMETRY.iconHeight }} />
             {iconArt && dashboardImagePath(iconArt) ? (
               <img
                 src={dashboardImagePath(iconArt)}
                 alt=""
+                data-art-key={iconArt.key}
                 data-testid={`roblox-nav-icon-${item.id}`}
                 data-z-layer="icon-above-background"
                 className="pointer-events-none absolute z-20 object-contain"
@@ -1287,7 +1287,6 @@ function RobloxLeftColumn({
           <div className="mt-[18px] text-[12px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
           <div className="mt-[7px] text-[24px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
         </div>
-        <div className="absolute left-[28px] right-[49px] top-[154px] truncate text-[11px] font-black uppercase text-cyan-100/58">Next Milestone: Level Up Upgrades</div>
       </section>
     </div>
   );

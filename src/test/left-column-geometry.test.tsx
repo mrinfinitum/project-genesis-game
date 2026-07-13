@@ -65,8 +65,19 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveClass("z-20");
   });
 
+  it("does not draw separate bordered cards around inactive nav items", async () => {
+    const data = await bundledRuntime();
+    render(<RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />);
+
+    const inactive = screen.getByTestId("roblox-nav-item-production");
+    expect(inactive).toHaveAttribute("data-active", "false");
+    expect(inactive).toHaveClass("border-transparent");
+    expect(inactive).toHaveClass("bg-transparent");
+    expect(inactive.className).not.toMatch(/border-cyan|bg-\[rgb/);
+  });
+
   it("uses one shared left-column clicker background for Click, Auto, and Critical", async () => {
-    render(<GameShell data={await bundledRuntime()} />);
+    const { container } = render(<GameShell data={await bundledRuntime()} />);
 
     const backgrounds = screen.getAllByTestId("roblox-left-column-background");
     expect(backgrounds).toHaveLength(1);
@@ -75,6 +86,37 @@ describe("Roblox left column geometry", () => {
     expect(backgrounds[0]).toHaveAttribute("data-rendered-size", "350x823");
     expect(backgrounds[0]).toHaveAttribute("data-background-size", "100% 100%");
     expect(screen.getByTestId("critical-stats-panel")).toHaveAttribute("data-rojo-rect", "0,638,350,185");
+    expect(container.querySelectorAll("[data-art-key='dashboard_click_panel_background']")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-art-key='dashboard_auto_panel_background']")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-art-key='dashboard_critical_panel_background']")).toHaveLength(0);
+  });
+
+  it("uses exact registered action button art and removes non-canonical critical copy", async () => {
+    const { container } = render(<GameShell data={await bundledRuntime()} />);
+
+    expect(container.querySelector("[data-art-key='dashboard_click_button']")).toBeTruthy();
+    expect(container.querySelector("[data-art-key='dashboard_auto_button_on'], [data-art-key='dashboard_auto_button_off']")).toBeTruthy();
+    expect(screen.queryByText(/Next Milestone/i)).toBeNull();
+  });
+
+  it("keeps visible HUD images semantic through the dashboard art registry", async () => {
+    const { container } = render(<GameShell data={await bundledRuntime()} />);
+    const semanticImages = [...container.querySelectorAll("img[data-art-key]")];
+
+    expect(semanticImages.length).toBeGreaterThanOrEqual(12);
+    for (const image of semanticImages) {
+      expect(image.getAttribute("data-art-key")).not.toMatch(/^\/|roblox-assets/);
+    }
+  });
+
+  it("keeps HUD typography in the measured Roblox source ranges", async () => {
+    const data = await bundledRuntime();
+    render(<GameShell data={data} />);
+
+    expect(screen.getByTestId("roblox-nav-item-dashboard").querySelector("span:last-child")).toHaveClass("text-[11px]");
+    expect(screen.getByText("Click Power")).toHaveClass("text-[18px]");
+    expect(screen.getByText("Auto Click")).toHaveClass("text-[18px]");
+    expect(screen.getByText("Critical Chance")).toHaveClass("text-[12px]");
   });
 
   it("keeps Auto Click controls inside the canonical panel bounds", async () => {
