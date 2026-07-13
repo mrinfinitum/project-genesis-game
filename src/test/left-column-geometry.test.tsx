@@ -40,7 +40,7 @@ describe("Roblox left column geometry", () => {
 
     const background = screen.getByTestId("roblox-sidebar-background");
     expect(background).toHaveAttribute("data-art-key", "dashboard_nav_background");
-    expect(background).toHaveAttribute("data-local-path", "/roblox-assets/UI/sidebar_frame_160x790.png");
+    expect(background).toHaveAttribute("data-local-path", "/roblox-assets/UI/ui_panel_side_menu.png");
     expect(background).toHaveAttribute("data-native-size", "160x790");
     expect(background).toHaveAttribute("data-rendered-size", "160x944");
     expect(background).toHaveAttribute("data-background-size", "100% 100%");
@@ -54,6 +54,7 @@ describe("Roblox left column geometry", () => {
     const data = await bundledRuntime();
     render(<RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />);
 
+    expect(screen.getByTestId("roblox-integrated-nav-hud")).toHaveAttribute("data-dom-model", "single-hud-image-with-absolute-overlays");
     expect(screen.getByTestId("roblox-nav-item-dashboard")).toHaveAttribute("data-active", "true");
     expect(screen.getByTestId("roblox-nav-item-dashboard")).toHaveStyle({
       left: "8px",
@@ -63,17 +64,32 @@ describe("Roblox left column geometry", () => {
     });
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveAttribute("data-z-layer", "icon-above-background");
     expect(screen.getByTestId("roblox-nav-icon-dashboard")).toHaveClass("z-20");
+    const dashboardLabelStyle = screen.getByTestId("roblox-nav-label-dashboard").style;
+    expect(Number.parseFloat(dashboardLabelStyle.left)).toBeCloseTo(10.88);
+    expect(Number.parseFloat(dashboardLabelStyle.top)).toBeCloseTo(70.2);
+    expect(Number.parseFloat(dashboardLabelStyle.width)).toBeCloseTo(138.24);
+    expect(Number.parseFloat(dashboardLabelStyle.height)).toBeCloseTo(29.1);
   });
 
-  it("does not draw separate bordered cards around inactive nav items", async () => {
+  it("uses independent icon and label overlays instead of per-item visual containers", async () => {
+    const data = await bundledRuntime();
+    render(<RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />);
+
+    expect(screen.getByTestId("roblox-nav-item-dashboard").querySelector("img, span, svg")).toBeNull();
+    expect(screen.getAllByTestId(/roblox-nav-icon-/)).toHaveLength(8);
+    expect(screen.getAllByTestId(/roblox-nav-label-/)).toHaveLength(8);
+    expect(screen.getAllByTestId("roblox-nav-active-frame")).toHaveLength(1);
+  });
+
+  it("does not draw separate bordered cards around inactive nav hit targets", async () => {
     const data = await bundledRuntime();
     render(<RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />);
 
     const inactive = screen.getByTestId("roblox-nav-item-production");
     expect(inactive).toHaveAttribute("data-active", "false");
-    expect(inactive).toHaveClass("border-transparent");
+    expect(inactive).toHaveClass("border-0");
     expect(inactive).toHaveClass("bg-transparent");
-    expect(inactive.className).not.toMatch(/border-cyan|bg-\[rgb/);
+    expect(inactive.className).not.toMatch(/rounded|shadow|border-cyan|bg-\[rgb|bg-\[rgba/);
   });
 
   it("uses one shared left-column clicker background for Click, Auto, and Critical", async () => {
@@ -113,7 +129,7 @@ describe("Roblox left column geometry", () => {
     const data = await bundledRuntime();
     render(<GameShell data={data} />);
 
-    expect(screen.getByTestId("roblox-nav-item-dashboard").querySelector("span:last-child")).toHaveClass("text-[11px]");
+    expect(screen.getByTestId("roblox-nav-label-dashboard")).toHaveClass("text-[11px]");
     expect(screen.getByText("Click Power")).toHaveClass("text-[18px]");
     expect(screen.getByText("Auto Click")).toHaveClass("text-[18px]");
     expect(screen.getByText("Critical Chance")).toHaveClass("text-[12px]");

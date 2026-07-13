@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject, type WheelEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject, type WheelEvent } from "react";
 import { createPortal } from "react-dom";
 import {
   Activity,
@@ -1042,6 +1042,10 @@ const ROBLOX_NAV_GEOMETRY = {
   labelHeight: 29.1
 } as const;
 
+function robloxNavItemTop(index: number) {
+  return ROBLOX_NAV_GEOMETRY.paddingTop + index * (ROBLOX_NAV_GEOMETRY.itemHeight + ROBLOX_NAV_GEOMETRY.itemGap);
+}
+
 const LEFT_COLUMN_GEOMETRY = {
   click: { x: 0, y: 0, width: 350, height: 320 },
   auto: { x: 0, y: 344, width: 350, height: 270 },
@@ -1162,9 +1166,10 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
     journal: "spaceport"
   };
   const current = activeMap[active] ?? active;
+  const activeIndex = robloxNavItems.findIndex((item) => item.id === current);
 
   return (
-    <nav className="relative h-full w-full overflow-hidden">
+    <nav className="relative h-full w-full overflow-hidden" data-testid="roblox-integrated-nav-hud" data-dom-model="single-hud-image-with-absolute-overlays">
       {dashboardImagePath(art.dashboard_nav_background) ? (
         <img
           src={dashboardImagePath(art.dashboard_nav_background)}
@@ -1180,26 +1185,42 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
           className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill"
         />
       ) : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
+      {activeIndex >= 0 ? (
+        <div
+          aria-hidden="true"
+          data-testid="roblox-nav-active-frame"
+          data-active-for={current}
+          className="pointer-events-none absolute z-10 bg-cyan-300/8 outline outline-1 -outline-offset-1 outline-cyan-100/58"
+          style={{
+            left: ROBLOX_NAV_GEOMETRY.paddingX,
+            top: robloxNavItemTop(activeIndex),
+            width: ROBLOX_NAV_GEOMETRY.itemWidth,
+            height: ROBLOX_NAV_GEOMETRY.itemHeight
+          }}
+        />
+      ) : null}
       {robloxNavItems.map((item, index) => {
         const Icon = item.icon;
         const isActive = item.id === current;
         const iconArt = art[menuIconKeys[index]];
-        const itemTop = ROBLOX_NAV_GEOMETRY.paddingTop + index * (ROBLOX_NAV_GEOMETRY.itemHeight + ROBLOX_NAV_GEOMETRY.itemGap);
+        const itemTop = robloxNavItemTop(index);
+        const iconStyle = {
+          left: ROBLOX_NAV_GEOMETRY.paddingX + ROBLOX_NAV_GEOMETRY.iconLeft,
+          top: itemTop + ROBLOX_NAV_GEOMETRY.iconTop,
+          width: ROBLOX_NAV_GEOMETRY.iconWidth,
+          height: ROBLOX_NAV_GEOMETRY.iconHeight,
+          opacity: isActive ? 1 : 0.72,
+          filter: isActive ? "brightness(1.08)" : "none"
+        };
+        const labelStyle = {
+          left: ROBLOX_NAV_GEOMETRY.paddingX + ROBLOX_NAV_GEOMETRY.labelLeft,
+          top: itemTop + ROBLOX_NAV_GEOMETRY.labelTop,
+          width: ROBLOX_NAV_GEOMETRY.labelWidth,
+          height: ROBLOX_NAV_GEOMETRY.labelHeight,
+          opacity: isActive ? 1 : 0.9
+        };
         return (
-          <button
-            key={item.id}
-            type="button"
-            data-testid={`roblox-nav-item-${item.id}`}
-            data-active={isActive}
-            data-rojo-size="1,0,0.11,0"
-            className={`absolute z-10 overflow-hidden rounded-[8px] border text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "border-cyan-100/90 bg-[rgba(8,84,126,0.68)] text-white shadow-[inset_0_0_16px_rgba(125,249,255,0.22),0_0_12px_rgba(45,212,255,0.12)]" : "border-transparent bg-transparent text-blue-50/76 shadow-none"}`}
-            style={{
-              left: ROBLOX_NAV_GEOMETRY.paddingX,
-              top: itemTop,
-              width: ROBLOX_NAV_GEOMETRY.itemWidth,
-              height: ROBLOX_NAV_GEOMETRY.itemHeight
-            }}
-          >
+          <Fragment key={item.id}>
             {iconArt && dashboardImagePath(iconArt) ? (
               <img
                 src={dashboardImagePath(iconArt)}
@@ -1208,18 +1229,32 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
                 data-testid={`roblox-nav-icon-${item.id}`}
                 data-z-layer="icon-above-background"
                 className="pointer-events-none absolute z-20 object-contain"
-                style={{ left: ROBLOX_NAV_GEOMETRY.iconLeft, top: ROBLOX_NAV_GEOMETRY.iconTop, width: ROBLOX_NAV_GEOMETRY.iconWidth, height: ROBLOX_NAV_GEOMETRY.iconHeight, opacity: isActive ? 1 : 0.72, filter: isActive ? "brightness(1.08)" : "none" }}
+                style={iconStyle}
               />
             ) : (
               <Icon
                 data-testid={`roblox-nav-icon-${item.id}`}
                 data-z-layer="icon-above-background"
                 className={`pointer-events-none absolute z-20 ${isActive ? "text-cyan-100" : "text-white/72"}`}
-                style={{ left: ROBLOX_NAV_GEOMETRY.iconLeft, top: ROBLOX_NAV_GEOMETRY.iconTop, width: ROBLOX_NAV_GEOMETRY.iconWidth, height: ROBLOX_NAV_GEOMETRY.iconHeight }}
+                style={iconStyle}
               />
             )}
-            <span className="pointer-events-none absolute z-20 px-1 text-[11px] [text-shadow:0_1px_2px_rgba(0,0,0,0.66)]" style={{ left: ROBLOX_NAV_GEOMETRY.labelLeft, top: ROBLOX_NAV_GEOMETRY.labelTop, width: ROBLOX_NAV_GEOMETRY.labelWidth, height: ROBLOX_NAV_GEOMETRY.labelHeight, opacity: isActive ? 1 : 0.9 }}>{item.label}</span>
-          </button>
+            <span data-testid={`roblox-nav-label-${item.id}`} className="pointer-events-none absolute z-20 px-1 text-center text-[11px] font-black uppercase leading-tight text-blue-50 [text-shadow:0_1px_2px_rgba(0,0,0,0.66)]" style={labelStyle}>{item.label}</span>
+            <button
+              type="button"
+              aria-label={item.label}
+              data-testid={`roblox-nav-item-${item.id}`}
+              data-active={isActive}
+              data-rojo-size="1,0,0.11,0"
+              className="absolute z-30 border-0 bg-transparent p-0 text-transparent outline-none transition hover:bg-cyan-100/5 focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-cyan-100/55"
+              style={{
+                left: ROBLOX_NAV_GEOMETRY.paddingX,
+                top: itemTop,
+                width: ROBLOX_NAV_GEOMETRY.itemWidth,
+                height: ROBLOX_NAV_GEOMETRY.itemHeight
+              }}
+            />
+          </Fragment>
         );
       })}
     </nav>

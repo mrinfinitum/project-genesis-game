@@ -157,8 +157,9 @@ export const DASHBOARD_ART_REGISTRY = {
     viteUsage: "RobloxNavigation shell",
     artKey: "sidebar_frame",
     robloxAssetId: "133332255744133",
-    localPath: "/roblox-assets/UI/sidebar_frame_160x790.png",
-    sourceStatus: "mapped"
+    localPath: "/roblox-assets/UI/ui_panel_side_menu.png",
+    sourceStatus: "mapped",
+    notes: "Complete side-menu HUD image rendered once. Local filename mirrors the Roblox parity brief; source export key remains sidebar_frame."
   },
   navigation_overview_icon: {
     key: "navigation_overview_icon",

@@ -22,7 +22,7 @@ Source of truth:
 | Calendar icon | `calendar_icon` | `124831656845168` | `assets/topbar/icon_calendar_80x80.png` | 80x80 | `topbar_calendar_icon` | Exact bitmap |
 | Trophy icon | `trophy_icon` | `136305496385375` | `assets/topbar/icon_trophy_80x80.png` | 80x80 | `topbar_trophy_icon` | Exact bitmap |
 | Settings icon | `settings_icon` | `134568742596537` | `assets/topbar/icon_settings_80x80.png` | 80x80 | `topbar_settings_icon` | Exact bitmap |
-| Sidebar rail | `sidebar_frame` | `133332255744133` | `assets/UI/sidebar_frame_160x790.png` | 160x790 | `dashboard_nav_background` | Exact bitmap, stretched to Rojo frame |
+| Sidebar rail | `sidebar_frame` / `ui_panel_side_menu.png` alias | `133332255744133` | `assets/UI/sidebar_frame_160x790.png` | 160x790 | `dashboard_nav_background` | Exact bitmap rendered once, stretched to Rojo frame |
 | Overview nav icon | `overview` | `90083002972176` | `assets/menu/icon_overview_96x96.png` | 96x96 | `nav_overview_icon` | Exact bitmap |
 | Production nav icon | `buildings` | `110776348182971` | `assets/menu/icon_buildings_96x96.png` | 96x96 | `nav_production_icon` | Exact bitmap |
 | Research nav icon | `research_icon` | `79646906444906` | `assets/menu/icon_research_96x96.png` | 96x96 | `nav_research_icon` | Exact bitmap |
@@ -54,7 +54,7 @@ Source of truth:
 
 ## CSS Recreation Removed Or Reduced
 
-- Inactive left navigation items no longer render independent cyan/white card borders or dark rectangular card fills. They sit transparent over the exported continuous sidebar rail.
+- Inactive left navigation items no longer render independent cyan/white card borders, dark rectangular card fills, rounded corners, shadows, or icon frames. They sit transparent over the exported continuous `ui_panel_side_menu.png` rail.
 - The click, auto, and critical regions now share one rendered `hud_clicker_350x823.png` background. Vite does not render separate auto/critical panel background images over it.
 - Click and auto action buttons use the exact exported button images when registry mappings resolve; CSS bevels remain only as missing-asset fallback.
 - The critical stats region no longer renders the extra `Next Milestone` label in the Vite HUD.
