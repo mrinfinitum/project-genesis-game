@@ -7,6 +7,7 @@ import {
   AlignmentPanel,
   ArtReviewGallery,
   AutoClickPanel,
+  BeveledActionButton,
   BoostBar,
   ClickPowerPanel,
   CivilizationEraCarousel,
@@ -21,6 +22,7 @@ import {
   ManualProductionPanel,
   ResourceCard,
   ResourceDetail,
+  RobloxNavigation,
   RobloxParityReview,
   SidebarNavigation,
   StoryCanvas,
@@ -118,6 +120,8 @@ function panelMissingArt(art: ReturnType<typeof createDashboardArtMap>) {
     dashboard_auto_robot: { ...art.dashboard_auto_robot, path: undefined, mappingStatus: "missing" as const, warnings: warning },
     dashboard_click_button: { ...art.dashboard_click_button, path: undefined, mappingStatus: "missing" as const, warnings: warning },
     dashboard_auto_button: { ...art.dashboard_auto_button, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_auto_button_on: { ...art.dashboard_auto_button_on, path: undefined, mappingStatus: "missing" as const, warnings: warning },
+    dashboard_auto_button_off: { ...art.dashboard_auto_button_off, path: undefined, mappingStatus: "missing" as const, warnings: warning },
     auto_button_off: { ...art.auto_button_off, path: undefined, mappingStatus: "missing" as const, warnings: warning }
   };
 }
@@ -140,6 +144,28 @@ function AutoPanelStoryFrame({ children, reducedMotion = false }: { children: Re
         <div className="relative h-[614px] w-[350px] -translate-y-[344px]">
           {children}
         </div>
+      </div>
+    </StoryCanvas>
+  );
+}
+
+function ActionButtonStoryFrame({ children }: { children: ReactNode }) {
+  return (
+    <StoryCanvas>
+      <div className="flex h-[150px] w-[420px] items-center justify-center rounded-md border border-cyan-200/12 bg-slate-950/86 p-8">
+        <div className="relative h-[70px] w-[330px]">
+          {children}
+        </div>
+      </div>
+    </StoryCanvas>
+  );
+}
+
+function RobloxNavStoryFrame({ children }: { children: ReactNode }) {
+  return (
+    <StoryCanvas>
+      <div className="relative h-[927px] w-[140px] overflow-hidden bg-slate-950">
+        {children}
       </div>
     </StoryCanvas>
   );
@@ -733,6 +759,109 @@ export const AutoClickReducedMotion: Story = {
       }
     });
     return <AutoPanelStoryFrame reducedMotion><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
+  }
+};
+
+export const RobloxNavigationOverviewActiveNoGlow: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return <RobloxNavStoryFrame><RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} /></RobloxNavStoryFrame>;
+  }
+};
+
+export const RobloxNavigationResearchActive: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return <RobloxNavStoryFrame><RobloxNavigation active="research" art={createDashboardArtMap(data.assets)} /></RobloxNavStoryFrame>;
+  }
+};
+
+export const RobloxNavigationKeyboardFocus: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <RobloxNavStoryFrame>
+        <style>{".storybook-nav-focus button:first-of-type{outline:1px solid rgba(207,250,254,.48);outline-offset:-3px}"}</style>
+        <div className="storybook-nav-focus">
+          <RobloxNavigation active="dashboard" art={createDashboardArtMap(data.assets)} />
+        </div>
+      </RobloxNavStoryFrame>
+    );
+  }
+};
+
+export const ClickButtonImageDefault: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_click_button} label="CLICK!" tone="cyan" className="absolute left-[9px] top-[2px] h-[66px] w-[312px]" /></ActionButtonStoryFrame>;
+  }
+};
+
+export const ClickButtonImageHover: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return (
+      <ActionButtonStoryFrame>
+        <div className="brightness-110">
+          <BeveledActionButton art={art.dashboard_click_button} label="CLICK!" tone="cyan" className="absolute left-[9px] top-[2px] h-[66px] w-[312px]" />
+        </div>
+      </ActionButtonStoryFrame>
+    );
+  }
+};
+
+export const ClickButtonImagePressed: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_click_button} label="CLICK!" tone="cyan" pressed className="absolute left-[9px] top-[2px] h-[66px] w-[312px]" /></ActionButtonStoryFrame>;
+  }
+};
+
+export const ClickButtonImageDisabled: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_click_button} label="CLICK!" tone="cyan" disabled className="absolute left-[9px] top-[2px] h-[66px] w-[312px]" /></ActionButtonStoryFrame>;
+  }
+};
+
+export const AutoButtonImageOn: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_on} label="AUTO: ON" tone="green" active className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+  }
+};
+
+export const AutoButtonImageOff: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_off} label="AUTO: OFF" tone="muted" className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+  }
+};
+
+export const AutoButtonImageHover: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return (
+      <ActionButtonStoryFrame>
+        <div className="brightness-110">
+          <BeveledActionButton art={art.dashboard_auto_button_on} label="AUTO: ON" tone="green" active className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" />
+        </div>
+      </ActionButtonStoryFrame>
+    );
+  }
+};
+
+export const AutoButtonImagePressed: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_on} label="AUTO: ON" tone="green" pressed className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+  }
+};
+
+export const AutoButtonImageDisabled: Story = {
+  render: () => {
+    const { art } = usePanelStoryModel();
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_off} label="AUTO: OFF" tone="muted" disabled className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
   }
 };
 

@@ -760,6 +760,9 @@ type BeveledActionButtonProps = {
 export function BeveledActionButton({ art, label, tone, disabled = false, active = false, pressed = false, onClick, className = "" }: BeveledActionButtonProps) {
   const path = dashboardImagePath(art);
   const positionClass = /\babsolute\b/.test(className) ? "" : "relative";
+  const imageButtonClasses = path
+    ? "bg-transparent text-transparent shadow-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-100/42"
+    : "";
   const toneClasses = {
     cyan: "border-cyan-200/40 bg-[linear-gradient(180deg,rgba(20,124,168,0.9),rgba(4,48,86,0.95))] text-white shadow-[0_0_24px_rgba(45,212,255,0.18)]",
     green: "border-emerald-200/45 bg-[linear-gradient(180deg,rgba(28,146,78,0.92),rgba(7,79,48,0.96))] text-white shadow-[0_0_26px_rgba(52,245,106,0.24)]",
@@ -771,9 +774,9 @@ export function BeveledActionButton({ art, label, tone, disabled = false, active
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`${positionClass} overflow-hidden ${bevel} border text-[23px] font-black uppercase tracking-normal transition hover:brightness-125 active:scale-[0.97] disabled:opacity-50 ${toneClasses} ${active ? "brightness-110" : ""} ${pressed ? "scale-[0.97] brightness-125" : ""} ${className}`}
+      className={`${positionClass} overflow-hidden ${path ? "" : `${bevel} border ${toneClasses}`} ${imageButtonClasses} text-[23px] font-black uppercase tracking-normal transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 ${active ? "brightness-105" : ""} ${pressed ? "scale-[0.98] brightness-110" : ""} ${className}`}
     >
-      {path ? <img src={path} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
+      {path ? <img src={path} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" /> : <DashboardMissingArt art={art} className="absolute inset-0" />}
       {!path ? <span className="relative z-10 [text-shadow:0_2px_6px_rgba(0,0,0,0.72)]">{label}</span> : null}
       <span className="sr-only">{label}</span>
     </button>
@@ -914,7 +917,7 @@ export function ClickPowerPanel({
         disabled={!hasClickState}
         pressed={pressed}
         onClick={hasClickState ? onClick : undefined}
-        className="absolute bottom-[22px] left-[28px] h-[54px] w-[280px]"
+        className="absolute bottom-[10px] left-[19px] h-[66px] w-[312px]"
       />
     </section>
   );
@@ -931,7 +934,7 @@ export function AutoClickPanel({
 }) {
   const hasAutomation = Boolean(model.playerState.automation);
   const autoEnabled = model.playerState.automation?.enabled === true;
-  const autoArt = autoEnabled ? art.dashboard_auto_button : art.auto_button_off;
+  const autoArt = autoEnabled ? art.dashboard_auto_button_on : art.dashboard_auto_button_off;
 
   return (
     <section className="absolute left-0 top-[344px] h-[270px] w-full">
@@ -958,7 +961,7 @@ export function AutoClickPanel({
         active={autoEnabled}
         disabled={!hasAutomation}
         onClick={hasAutomation ? onToggle : undefined}
-        className={`absolute bottom-[17px] left-[28px] h-[46px] w-[280px] ${autoEnabled ? "shadow-[0_0_30px_rgba(52,245,106,0.32)]" : ""}`}
+        className="absolute bottom-[9px] left-[19px] h-[55px] w-[312px]"
       />
     </section>
   );
@@ -979,14 +982,14 @@ function robloxLayoutRect(rect: { x: number; y: number; width: number; height: n
 }
 
 const robloxNavItems = [
-  { id: "dashboard", label: "Overview", icon: Gauge, iconSize: 48, offsetY: 8 },
-  { id: "production", label: "Buildings", icon: Building2, iconSize: 58, offsetY: 0 },
-  { id: "research", label: "Research", icon: FlaskConical, iconSize: 56, offsetY: 0 },
-  { id: "upgrades", label: "Upgrades", icon: WrenchIcon, iconSize: 58, offsetY: -3 },
-  { id: "civilization", label: "Civilization", icon: Crown, iconSize: 56, offsetY: -3 },
-  { id: "events", label: "Events", icon: CalendarDays, iconSize: 56, offsetY: -3 },
-  { id: "galaxy", label: "Galaxy", icon: Globe2, iconSize: 60, offsetY: -5 },
-  { id: "spaceport", label: "Spaceport", icon: Rocket, iconSize: 60, offsetY: -8 }
+  { id: "dashboard", label: "Overview", icon: Gauge, iconSize: 54, offsetY: 14 },
+  { id: "production", label: "Buildings", icon: Building2, iconSize: 64, offsetY: 0 },
+  { id: "research", label: "Research", icon: FlaskConical, iconSize: 62, offsetY: 0 },
+  { id: "upgrades", label: "Upgrades", icon: WrenchIcon, iconSize: 64, offsetY: -5 },
+  { id: "civilization", label: "Civilization", icon: Crown, iconSize: 60, offsetY: -5 },
+  { id: "events", label: "Events", icon: CalendarDays, iconSize: 62, offsetY: -5 },
+  { id: "galaxy", label: "Galaxy", icon: Globe2, iconSize: 68, offsetY: -8 },
+  { id: "spaceport", label: "Spaceport", icon: Rocket, iconSize: 66, offsetY: -14 }
 ];
 
 function WrenchIcon({ className }: { className?: string }) {
@@ -1091,7 +1094,7 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
   );
 }
 
-function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMap }) {
+export function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMap }) {
   const activeMap: Record<string, string> = {
     dashboard: "dashboard",
     production: "production",
@@ -1104,11 +1107,15 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
   };
   const current = activeMap[active] ?? active;
   const activeIndex = Math.max(0, robloxNavItems.findIndex((item) => item.id === current));
+  const slotHeightPx = ROBLOX_DASHBOARD_LAYOUT.sidebar.height / robloxNavItems.length;
 
   return (
     <nav className="relative h-full w-full overflow-hidden">
       {dashboardImagePath(art.sidebar_frame) ? <img src={dashboardImagePath(art.sidebar_frame)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.sidebar_frame} className="absolute inset-0" />}
-      <div className="pointer-events-none absolute inset-x-[8px] h-[107px] rounded-[8px] border border-cyan-200/80 bg-cyan-400/18 shadow-[0_0_20px_rgba(45,212,255,0.34),inset_0_0_20px_rgba(45,212,255,0.1)]" style={{ top: `${(activeIndex * 113 + 6) / 927 * 100}%` }} />
+      <div
+        className="pointer-events-none absolute inset-x-[10px] rounded-[10px] border-2 border-cyan-200/75 bg-[linear-gradient(180deg,rgba(13,71,116,0.56),rgba(4,24,44,0.62))] shadow-[inset_0_0_12px_rgba(45,212,255,0.08)]"
+        style={{ top: `${(activeIndex * slotHeightPx - 2) / ROBLOX_DASHBOARD_LAYOUT.sidebar.height * 100}%`, height: `${(slotHeightPx + 2) / ROBLOX_DASHBOARD_LAYOUT.sidebar.height * 100}%` }}
+      />
       {robloxNavItems.map((item, index) => {
         const Icon = item.icon;
         const isActive = item.id === current;
@@ -1120,13 +1127,13 @@ function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMa
             className={`absolute left-0 flex w-full flex-col items-center text-center font-black uppercase leading-tight transition hover:brightness-125 ${isActive ? "text-white" : "text-blue-50/82"}`}
             style={{ top: `${index * slotHeight}%`, height: `${slotHeight}%` }}
           >
-            <span className="absolute left-[14px] right-[14px] top-[-1px] h-px bg-cyan-100/18 shadow-[0_0_10px_rgba(45,212,255,0.16)]" />
+            {index > 0 ? <span className="absolute left-[18px] right-[18px] top-[-2px] h-px bg-cyan-100/14" /> : null}
             {iconArt && dashboardImagePath(iconArt) ? (
-              <img src={dashboardImagePath(iconArt)} alt="" className="mt-[12px] object-contain drop-shadow-[0_0_13px_rgba(125,249,255,0.28)]" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.72 }} />
+              <img src={dashboardImagePath(iconArt)} alt="" className="mt-[14px] object-contain" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.72, filter: isActive ? "brightness(1.08)" : "none" }} />
             ) : (
-              <Icon className="mt-[12px] text-cyan-100" style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)` }} />
+              <Icon className={`mt-[14px] ${isActive ? "text-cyan-100" : "text-white/72"}`} style={{ width: item.iconSize, height: item.iconSize, transform: `translateY(${item.offsetY}px)` }} />
             )}
-            <span className="mt-[-1px] w-full px-1 text-[14px] [text-shadow:0_1px_4px_rgba(0,0,0,0.75)]" style={{ transform: `translateY(${item.offsetY}px)` }}>{item.label}</span>
+            <span className="mt-[-2px] w-full px-1 text-[15px] [text-shadow:0_1px_3px_rgba(0,0,0,0.72)]" style={{ transform: `translateY(${item.offsetY}px)`, opacity: isActive ? 1 : 0.92 }}>{item.label}</span>
           </button>
         );
       })}

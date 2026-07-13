@@ -295,6 +295,24 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/buttons/click_auto_on.png",
     sourceStatus: "mapped"
   },
+  dashboard_auto_button_on: {
+    key: "dashboard_auto_button_on",
+    label: "Dashboard auto on button",
+    viteUsage: "Auto panel active toggle action",
+    artKey: "auto_button_on",
+    robloxAssetId: "139841618767256",
+    localPath: "/roblox-assets/buttons/click_auto_on.png",
+    sourceStatus: "mapped"
+  },
+  dashboard_auto_button_off: {
+    key: "dashboard_auto_button_off",
+    label: "Dashboard auto off button",
+    viteUsage: "Auto panel inactive toggle action",
+    artKey: "auto_button_off",
+    robloxAssetId: "106944699002340",
+    localPath: "/roblox-assets/buttons/click_auto_off.png",
+    sourceStatus: "mapped"
+  },
   dashboard_help_icon: {
     key: "dashboard_help_icon",
     label: "Dashboard help icon",
