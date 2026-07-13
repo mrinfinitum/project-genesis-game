@@ -229,6 +229,7 @@ describe("Roblox left column geometry", () => {
         playerRuntimeActions={{
           saveNow: vi.fn(),
           resetSave: vi.fn(),
+          deleteLocalSave: vi.fn(),
           exportSave: () => "{}",
           importSave: () => true,
           advanceSimulation: vi.fn(),

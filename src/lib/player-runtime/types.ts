@@ -27,6 +27,27 @@ export type UnresolvedPlayerRuntimeIds = {
   migrationNotes: string[];
 };
 
+export type PlayerRuntimeLoadSource =
+  | "New Game"
+  | "Browser Save"
+  | "Imported Save"
+  | "Reset to Canonical New Game"
+  | "Deleted Local Save";
+
+export type PlayerRuntimeLoadReport = {
+  loadedFrom: PlayerRuntimeLoadSource;
+  saveSource: "canonical-runtime" | "localStorage" | "import" | "memory";
+  saveLoaded: boolean;
+  newGamePathExecuted: boolean;
+  migrationExecuted: boolean;
+  rawSaveVersion?: number;
+  rawContentVersion?: number;
+  saveTimestamp?: string;
+  loadedAt: string;
+  contentVersion: number;
+  currentSaveVersion: number;
+};
+
 export type PlayerRuntimeState = {
   playerId: string;
   saveVersion: number;
@@ -89,6 +110,7 @@ export type PlayerRuntimeState = {
     nextColonyProgress: number;
   };
   unresolved: UnresolvedPlayerRuntimeIds;
+  runtimeLoadReport: PlayerRuntimeLoadReport;
 };
 
 export type PlayerRuntimeImportResult = {

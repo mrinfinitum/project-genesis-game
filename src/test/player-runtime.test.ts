@@ -120,13 +120,32 @@ describe("canonical player runtime", () => {
     const imported = service.importSave(exported);
     const reset = service.reset();
 
+    expect(state.runtimeLoadReport.loadedFrom).toBe("New Game");
+    expect(state.runtimeLoadReport.newGamePathExecuted).toBe(true);
+    expect(state.runtimeLoadReport.saveLoaded).toBe(false);
     expect(saved.revision).toBeGreaterThan(state.revision);
     expect(reloaded.economy.balances[LABOR_ECONOMY_ID]).toBe(321);
+    expect(reloaded.runtimeLoadReport.loadedFrom).toBe("Browser Save");
+    expect(reloaded.runtimeLoadReport.saveLoaded).toBe(true);
+    expect(reloaded.runtimeLoadReport.newGamePathExecuted).toBe(false);
+    expect(reloaded.runtimeLoadReport.rawSaveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
+    expect(reloaded.runtimeLoadReport.rawContentVersion).toBe(runtime.metadata.contentVersion);
+    expect(reloaded.runtimeLoadReport.saveTimestamp).toBeTruthy();
     expect(autosaved.revision).toBeGreaterThan(reloaded.revision);
     expect(imported.ok).toBe(true);
     expect(imported.state?.economy.balances[LABOR_ECONOMY_ID]).toBe(321);
+    expect(imported.state?.runtimeLoadReport.loadedFrom).toBe("Imported Save");
     expect(reset.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
+    expect(reset.economy.balances[CREDITS_ECONOMY_ID]).toBe(0);
+    expect(reset.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
+    expect(reset.runtimeLoadReport.loadedFrom).toBe("Reset to Canonical New Game");
     expect(readJson<PlayerRuntimeState | null>(store, PLAYER_RUNTIME_SAVE_KEY, null)?.saveVersion).toBe(PLAYER_RUNTIME_SAVE_VERSION);
+    const deleted = service.deleteLocalSave();
+    expect(deleted.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
+    expect(deleted.economy.balances[CREDITS_ECONOMY_ID]).toBe(0);
+    expect(deleted.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
+    expect(deleted.runtimeLoadReport.loadedFrom).toBe("Deleted Local Save");
+    expect(store.getItem(PLAYER_RUNTIME_SAVE_KEY)).toBeNull();
   });
 
   it("migrates content versions and preserves unknown canonical ids in unresolved buckets", async () => {

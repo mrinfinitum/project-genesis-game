@@ -167,7 +167,8 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       activeEventId: typeof record.unresolved?.activeEventId === "string" ? record.unresolved.activeEventId : undefined,
       boostDefinitionIds: normalizeStringArray(record.unresolved?.boostDefinitionIds),
       migrationNotes: normalizeStringArray(record.unresolved?.migrationNotes)
-    }
+    },
+    runtimeLoadReport: seed.runtimeLoadReport
   };
 
   const previousSaveVersion = typeof record.saveVersion === "number" ? record.saveVersion : 0;

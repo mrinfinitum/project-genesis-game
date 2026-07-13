@@ -51,6 +51,7 @@ const developerToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
 type PlayerRuntimeActions = {
   saveNow: () => void;
   resetSave: () => void;
+  deleteLocalSave: () => void;
   exportSave: () => string;
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
@@ -220,6 +221,11 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
       },
       resetSave() {
         setPlayerRuntime(service.reset());
+        setLoadedRuntimeKey(runtimeKey);
+      },
+      deleteLocalSave() {
+        setPlayerRuntime(service.deleteLocalSave());
+        setLoadedRuntimeKey(runtimeKey);
       },
       exportSave() {
         return service.exportSave(playerRuntime);
@@ -260,7 +266,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
         }));
       }
     }),
-    [data, playerRuntime, service]
+    [data, playerRuntime, runtimeKey, service]
   );
 
   return { playerRuntime: displayPlayerRuntime, actions };

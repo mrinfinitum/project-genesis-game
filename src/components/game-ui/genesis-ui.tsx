@@ -69,6 +69,7 @@ type RobloxReference = {
 type PlayerRuntimeDashboardActions = {
   saveNow: () => void;
   resetSave: () => void;
+  deleteLocalSave: () => void;
   exportSave: () => string;
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
@@ -2490,6 +2491,7 @@ function DashboardDataArtInspector({
   const passiveTickTarget = resolvedPrimaryEconomyId && (playerRuntime?.economy.rates[resolvedPrimaryEconomyId] ?? 0) > 0 ? resolvedPrimaryEconomyId : "none";
   const autoClickTarget = playerRuntime?.production.automationEnabled && resolvedPrimaryEconomyId ? resolvedPrimaryEconomyId : "none";
   const hudSlotIds = model.hudResources.map((resource) => resource.resourceId);
+  const loadReport = playerRuntime?.runtimeLoadReport;
 
   function exportSave() {
     if (!playerRuntimeActions) return;
@@ -2532,6 +2534,18 @@ function DashboardDataArtInspector({
         <div className="mt-3 rounded-sm border border-cyan-200/18 bg-black/25 p-2">
           <div className="font-black uppercase text-cyan-100/75">Player Runtime</div>
           <div className="mt-1 grid grid-cols-2 gap-1">
+            <div className="col-span-2 rounded-sm border border-cyan-200/15 bg-cyan-300/8 p-1.5">
+              <div className="font-black uppercase text-cyan-100/70">Loaded from {loadReport?.loadedFrom ?? "unknown"}</div>
+              <div className="grid grid-cols-2 gap-x-2">
+                <span>source {loadReport?.saveSource ?? "unknown"}</span>
+                <span>save loaded {loadReport?.saveLoaded ? "yes" : "no"}</span>
+                <span>new game {loadReport?.newGamePathExecuted ? "yes" : "no"}</span>
+                <span>migration {loadReport?.migrationExecuted ? "yes" : "no"}</span>
+                <span>raw save v{loadReport?.rawSaveVersion ?? "none"}</span>
+                <span>raw content v{loadReport?.rawContentVersion ?? "none"}</span>
+                <span className="col-span-2 truncate">save timestamp {loadReport?.saveTimestamp ?? "none"}</span>
+              </div>
+            </div>
             <div>save v{playerRuntime.saveVersion}</div>
             <div>rev {playerRuntime.revision}</div>
             <div>era {playerRuntime.civilization.currentEraId}</div>
@@ -2580,6 +2594,7 @@ function DashboardDataArtInspector({
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={exportSave}>Export</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => importInputRef.current?.click()}>Import</button>
               <button className="col-span-3 rounded-sm border border-rose-200/30 bg-rose-300/10 px-2 py-1 font-black uppercase text-rose-100" onClick={playerRuntimeActions.resetSave}>Reset to Canonical New Game</button>
+              <button className="col-span-3 rounded-sm border border-rose-200/40 bg-rose-500/15 px-2 py-1 font-black uppercase text-rose-50" onClick={playerRuntimeActions.deleteLocalSave}>Delete Local Save</button>
               <input ref={importInputRef} className="hidden" type="file" accept="application/json" onChange={(event) => void importSave(event.currentTarget.files?.[0])} />
             </div>
           ) : null}

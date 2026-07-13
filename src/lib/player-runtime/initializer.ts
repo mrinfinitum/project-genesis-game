@@ -110,6 +110,16 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       discoveredUpgradeIds: [],
       boostDefinitionIds: [],
       migrationNotes: []
+    },
+    runtimeLoadReport: {
+      loadedFrom: "New Game",
+      saveSource: "canonical-runtime",
+      saveLoaded: false,
+      newGamePathExecuted: true,
+      migrationExecuted: false,
+      loadedAt: timestamp,
+      contentVersion: content.metadata.contentVersion,
+      currentSaveVersion: PLAYER_RUNTIME_SAVE_VERSION
     }
   };
 }
