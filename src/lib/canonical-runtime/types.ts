@@ -159,6 +159,11 @@ export interface PrimaryHudResourceDefinition {
   order?: number;
   showRate?: boolean;
   formatting?: Record<string, unknown>;
+  playerFacingHelpText?: string;
+  spendable?: boolean;
+  valueType?: string;
+  semantics?: string[];
+  supportsCaps?: boolean;
   balanceKey?: keyof BalanceDefinition | string;
   startingValue?: number;
   startingAmount?: number;

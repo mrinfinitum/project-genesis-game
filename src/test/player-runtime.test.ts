@@ -57,7 +57,7 @@ describe("canonical player runtime", () => {
       civilization: {
         civilizationName: "Test Civilization",
         currentEraId: "survival",
-        population: runtime.balance.startingPopulation
+        population: 5
       },
       production: {
         clickPower: runtime.balance.baseClickPower,
@@ -75,7 +75,8 @@ describe("canonical player runtime", () => {
     expect(Object.keys(state.economy.balances).sort()).toEqual(getEconomyResourceIds(runtime).sort());
     expect(state.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
     expect(state.economy.rates[LABOR_ECONOMY_ID]).toBe(1);
-    expect(state.economy.balances[POPULATION_ECONOMY_ID]).toBe(125);
+    expect(state.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
+    expect(state.economy.balances[RESEARCH_ECONOMY_ID]).toBe(0);
     expect(state.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
     expect(Object.keys(state.resources.inventory)).toEqual(getInventoryResources(runtime).map((resource) => resource.id));
     expect(Object.keys(state.resources.inventory)).not.toContain(LABOR_ECONOMY_ID);
@@ -135,7 +136,7 @@ describe("canonical player runtime", () => {
     expect(migrated.contentVersion).toBe(runtime.metadata.contentVersion);
     expect(migrated.unresolved.currentEraId).toBe("lost-era");
     expect(migrated.civilization.currentEraId).toBe("survival");
-    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(runtime.balance.startingPopulation);
+    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
     expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(42);
     expect(migrated.unresolved.migrationNotes).toContain(`Migrated ${POPULATION_ECONOMY_ID} from civilization.population.`);
     expect(migrated.unresolved.migrationNotes).toContain(`Migrated legacy ${LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID} balance into ${LABOR_ECONOMY_ID}.`);
@@ -150,6 +151,60 @@ describe("canonical player runtime", () => {
     expect(migrated.economy.balances["ECON-LOST"]).toBeUndefined();
     expect(migrated.resources.inventory["RES-LOST"]).toBeUndefined();
     expect(migrated.upgrades.levels["UPG-LOST"]).toBeUndefined();
+  });
+
+  it("migrates untouched starter Population 125 to the Studio v8 default", async () => {
+    const runtime = await bundledRuntime();
+    const untouched = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "untouched-population" });
+    const legacy = {
+      ...untouched,
+      saveVersion: 3,
+      contentVersion: 7,
+      civilization: { ...untouched.civilization, population: 125 },
+      economy: {
+        ...untouched.economy,
+        balances: { ...untouched.economy.balances, [POPULATION_ECONOMY_ID]: 125, [LABOR_ECONOMY_ID]: 0 }
+      },
+      production: {
+        ...untouched.production,
+        totalManualClicks: 0,
+        totalAutoClicks: 0,
+        lifetimeLaborGenerated: 0
+      }
+    };
+
+    const migrated = migratePlayerRuntimeState(legacy, runtime);
+
+    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
+    expect(migrated.civilization.population).toBe(5);
+    expect(migrated.unresolved.migrationNotes).toContain("Migrated untouched starter ECON-POPULATION from 125 to 5.");
+  });
+
+  it("preserves established Population 125 saves", async () => {
+    const runtime = await bundledRuntime();
+    const established = createNewPlayerRuntimeState(runtime, { now: fixedDate(), playerId: "established-population" });
+    const legacy = {
+      ...established,
+      saveVersion: 3,
+      contentVersion: 7,
+      civilization: { ...established.civilization, population: 125 },
+      economy: {
+        ...established.economy,
+        balances: { ...established.economy.balances, [POPULATION_ECONOMY_ID]: 125, [LABOR_ECONOMY_ID]: 12 }
+      },
+      production: {
+        ...established.production,
+        totalManualClicks: 12,
+        lifetimeLaborGenerated: 12
+      }
+    };
+
+    const migrated = migratePlayerRuntimeState(legacy, runtime);
+
+    expect(migrated.economy.balances[POPULATION_ECONOMY_ID]).toBe(125);
+    expect(migrated.civilization.population).toBe(125);
+    expect(migrated.economy.balances[LABOR_ECONOMY_ID]).toBe(12);
+    expect(migrated.unresolved.migrationNotes).not.toContain("Migrated untouched starter ECON-POPULATION from 125 to 5.");
   });
 
   it("routes manual and auto labor to Civilization Energy instead of the first HUD slot", async () => {
@@ -195,7 +250,26 @@ describe("canonical player runtime", () => {
     expect(selectEconomyRate(clicked, CREDITS_ECONOMY_ID)).toBe(0);
     expect(selectClickPower(clicked)).toBe(1);
     expect(selectLastClickGain(clicked)).toBe(1);
-    expect(selectPopulation(clicked)).toBe(125);
+    expect(selectPopulation(clicked)).toBe(5);
+  });
+
+  it("resolves the era-specific Labor display label from the active economy profile", async () => {
+    const runtime = await bundledRuntime();
+    const expectedLabels = {
+      survival: "Labor",
+      ancient: "Labor",
+      medieval: "Workforce",
+      renaissance: "Workforce",
+      industrial: "Industrial Workforce",
+      modern: "Human Capital",
+      "space-age": "Workforce",
+      interstellar: "Civilization Output",
+      galactic: "Galactic Output"
+    };
+
+    for (const [eraId, label] of Object.entries(expectedLabels)) {
+      expect(selectHudEconomySlots(runtime, eraId).find((slot) => slot.id === LABOR_ECONOMY_ID)?.label).toBe(label);
+    }
   });
 
   it("derives dashboard selectors without live objective, event, or fabricated boost fallbacks", async () => {
@@ -206,7 +280,7 @@ describe("canonical player runtime", () => {
     expect(playerState.source).toBe("player-runtime");
     expect(playerState.currentEraId).toBe("survival");
     expect(playerState.clickOutput?.resourceId).toBe(LABOR_ECONOMY_ID);
-    expect(playerState.economyBalances?.[POPULATION_ECONOMY_ID]).toBe(125);
+    expect(playerState.economyBalances?.[POPULATION_ECONOMY_ID]).toBe(5);
     expect(playerState.objective).toBeUndefined();
     expect(playerState.activeEvent).toBeUndefined();
     expect(playerState.leaderboard).toBeUndefined();

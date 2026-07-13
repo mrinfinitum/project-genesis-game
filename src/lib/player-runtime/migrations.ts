@@ -192,6 +192,24 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.unresolved.migrationNotes.push(`Migrated legacy ${LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID} balance into ${LABOR_ECONOMY_ID}.`);
     }
   }
+  if (previousSaveVersion < 4) {
+    const seedPopulation = seed.economy.balances[POPULATION_ECONOMY_ID] ?? seed.civilization.population;
+    const legacyPopulation = next.economy.balances[POPULATION_ECONOMY_ID];
+    const legacyCivilizationPopulation = next.civilization.population;
+    const untouchedStarter =
+      legacyPopulation === 125 &&
+      (legacyCivilizationPopulation === 125 || legacyCivilizationPopulation === seedPopulation) &&
+      (next.production.totalManualClicks ?? 0) === 0 &&
+      (next.production.totalAutoClicks ?? 0) === 0 &&
+      (next.production.lifetimeLaborGenerated ?? 0) === 0 &&
+      (next.economy.balances[LABOR_ECONOMY_ID] ?? 0) <= (seed.economy.balances[LABOR_ECONOMY_ID] ?? 0);
+
+    if (untouchedStarter && seedPopulation !== 125) {
+      next.economy.balances[POPULATION_ECONOMY_ID] = seedPopulation;
+      next.civilization.population = seedPopulation;
+      next.unresolved.migrationNotes.push(`Migrated untouched starter ${POPULATION_ECONOMY_ID} from 125 to ${seedPopulation}.`);
+    }
+  }
 
   return preserveUnresolvedPlayerRuntimeIds(next, content);
 }

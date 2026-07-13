@@ -42,7 +42,7 @@ export const mockRuntimeData: GameRuntimeData = {
     startingCivilizationEnergy: 0,
     startingCoins: 0,
     startingResearch: 0,
-    startingPopulation: 125,
+    startingPopulation: 5,
     baseClickPower: 1,
     baseAutoClickPower: 0,
     autosaveSeconds: 30

@@ -68,6 +68,11 @@ function normalizeEconomyDefinition(input: unknown): PrimaryHudResourceDefinitio
     order: typeof record.order === "number" ? record.order : undefined,
     showRate: typeof record.showRate === "boolean" ? record.showRate : undefined,
     formatting: record.formatting && typeof record.formatting === "object" ? record.formatting as Record<string, unknown> : undefined,
+    playerFacingHelpText: typeof record.playerFacingHelpText === "string" ? record.playerFacingHelpText : undefined,
+    spendable: typeof record.spendable === "boolean" ? record.spendable : undefined,
+    valueType: typeof record.valueType === "string" ? record.valueType : undefined,
+    semantics: Array.isArray(record.semantics) ? record.semantics.filter((item): item is string => typeof item === "string") : undefined,
+    supportsCaps: typeof record.supportsCaps === "boolean" ? record.supportsCaps : undefined,
     balanceKey: typeof record.balanceKey === "string" ? record.balanceKey : undefined,
     startingValue: typeof record.startingValue === "number" ? record.startingValue : undefined,
     startingAmount: typeof record.startingAmount === "number" ? record.startingAmount : undefined,
@@ -82,6 +87,42 @@ function normalizeHudSlot(input: unknown): PrimaryHudResourceDefinition | undefi
     return { id: input };
   }
   return normalizeEconomyDefinition(input);
+}
+
+function stringRecord(input: unknown): Record<string, string> | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const entries = Object.entries(input as Record<string, unknown>).filter(([, value]) => typeof value === "string") as Array<[string, string]>;
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
+function nestedStringRecord(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = stringRecord(record[key]);
+    if (value) return value;
+  }
+  return undefined;
+}
+
+const LABOR_ERA_LABEL_FALLBACKS: Record<string, string> = {
+  survival: "Labor",
+  ancient: "Labor",
+  medieval: "Workforce",
+  renaissance: "Workforce",
+  industrial: "Industrial Workforce",
+  modern: "Human Capital",
+  "space-age": "Workforce",
+  interstellar: "Civilization Output",
+  galactic: "Galactic Output"
+};
+
+export function resolveEconomyDisplayLabel(content: GameRuntimeData, economyId: string, currentEraId?: string) {
+  const definition = getEconomyDefinitions(content).find((item) => item.id === economyId);
+  if (!definition) return economyId;
+  const record = definition as unknown as Record<string, unknown>;
+  const eraLabels = nestedStringRecord(record, ["eraDisplayLabels", "eraDisplayNames", "eraLabels", "displayNamesByEra", "labelByEra", "eraDisplayOverrides", "displayOverrides"]);
+  const canonicalEraLabel = currentEraId ? eraLabels?.[currentEraId] : undefined;
+  const fallbackEraLabel = economyId === LABOR_ECONOMY_ID && currentEraId ? LABOR_ERA_LABEL_FALLBACKS[currentEraId] : undefined;
+  return canonicalEraLabel ?? fallbackEraLabel ?? definition.label ?? definition.compactLabel ?? definition.displayName ?? definition.name ?? economyId;
 }
 
 export function getEconomyDefinitions(content: GameRuntimeData): PrimaryHudResourceDefinition[] {
@@ -148,7 +189,7 @@ export function getPrimaryHudResources(content: GameRuntimeData, currentEraId?: 
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     .map((slot) => {
       const canonical = definitions.get(slot.id);
-      if (canonical) return { ...canonical, ...slot, label: slot.label ?? canonical.label ?? canonical.displayName ?? canonical.name };
+      if (canonical) return { ...canonical, ...slot, label: resolveEconomyDisplayLabel(content, slot.id, currentEraId) };
       return { ...slot, missingDefinition: true };
     });
 }

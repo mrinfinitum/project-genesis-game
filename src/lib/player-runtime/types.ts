@@ -1,4 +1,4 @@
-export const PLAYER_RUNTIME_SAVE_VERSION = 3;
+export const PLAYER_RUNTIME_SAVE_VERSION = 4;
 
 export type AlignmentKey = "industry" | "technology" | "cyber" | "nature" | "corporate";
 
