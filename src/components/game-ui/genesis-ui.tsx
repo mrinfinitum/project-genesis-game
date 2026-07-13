@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type WheelEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject, type WheelEvent } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   AlertTriangle,
@@ -30,6 +31,7 @@ import {
   Sparkles,
   Star,
   Trophy,
+  X,
   Zap
 } from "lucide-react";
 import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
@@ -72,6 +74,22 @@ type PlayerRuntimeDashboardActions = {
   grantTestResources: () => void;
   click: () => void;
   toggleAutomation: () => void;
+  activateBoost?: (definitionId: string) => void;
+};
+
+export type BoostSlotState = "available" | "active" | "locked" | "unavailable" | "cooldown";
+
+export type BoostTraySlot = {
+  id: string;
+  name: string;
+  shortEffect: string;
+  multiplier?: string;
+  duration?: string;
+  remainingTime?: string;
+  cost?: string;
+  targetSystem?: PlayerRuntimeState["boosts"]["active"][number]["targetSystem"];
+  state: BoostSlotState;
+  accent?: "cyan" | "purple" | "green" | "gold" | "rose";
 };
 
 type TopHudResource = {
@@ -88,6 +106,8 @@ const robloxReferences = robloxReferenceManifest as RobloxReference[];
 
 const shellStyle = tokenStyle();
 const dashboardDevToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
+// Matches the Roblox BOOST_TRAY_Z_INDEX layer with one central dashboard overlay token.
+const DASHBOARD_OVERLAY_Z_INDEX = 80;
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: Gauge },
@@ -1688,19 +1708,226 @@ function RobloxRightColumn({ model, art }: { model: DashboardModel; art: Dashboa
   );
 }
 
-function RobloxBoostBar({ model }: { model: DashboardModel }) {
+function usePrefersReducedMotion(explicit?: boolean) {
+  const [mediaReducedMotion, setMediaReducedMotion] = useState(() => {
+    if (typeof explicit === "boolean") return explicit;
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof explicit === "boolean") return;
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setMediaReducedMotion(query.matches);
+    query.addEventListener?.("change", update);
+    return () => query.removeEventListener?.("change", update);
+  }, [explicit]);
+
+  return explicit ?? mediaReducedMotion;
+}
+
+function formatBoostRemaining(endsAt: string, now: number) {
+  const remainingSeconds = Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000));
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function runtimeBoostsToSlots(activeBoosts: PlayerRuntimeState["boosts"]["active"], now: number): BoostTraySlot[] {
+  return activeBoosts
+    .filter((boost) => Date.parse(boost.endsAt) > now)
+    .map((boost) => ({
+      id: boost.id,
+      name: boost.definitionId ?? boost.id,
+      shortEffect: `${boost.targetSystem.toUpperCase()} system boost`,
+      multiplier: `${boost.multiplier}x`,
+      remainingTime: formatBoostRemaining(boost.endsAt, now),
+      targetSystem: boost.targetSystem,
+      state: "active",
+      accent: boost.targetSystem === "colony" ? "green" : boost.targetSystem === "research" ? "purple" : boost.targetSystem === "auto" ? "cyan" : "gold"
+    }));
+}
+
+function RobloxBoostBar({
+  model,
+  open = false,
+  count,
+  controlsId,
+  triggerRef,
+  onToggle
+}: {
+  model: DashboardModel;
+  open?: boolean;
+  count?: number;
+  controlsId?: string;
+  triggerRef?: RefObject<HTMLButtonElement | null>;
+  onToggle?: () => void;
+}) {
   const primaryBoost = model.playerState.boosts?.[0];
-  const boostValue = primaryBoost?.value ?? "6";
+  const boostValue = count ?? model.playerState.boosts?.length ?? 0;
   return (
-    <footer className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 ${primaryBoost ? "" : "opacity-90"}`}>
+    <button
+      ref={triggerRef}
+      type="button"
+      aria-label={`Toggle boosts tray, ${boostValue} boosts available`}
+      aria-expanded={open}
+      aria-controls={controlsId}
+      onClick={onToggle}
+      className={`${gamePanelFrame} ${bevel} flex h-full w-full items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(24,6,12,0.78),rgba(3,8,18,0.88))] px-3 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50 active:translate-y-px ${open ? "border-cyan-100/65 shadow-[0_0_28px_rgba(45,212,255,0.25),inset_0_0_18px_rgba(45,212,255,0.09)]" : ""} ${primaryBoost || boostValue > 0 ? "" : "opacity-90"}`}
+    >
       <Zap className={`h-6 w-6 shrink-0 ${primaryBoost ? "text-cyan-100" : "text-cyan-100/45"}`} />
       <div className="min-w-0 truncate text-center">
-        <span className="text-[1.35rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">Boosts</span>
+        <span className="text-[1.35rem] font-black uppercase leading-none text-white [text-shadow:0_0_18px_rgba(45,212,255,0.5)]">{open ? "Close" : "Boosts"}</span>
         {typeof primaryBoost?.remainingSeconds === "number" ? <div className="text-[0.55rem] font-black uppercase text-cyan-100/55">{primaryBoost.remainingSeconds}s</div> : null}
       </div>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100/32 bg-black/35 text-[1.25rem] font-black text-white">{boostValue}</div>
-    </footer>
+    </button>
   );
+}
+
+const boostAccentClasses: Record<NonNullable<BoostTraySlot["accent"]>, string> = {
+  cyan: "border-cyan-200/28 bg-cyan-300/10 text-cyan-100",
+  purple: "border-fuchsia-200/28 bg-fuchsia-300/10 text-fuchsia-100",
+  green: "border-emerald-200/28 bg-emerald-300/10 text-emerald-100",
+  gold: "border-amber-200/30 bg-amber-300/10 text-amber-100",
+  rose: "border-rose-200/30 bg-rose-300/10 text-rose-100"
+};
+
+function BoostSlotCard({ slot, onActivate }: { slot: BoostTraySlot; onActivate?: (definitionId: string) => void }) {
+  const accent = slot.accent ?? "cyan";
+  const disabled = slot.state !== "available" || !onActivate;
+  const actionLabel = slot.state === "active" ? "Active" : slot.state === "locked" ? "Locked" : slot.state === "cooldown" ? "Cooling" : slot.state === "unavailable" ? "Unavailable" : "Activate";
+
+  return (
+    <article className={`relative flex h-[7.2rem] min-w-[14.35rem] flex-col overflow-hidden rounded-md border bg-[linear-gradient(180deg,rgba(7,18,36,0.94),rgba(2,8,18,0.96))] p-3 shadow-[inset_0_0_20px_rgba(45,212,255,0.05)] ${boostAccentClasses[accent]} ${slot.state === "locked" || slot.state === "unavailable" ? "opacity-58" : ""}`}>
+      <div className="flex min-h-0 items-start gap-3">
+        <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-md border bg-black/35 text-sm font-black uppercase ${boostAccentClasses[accent]}`}>
+          {slot.multiplier ?? slot.targetSystem?.slice(0, 2).toUpperCase() ?? "BX"}
+        </div>
+        <div className="min-w-0">
+          <h3 className="truncate text-[0.8rem] font-black uppercase leading-tight text-white">{slot.name}</h3>
+          <p className="mt-1 line-clamp-2 text-[0.64rem] font-bold uppercase leading-snug text-cyan-50/62">{slot.shortEffect}</p>
+        </div>
+      </div>
+      <div className="mt-auto grid grid-cols-[1fr_auto] items-end gap-2">
+        <div className="min-w-0 space-y-1 text-[0.6rem] font-black uppercase text-cyan-100/54">
+          <div className="truncate">{slot.remainingTime ? `Remaining ${slot.remainingTime}` : slot.duration ? `Duration ${slot.duration}` : "Duration pending"}</div>
+          <div className="truncate">{slot.cost ? `Cost ${slot.cost}` : slot.state === "active" ? "Runtime active" : "Cost pending"}</div>
+        </div>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onActivate?.(slot.id)}
+          className="h-8 rounded-sm border border-cyan-100/24 bg-cyan-300/10 px-3 text-[0.62rem] font-black uppercase text-cyan-50 transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-cyan-100/42"
+        >
+          {actionLabel}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+export function BoostsTray({
+  open,
+  slots = [],
+  activeBoosts = [],
+  triggerRef,
+  portalRoot,
+  onClose,
+  onActivate,
+  reducedMotion
+}: {
+  open: boolean;
+  slots?: BoostTraySlot[];
+  activeBoosts?: PlayerRuntimeState["boosts"]["active"];
+  triggerRef?: RefObject<HTMLButtonElement | null>;
+  portalRoot?: HTMLElement | null;
+  onClose: () => void;
+  onActivate?: (definitionId: string) => void;
+  reducedMotion?: boolean;
+}) {
+  const trayRef = useRef<HTMLDivElement | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion(reducedMotion);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!open || activeBoosts.length === 0) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [activeBoosts.length, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    function closeAndRestore() {
+      onClose();
+      window.requestAnimationFrame(() => triggerRef?.current?.focus());
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeAndRestore();
+      }
+    }
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (trayRef.current?.contains(target) || triggerRef?.current?.contains(target)) return;
+      closeAndRestore();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown, true);
+    };
+  }, [onClose, open, triggerRef]);
+
+  if (!open) return null;
+
+  const runtimeSlots = runtimeBoostsToSlots(activeBoosts, now);
+  const visibleSlots = slots.length ? slots : runtimeSlots;
+  const tray = (
+    <div className="absolute inset-0 pointer-events-none" data-dashboard-overlay="boosts" style={{ zIndex: DASHBOARD_OVERLAY_Z_INDEX }}>
+      <section
+        id="dashboard-boosts-tray"
+        ref={trayRef}
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="dashboard-boosts-tray-title"
+        data-testid="boosts-tray"
+        data-transition={prefersReducedMotion ? "none" : "fade-slide"}
+        className={`pointer-events-auto absolute left-1/2 top-[858px] max-h-[170px] w-[calc(100%_-_24px)] max-w-[1904px] -translate-x-1/2 overflow-hidden rounded-md border border-cyan-100/30 bg-[linear-gradient(180deg,rgba(9,22,45,0.96),rgba(3,8,18,0.98))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.38),0_0_34px_rgba(45,212,255,0.15),inset_0_0_28px_rgba(45,212,255,0.06)] ${prefersReducedMotion ? "" : "animate-[boostTrayIn_220ms_cubic-bezier(.2,.8,.2,1)]"}`}
+      >
+        <style>{`@keyframes boostTrayIn{from{opacity:0;transform:translate(-50%,18px) scale(.985)}to{opacity:1;transform:translate(-50%,0) scale(1)}}`}</style>
+        <div className="flex h-full min-h-0 gap-3">
+          <header className="flex w-[13.5rem] shrink-0 flex-col justify-between rounded-md border border-cyan-100/16 bg-black/24 p-3">
+            <div>
+              <div className="text-[0.62rem] font-black uppercase text-cyan-100/55">Runtime Tray</div>
+              <h2 id="dashboard-boosts-tray-title" className="mt-1 text-2xl font-black uppercase tracking-normal text-white [text-shadow:0_0_18px_rgba(45,212,255,0.42)]">Boosts</h2>
+            </div>
+            <button type="button" onClick={() => { onClose(); window.requestAnimationFrame(() => triggerRef?.current?.focus()); }} className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-cyan-100/24 bg-cyan-300/10 text-cyan-50 transition hover:bg-cyan-300/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100/50" aria-label="Close boosts tray">
+              <X className="h-4 w-4" />
+            </button>
+          </header>
+          {visibleSlots.length ? (
+            <div className="grid min-w-0 flex-1 grid-flow-col auto-cols-[minmax(14.35rem,1fr)] gap-3 overflow-x-auto overflow-y-hidden pr-1" data-testid="boosts-slot-list">
+              {visibleSlots.map((slot) => <BoostSlotCard key={slot.id} slot={slot} onActivate={onActivate} />)}
+            </div>
+          ) : (
+            <div className="flex min-w-0 flex-1 items-center justify-center rounded-md border border-cyan-100/14 bg-black/22 px-5 text-center" data-testid="boosts-empty-state">
+              <div>
+                <div className="text-xl font-black uppercase text-white">No boosts available</div>
+                <p className="mt-2 max-w-[38rem] text-sm font-bold text-cyan-100/62">Boost definitions will appear here when published from Project Genesis Studio.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+
+  return portalRoot ? createPortal(tray, portalRoot) : tray;
 }
 
 function RuntimeSourceBadge({ model }: { model: DashboardModel }) {
@@ -1896,6 +2123,11 @@ export function GameShell({
   const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
   const artAudit = useMemo(() => getDashboardArtAudit(data.assets), [data.assets]);
+  const [boostsTrayOpen, setBoostsTrayOpen] = useState(false);
+  const boostTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [boostOverlayRoot, setBoostOverlayRoot] = useState<HTMLDivElement | null>(null);
+  const activeRuntimeBoosts = playerRuntime?.boosts.active ?? [];
+  const boostCount = model.playerState.boosts?.length ?? 0;
   useDashboardAssetDiagnostics(artAudit);
 
   return (
@@ -1937,8 +2169,24 @@ export function GameShell({
             <RobloxRightColumn model={model} art={dashboardArt} />
           </div>
           <div className="z-20" style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle)}>
-            <RobloxBoostBar model={model} />
+            <RobloxBoostBar
+              model={model}
+              open={boostsTrayOpen}
+              count={boostCount}
+              controlsId="dashboard-boosts-tray"
+              triggerRef={boostTriggerRef}
+              onToggle={() => setBoostsTrayOpen((open) => !open)}
+            />
           </div>
+          <div ref={setBoostOverlayRoot} className="pointer-events-none absolute inset-0" style={{ zIndex: DASHBOARD_OVERLAY_Z_INDEX }} />
+          <BoostsTray
+            open={boostsTrayOpen}
+            activeBoosts={activeRuntimeBoosts}
+            triggerRef={boostTriggerRef}
+            portalRoot={boostOverlayRoot}
+            onClose={() => setBoostsTrayOpen(false)}
+            onActivate={playerRuntimeActions?.activateBoost}
+          />
           {dashboardDevToolsEnabled ? <DashboardDataArtInspector model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
         </div>
       </div>

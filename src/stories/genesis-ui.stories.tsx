@@ -9,6 +9,7 @@ import {
   AutoClickPanel,
   BeveledActionButton,
   BoostBar,
+  BoostsTray,
   ClickPowerPanel,
   CivilizationEraCarousel,
   CriticalStatsPanel,
@@ -29,7 +30,8 @@ import {
   TopResourceHud,
   UnknownUpgradeCard,
   UpgradeCard,
-  UpgradeCategoryTabs
+  UpgradeCategoryTabs,
+  type BoostTraySlot
 } from "../components/game-ui/genesis-ui";
 import { missingArtResource, resourceByCategory, resourceByClass, upgradeFixture, useGenesisStoryContent } from "./storybook-content-provider";
 
@@ -166,6 +168,73 @@ function RobloxNavStoryFrame({ children }: { children: ReactNode }) {
     <StoryCanvas>
       <div className="relative h-[927px] w-[140px] overflow-hidden bg-slate-950">
         {children}
+      </div>
+    </StoryCanvas>
+  );
+}
+
+const boostFixtureSlots: BoostTraySlot[] = [
+  {
+    id: "story-manual-boost",
+    name: "Manual Boost",
+    shortEffect: "2x clicks for 30s",
+    multiplier: "x2",
+    duration: "00:30",
+    cost: "25 Energy",
+    state: "available",
+    accent: "gold",
+    targetSystem: "click"
+  },
+  {
+    id: "story-work-frenzy",
+    name: "Work Frenzy",
+    shortEffect: "2x production loop",
+    multiplier: "WK",
+    duration: "00:30",
+    cost: "Studio pending",
+    state: "available",
+    accent: "cyan",
+    targetSystem: "auto"
+  },
+  {
+    id: "story-innovation",
+    name: "Innovation Surge",
+    shortEffect: "10x research output",
+    multiplier: "IN",
+    duration: "01:00",
+    cost: "Locked",
+    state: "locked",
+    accent: "purple",
+    targetSystem: "research"
+  },
+  {
+    id: "story-colony",
+    name: "Colony Countdown",
+    shortEffect: "50x colonization progress",
+    multiplier: "CS",
+    remainingTime: "00:18",
+    cost: "Cooldown",
+    state: "cooldown",
+    accent: "green",
+    targetSystem: "colony"
+  }
+];
+
+function BoostTrayStoryFrame({ children, compact = false }: { children: ReactNode; compact?: boolean }) {
+  const scale = compact ? 0.52 : 0.72;
+  return (
+    <StoryCanvas>
+      <div className="h-[720px] w-full overflow-auto bg-slate-950 p-4">
+        <div
+          className="relative overflow-hidden border border-cyan-200/20 bg-[#06111f]"
+          style={{ width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: "top left" }}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.12),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)]" />
+          <button className="absolute left-[866px] top-[1010px] h-[58px] w-[230px] rounded-md border border-cyan-100/30 bg-black/50 text-xl font-black uppercase text-white" type="button">
+            Boosts <span className="text-cyan-100">0</span>
+          </button>
+          {children}
+        </div>
       </div>
     </StoryCanvas>
   );
@@ -946,6 +1015,77 @@ export const RobloxParityMainDashboard: Story = {
     const { data } = useGenesisStoryContent();
     return <RobloxParityReview data={data} status="In Progress" opacity={0.5} />;
   }
+};
+
+export const BoostsTrayClosed: Story = {
+  render: () => <BoostTrayStoryFrame>{null}</BoostTrayStoryFrame>
+};
+
+export const BoostsTrayOpenNoBoosts: Story = {
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray open onClose={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayAvailableBoosts: Story = {
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray open slots={boostFixtureSlots.filter((slot) => slot.state === "available")} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayOneActiveBoost: Story = {
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray
+        open
+        activeBoosts={[{
+          id: "runtime-click-surge",
+          definitionId: "Manual Boost",
+          targetSystem: "click",
+          startedAt: new Date(Date.now() - 12_000).toISOString(),
+          endsAt: new Date(Date.now() + 52_000).toISOString(),
+          multiplier: 2
+        }]}
+        onClose={() => undefined}
+      />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayLockedBoosts: Story = {
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray open slots={boostFixtureSlots.filter((slot) => slot.state === "locked")} onClose={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayCooldown: Story = {
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray open slots={boostFixtureSlots.filter((slot) => slot.state === "cooldown")} onClose={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayCompactViewport: Story = {
+  render: () => (
+    <BoostTrayStoryFrame compact>
+      <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} onActivate={() => undefined} />
+    </BoostTrayStoryFrame>
+  )
+};
+
+export const BoostsTrayReducedMotion: Story = {
+  render: () => (
+    <BoostTrayStoryFrame>
+      <BoostsTray open slots={boostFixtureSlots} onClose={() => undefined} reducedMotion />
+    </BoostTrayStoryFrame>
+  )
 };
 
 export const ComponentSampler: Story = {
