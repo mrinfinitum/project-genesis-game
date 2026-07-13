@@ -147,6 +147,7 @@ describe("Roblox left column geometry", () => {
     expect(backgrounds).toHaveLength(1);
     expect(backgrounds[0]).toHaveAttribute("data-art-key", "dashboard_click_panel_background");
     expect(backgrounds[0]).toHaveAttribute("data-local-path", "/roblox-assets/UI/hud_clicker_350x823.png");
+    expect(backgrounds[0]).toHaveAttribute("data-native-size", "350x823");
     expect(backgrounds[0]).toHaveAttribute("data-rendered-size", "350x823");
     expect(backgrounds[0]).toHaveAttribute("data-background-size", "100% 100%");
     expect(screen.getByTestId("critical-stats-panel")).toHaveAttribute("data-rojo-rect", "0,638,350,185");
@@ -178,9 +179,9 @@ describe("Roblox left column geometry", () => {
     render(<GameShell data={data} />);
 
     expect(screen.getByTestId("roblox-nav-label-dashboard")).toHaveClass("text-[15px]");
-    expect(screen.getByText("Click Power")).toHaveClass("text-[28px]");
-    expect(screen.getByText("Auto Click")).toHaveClass("text-[28px]");
-    expect(screen.getByText("Critical Chance")).toHaveClass("text-[17px]");
+    expect(screen.getByText("Click Power")).toHaveClass("text-[20px]");
+    expect(screen.getByText("Auto Click")).toHaveClass("text-[20px]");
+    expect(screen.getByText("Critical Chance")).toHaveClass("text-[15px]");
   });
 
   it("keeps Click Power controls inside the canonical panel bounds", async () => {
@@ -193,9 +194,9 @@ describe("Roblox left column geometry", () => {
     render(<ClickPowerPanel data={data} model={model} art={createDashboardArtMap(data.assets)} />);
 
     expectInside("0,0,350,344", screen.getByTestId("click-power-ring").getAttribute("data-rojo-rect") ?? "");
-    expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "25,82,174,174");
-    expect(screen.getByTestId("click-power-stat-block")).toHaveAttribute("data-rojo-rect", "196,82,126,152");
-    expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "39,267,272,55");
+    expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "31,80,162,162");
+    expect(screen.getByTestId("click-power-stat-block")).toHaveAttribute("data-rojo-rect", "196,82,126,145");
+    expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "39,260,272,50");
   });
 
   it("keeps Auto Click controls inside the canonical panel bounds", async () => {
@@ -212,9 +213,9 @@ describe("Roblox left column geometry", () => {
     expectInside("0,0,350,270", screen.getByTestId("auto-click-ring").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-stat-block").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-button").getAttribute("data-rojo-rect") ?? "");
-    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "35,76,150,150");
-    expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "198,70,122,128");
-    expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "33,206,286,55");
+    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "42,76,140,140");
+    expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "198,72,122,120");
+    expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "33,209,286,47");
   });
 
   it("keeps Critical stats spacing aligned to the reference column", async () => {
@@ -222,8 +223,27 @@ describe("Roblox left column geometry", () => {
 
     expectInside("0,0,350,185", screen.getByTestId("critical-star-icon").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,185", screen.getByTestId("critical-stats-block").getAttribute("data-rojo-rect") ?? "");
-    expect(screen.getByTestId("critical-star-icon")).toHaveAttribute("data-rojo-rect", "42,30,104,104");
-    expect(screen.getByTestId("critical-stats-block")).toHaveAttribute("data-rojo-rect", "158,38,168,132");
+    expect(screen.getByTestId("critical-star-icon")).toHaveAttribute("data-rojo-rect", "46,31,94,94");
+    expect(screen.getByTestId("critical-stats-block")).toHaveAttribute("data-rojo-rect", "154,35,170,136");
+  });
+
+  it("keeps the top HUD on measured fixed coordinates with source artwork", async () => {
+    render(<GameShell data={await bundledRuntime()} />);
+
+    expect(screen.getByTestId("roblox-top-hud")).toHaveAttribute("data-layout-mode", "fixed-rojo-coordinates");
+    expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-art-key", "dashboard_top_hud");
+    expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle({
+      left: "190px",
+      width: "355px"
+    });
+    expect(screen.getByTestId("top-hud-left-utility-1")).toHaveStyle({
+      left: "50px",
+      top: "8px"
+    });
+    expect(screen.getByTestId("top-hud-right-utility-2")).toHaveStyle({
+      left: "116px",
+      top: "0px"
+    });
   });
 
   it("does not introduce direct Roblox asset paths in JSX", () => {

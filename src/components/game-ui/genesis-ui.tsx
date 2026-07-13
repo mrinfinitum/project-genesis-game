@@ -919,8 +919,8 @@ export function ClickPowerPanel({
           click_interface_circle source missing
         </div>
       ) : null}
-      <h2 className="absolute left-[38px] top-[30px] h-[40px] w-[250px] text-[28px] font-black uppercase leading-[2rem] text-cyan-100/90">Click Power</h2>
-      <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[22px] top-[31px] h-[20px] w-[20px]" />
+      <h2 className="absolute left-[38px] top-[31px] h-[31px] w-[250px] text-[20px] font-black uppercase leading-[1.85rem] text-cyan-100/90">Click Power</h2>
+      <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[22px] top-[31px] h-[18px] w-[18px]" />
       <RotatingControlRing
         outerArt={art.dashboard_click_ring}
         middleArt={art.click_ring_middle}
@@ -931,14 +931,14 @@ export function ClickPowerPanel({
         pulseKey={pulseKey}
         onActivate={hasClickState ? onClick : undefined}
         data-testid="click-power-ring"
-        data-rojo-rect="25,82,174,174"
-        className="left-[25px] top-[82px] h-[174px] w-[174px]"
+        data-rojo-rect="31,80,162,162"
+        className="left-[31px] top-[80px] h-[162px] w-[162px]"
       />
-      <div data-testid="click-power-stat-block" data-rojo-rect="196,82,126,152" className="absolute left-[196px] top-[82px] h-[152px] w-[126px] text-center">
-        <div className="whitespace-pre-line text-[18px] font-black uppercase leading-[1.04] text-cyan-100/68">{formattedClickLabel(clickResourceLabel)}</div>
-        <div className="mt-[15px] text-[38px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
-        <div className="mt-[18px] text-[21px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
-        <div className={`mt-[8px] text-[20px] font-black uppercase leading-none text-cyan-300 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
+      <div data-testid="click-power-stat-block" data-rojo-rect="196,82,126,145" className="absolute left-[196px] top-[82px] h-[145px] w-[126px] text-center">
+        <div className="whitespace-pre-line text-[17px] font-black uppercase leading-[1.04] text-cyan-100/68">{formattedClickLabel(clickResourceLabel)}</div>
+        <div className="mt-[13px] text-[32px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasClickState ? compactNumber(model.playerState.clickOutput?.amount ?? 0) : "--"}</div>
+        <div className="mt-[16px] text-[18px] font-black uppercase leading-none text-cyan-200">{model.playerState.clickOutput?.perClickLabel ?? "Per Click"}</div>
+        <div className={`mt-[8px] text-[18px] font-black uppercase leading-none text-cyan-300 ${pressed ? "genesis-control-pulse" : ""}`}>+{hasClickState ? compactNumber(lastClick) : "0"} Last</div>
       </div>
       <BeveledActionButton
         art={art.dashboard_click_button}
@@ -948,8 +948,8 @@ export function ClickPowerPanel({
         pressed={pressed}
         onClick={hasClickState ? onClick : undefined}
         data-testid="click-power-button"
-        data-rojo-rect="39,267,272,55"
-        className="absolute left-[39px] top-[267px] h-[55px] w-[272px]"
+        data-rojo-rect="39,260,272,50"
+        className="absolute left-[39px] top-[260px] h-[50px] w-[272px]"
       />
     </section>
   );
@@ -970,8 +970,8 @@ export function AutoClickPanel({
 
   return (
     <section data-testid="auto-click-panel" className="absolute left-0 top-[344px] h-[270px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.auto.x},${LEFT_COLUMN_GEOMETRY.auto.y},${LEFT_COLUMN_GEOMETRY.auto.width},${LEFT_COLUMN_GEOMETRY.auto.height}`}>
-      <h2 className="absolute left-[38px] top-[31px] h-[40px] w-[250px] text-[28px] font-black uppercase leading-[2rem] text-cyan-100/90">Auto Click</h2>
-      <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[22px] top-[33px] h-[20px] w-[20px]" />
+      <h2 className="absolute left-[38px] top-[31px] h-[31px] w-[250px] text-[20px] font-black uppercase leading-[1.85rem] text-cyan-100/90">Auto Click</h2>
+      <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[22px] top-[33px] h-[18px] w-[18px]" />
       <RotatingControlRing
         outerArt={art.dashboard_auto_ring}
         centerArt={art.dashboard_auto_robot}
@@ -980,13 +980,13 @@ export function AutoClickPanel({
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
         data-testid="auto-click-ring"
-        data-rojo-rect="35,76,150,150"
-        className="left-[35px] top-[76px] h-[150px] w-[150px]"
+        data-rojo-rect="42,76,140,140"
+        className="left-[42px] top-[76px] h-[140px] w-[140px]"
       />
-      <div data-testid="auto-click-stat-block" data-rojo-rect="198,70,122,128" className="absolute left-[198px] top-[70px] h-[128px] w-[122px] text-center">
-        <div className="text-[16px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
-        <div className="mt-[15px] text-[36px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
-        <div className="mt-[16px] text-[20px] font-black uppercase leading-none text-cyan-200">Per/S</div>
+      <div data-testid="auto-click-stat-block" data-rojo-rect="198,72,122,120" className="absolute left-[198px] top-[72px] h-[120px] w-[122px] text-center">
+        <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
+        <div className="mt-[14px] text-[32px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
+        <div className="mt-[14px] text-[18px] font-black uppercase leading-none text-cyan-200">Per/S</div>
       </div>
       <BeveledActionButton
         art={autoArt}
@@ -996,8 +996,8 @@ export function AutoClickPanel({
         disabled={!hasAutomation}
         onClick={hasAutomation ? onToggle : undefined}
         data-testid="auto-click-button"
-        data-rojo-rect="33,206,286,55"
-        className="absolute left-[33px] top-[206px] h-[55px] w-[286px]"
+        data-rojo-rect="33,209,286,47"
+        className="absolute left-[33px] top-[209px] h-[47px] w-[286px]"
       />
     </section>
   );
@@ -1065,7 +1065,7 @@ function robloxNavSeparatorTop(index: number) {
 }
 
 const LEFT_COLUMN_GEOMETRY = {
-  click: { x: 0, y: 0, width: 350, height: 320 },
+  click: { x: 0, y: 0, width: 350, height: 344 },
   auto: { x: 0, y: 344, width: 350, height: 270 },
   critical: { x: 0, y: 638, width: 350, height: 185 }
 } as const;
@@ -1108,22 +1108,21 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
   const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
 
   return (
-    <header className="relative h-full w-full">
-      {dashboardImagePath(art.dashboard_top_hud) ? <img src={dashboardImagePath(art.dashboard_top_hud)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_top_hud} className="absolute inset-0" />}
+    <header className="relative h-full w-full" data-testid="roblox-top-hud" data-layout-mode="fixed-rojo-coordinates">
+      {dashboardImagePath(art.dashboard_top_hud) ? <img src={dashboardImagePath(art.dashboard_top_hud)} alt="" data-testid="roblox-top-hud-background" data-art-key="dashboard_top_hud" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_top_hud} className="absolute inset-0" />}
 
-      <div className="absolute left-[23px] top-[15px] flex h-[58px] items-center gap-2">
+      <div className="absolute left-[23px] top-[15px] h-[58px] w-[142px]" data-testid="top-hud-left-utility-cluster">
         {[Hexagon, Gauge, CircleHelp].map((Icon, index) => (
-          <button key={index} className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-black/48 text-cyan-100/82">
-            <Icon className="h-[22px] w-[22px]" />
+          <button key={index} className="absolute flex h-[42px] w-[42px] items-center justify-center text-cyan-100/82 transition hover:brightness-125" style={{ left: index * 50, top: 8 }} data-testid={`top-hud-left-utility-${index}`}>
+            {dashboardImagePath(art.topbar_hex_button) ? <img src={dashboardImagePath(art.topbar_hex_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <span className="absolute inset-0 rounded-full bg-black/48" />}
+            <Icon className="relative h-[22px] w-[22px]" />
           </button>
         ))}
       </div>
 
-      <div className="absolute top-0 flex min-w-0 items-center gap-3 px-3" style={{ left: `${(190 / 1920) * 100}%`, width: `${(355 / 1920) * 100}%`, height: "100%" }}>
-        <div className="min-w-0">
-          <div className="truncate text-[1.9rem] font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]">{civilizationTitle}</div>
-          <div className="mt-2 truncate text-[1.35rem] font-medium leading-none text-cyan-50/82">Era 1 - {shortEraName(model.currentEra)}</div>
-        </div>
+      <div className="absolute top-0 min-w-0" style={{ left: 190, width: 355, height: "100%" }} data-testid="top-hud-civilization-identity">
+        <div className="absolute left-[12px] top-[22px] w-[320px] truncate text-[2rem] font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]">{civilizationTitle}</div>
+        <div className="absolute left-[12px] top-[61px] w-[320px] truncate text-[1.18rem] font-medium leading-none text-cyan-50/82">Era 1 - {shortEraName(model.currentEra)}</div>
       </div>
 
       {showDevWarnings && model.economyWarnings.length ? (
@@ -1155,13 +1154,13 @@ function RobloxTopHud({ model, art, showDevWarnings = false }: { model: Dashboar
         {dashboardImagePath(art.topbar_plus_button) ? <img src={dashboardImagePath(art.topbar_plus_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.topbar_plus_button} className="h-full w-full" />}
       </button>
 
-      <div className="absolute flex items-center gap-4" style={{ left: 1715, top: 12, height: 80 }}>
+      <div className="absolute" style={{ left: 1715, top: 12, width: 190, height: 80 }} data-testid="top-hud-right-utility-cluster">
         {[
           { label: "Calendar", icon: CalendarDays, value: "" },
           { label: "Trophies", icon: Trophy, value: "" },
           { label: "Settings", icon: Settings, value: "" }
         ].map(({ label, icon: Icon, value }, index) => (
-          <button key={label} title={label} className="relative flex h-20 w-20 items-center justify-center text-cyan-100 transition hover:brightness-125">
+          <button key={label} title={label} className="absolute flex h-20 w-20 items-center justify-center text-cyan-100 transition hover:brightness-125" style={{ left: index * 58, top: 0 }} data-testid={`top-hud-right-utility-${index}`}>
             {dashboardImagePath(art.topbar_hex_button) ? <img src={dashboardImagePath(art.topbar_hex_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : null}
             {dashboardImagePath(art[topbarIconKeys[index]]) ? <img src={dashboardImagePath(art[topbarIconKeys[index]])} alt="" className="relative h-14 w-14 object-contain" /> : <Icon className="relative h-6 w-6" />}
             {value ? <span className="text-xs font-black text-white">{value}</span> : null}
@@ -1331,7 +1330,7 @@ function RobloxLeftColumn({
           data-testid="roblox-left-column-background"
           data-art-key="dashboard_click_panel_background"
           data-local-path={art.dashboard_click_panel_background.path}
-          data-native-size="350x780"
+          data-native-size="350x823"
           data-rendered-size={`${ROBLOX_DASHBOARD_LAYOUT.leftColumn.width}x${ROBLOX_DASHBOARD_LAYOUT.leftColumn.height}`}
           data-background-size="100% 100%"
           data-background-position="0 0"
@@ -1343,13 +1342,13 @@ function RobloxLeftColumn({
       <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
 
       <section data-testid="critical-stats-panel" className="absolute left-0 top-[638px] h-[185px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.critical.x},${LEFT_COLUMN_GEOMETRY.critical.y},${LEFT_COLUMN_GEOMETRY.critical.width},${LEFT_COLUMN_GEOMETRY.critical.height}`}>
-        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="42,30,104,104" className="absolute left-[42px] top-[30px] h-[104px] w-[104px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="42,30,104,104" className="absolute left-[42px] top-[30px] h-[104px] w-[104px] text-amber-100" />}
-        <div className="absolute left-[80px] top-[140px] w-[29px] text-center text-[17px] font-black leading-none text-cyan-700/75">-</div>
-        <div data-testid="critical-stats-block" data-rojo-rect="158,38,168,132" className="absolute left-[158px] top-[38px] w-[168px]">
-          <div className="text-[17px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
-          <div className="mt-[11px] text-[32px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
-          <div className="mt-[28px] text-[17px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
-          <div className="mt-[11px] text-[32px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
+        {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] text-amber-100" />}
+        <div className="absolute left-[80px] top-[130px] w-[29px] text-center text-[15px] font-black leading-none text-cyan-700/75">-</div>
+        <div data-testid="critical-stats-block" data-rojo-rect="154,35,170,136" className="absolute left-[154px] top-[35px] w-[170px]">
+          <div className="text-[15px] font-black uppercase leading-none text-cyan-100/60">Critical Chance</div>
+          <div className="mt-[11px] text-[29px] font-black leading-none text-white">{critical ? `${critical.chancePercent}%` : "--"}</div>
+          <div className="mt-[26px] text-[15px] font-black uppercase leading-none text-cyan-100/60">Critical Multiplier</div>
+          <div className="mt-[11px] text-[29px] font-black leading-none text-white">{critical ? `x${critical.multiplier}` : "--"}</div>
         </div>
       </section>
     </div>
@@ -1409,6 +1408,8 @@ function EraProgressionNode({
   state,
   size,
   progressPercent = 0,
+  mysteryLocked = false,
+  secondaryLocked = false,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -1423,6 +1424,8 @@ function EraProgressionNode({
   state: "completed" | "current" | "locked" | "preview";
   size: "large" | "medium" | "small";
   progressPercent?: number;
+  mysteryLocked?: boolean;
+  secondaryLocked?: boolean;
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -1438,6 +1441,7 @@ function EraProgressionNode({
   const preview = state === "preview";
   const locked = state === "locked";
   const completed = state === "completed";
+  const lockIconPath = dashboardImagePath(art.dashboard_era_lock_icon);
   const radius = 30;
   const circumference = 2 * Math.PI * radius;
   const progressOffset = circumference - (Math.max(0, Math.min(100, progressPercent)) / 100) * circumference;
@@ -1478,9 +1482,17 @@ function EraProgressionNode({
       ) : (
         <Hexagon className={`absolute inset-0 h-full w-full ${current ? "text-emerald-200" : locked ? "text-cyan-100/38" : "text-emerald-100/78"}`} />
       )}
-      <span className={`relative font-black text-white [text-shadow:0_2px_7px_rgba(0,0,0,0.88)] ${size === "large" ? "text-[1.65rem]" : size === "medium" ? "text-[1.22rem]" : "text-[0.48rem]"}`}>{era.index}</span>
+      {mysteryLocked ? (
+        lockIconPath ? (
+          <img src={lockIconPath} alt="" data-art-key={art.dashboard_era_lock_icon.key} data-testid={`era-lock-inside-${era.id}`} className="relative h-[46%] w-[46%] object-contain opacity-80" />
+        ) : (
+          <Lock data-testid={`era-lock-inside-${era.id}`} className="relative h-[46%] w-[46%] text-cyan-100/72" />
+        )
+      ) : (
+        <span className={`relative font-black text-white [text-shadow:0_2px_7px_rgba(0,0,0,0.88)] ${size === "large" ? "text-[1.65rem]" : size === "medium" ? "text-[1.22rem]" : "text-[0.48rem]"}`}>{era.index}</span>
+      )}
       {completed && size !== "small" ? <Check className="absolute bottom-[8px] right-[8px] h-4 w-4 rounded-full bg-emerald-300 p-0.5 text-slate-950" /> : null}
-      {locked && size !== "small" ? <Lock data-testid={`era-lock-inside-${era.id}`} className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-950/76 p-0.5 text-cyan-100/72" /> : null}
+      {secondaryLocked && size !== "small" ? <Lock data-testid={`era-lock-inside-${era.id}`} className="absolute bottom-[7px] right-[7px] h-4 w-4 rounded-full bg-slate-950/76 p-0.5 text-cyan-100/72" /> : null}
     </button>
   );
 }
@@ -1524,6 +1536,7 @@ export function CivilizationEraCarousel({
   void initialPreviewEraId;
   const orderedEras = [...eras].sort((a, b) => a.index - b.index);
   const [hoverEraId, setHoverEraId] = useState<string | undefined>(undefined);
+  const [selectedEraId, setSelectedEraId] = useState<string | undefined>(undefined);
   const activeIndex = Math.max(0, orderedEras.findIndex((era) => era.id === activeEraId));
   const trackProgress = eraTrackProgress(orderedEras, activeEraId, progressPercent);
   const railLeft = 52;
@@ -1531,8 +1544,9 @@ export function CivilizationEraCarousel({
   const railTop = 47;
   const labelTop = 86;
   const railWidth = railRight - railLeft;
-  const hoveredEra = orderedEras.find((era) => era.id === hoverEraId);
-  const hoveredIndex = hoveredEra ? orderedEras.findIndex((era) => era.id === hoveredEra.id) : -1;
+  const detailEraId = hoverEraId ?? selectedEraId;
+  const detailEra = orderedEras.find((era) => era.id === detailEraId);
+  const detailIndex = detailEra ? orderedEras.findIndex((era) => era.id === detailEra.id) : -1;
 
   function nodeCenter(index: number) {
     return orderedEras.length <= 1 ? (railLeft + railRight) / 2 : railLeft + (railWidth * index) / (orderedEras.length - 1);
@@ -1569,9 +1583,13 @@ export function CivilizationEraCarousel({
         const state = nodeState(index);
         const current = state === "current";
         const completed = state === "completed";
+        const immediateNext = index === activeIndex + 1;
+        const mysteryLocked = index > activeIndex + 1;
+        const lockedFuture = index > activeIndex;
         const size = current ? 64 : 50;
         const left = nodeCenter(index) - size / 2;
         const top = current ? 15 : 22;
+        const label = mysteryLocked ? "???" : shortEraName(era);
         return (
           <Fragment key={era.id}>
             <EraProgressionNode
@@ -1581,41 +1599,45 @@ export function CivilizationEraCarousel({
               assets={assets}
               art={art}
               progressPercent={current ? progressPercent : 0}
+              mysteryLocked={mysteryLocked}
+              secondaryLocked={lockedFuture && immediateNext}
               className={current ? "" : completed ? "" : "opacity-62"}
               style={{ left, top }}
               layoutRect={`${left},${top},${size},${size}`}
               testId={`era-rail-node-${era.id}`}
+              onClick={() => setSelectedEraId((currentId) => (currentId === era.id ? undefined : era.id))}
               onMouseEnter={() => setHoverEraId(era.id)}
               onMouseLeave={() => setHoverEraId(undefined)}
             />
-            <div className={`pointer-events-none absolute w-[92px] -translate-x-1/2 truncate text-center text-[9px] font-black uppercase leading-none ${current ? "text-emerald-100" : completed ? "text-cyan-50/70" : "text-cyan-50/40"}`} style={{ left: nodeCenter(index), top: labelTop }} data-testid={`era-rail-label-${era.id}`}>
-              {shortEraName(era)}
+            <div className={`pointer-events-none absolute w-[92px] -translate-x-1/2 truncate text-center text-[10px] font-black uppercase leading-none ${current ? "text-emerald-100" : completed ? "text-cyan-50/74" : immediateNext ? "text-cyan-50/62" : "text-slate-300/48"}`} style={{ left: nodeCenter(index), top: labelTop }} data-testid={`era-rail-label-${era.id}`}>
+              {label}
             </div>
           </Fragment>
         );
       })}
 
-      {hoveredEra ? (
-        <div data-testid="era-hover-tooltip" className="era-hover-hud pointer-events-none absolute z-40 w-[248px] overflow-hidden rounded-sm border border-cyan-100/34 bg-[linear-gradient(135deg,rgba(2,12,24,0.96),rgba(4,30,44,0.9)_58%,rgba(4,12,24,0.98))] px-4 py-3 text-left shadow-[0_0_28px_rgba(45,212,255,0.26),inset_0_0_24px_rgba(125,249,255,0.08)] backdrop-blur-md before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[linear-gradient(90deg,transparent,rgba(125,249,255,0.9),transparent)] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(180deg,rgba(125,249,255,0.07)_0,rgba(125,249,255,0.07)_1px,transparent_1px,transparent_8px)] after:opacity-25" style={{ left: panelLeft(hoveredIndex, 248), top: -88 }}>
+      {detailEra ? (
+        <div data-testid="era-hover-tooltip" className="era-hover-hud pointer-events-none absolute z-40 w-[248px] overflow-hidden rounded-sm border border-cyan-100/34 bg-[linear-gradient(135deg,rgba(2,12,24,0.96),rgba(4,30,44,0.9)_58%,rgba(4,12,24,0.98))] px-4 py-3 text-left shadow-[0_0_28px_rgba(45,212,255,0.26),inset_0_0_24px_rgba(125,249,255,0.08)] backdrop-blur-md before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[linear-gradient(90deg,transparent,rgba(125,249,255,0.9),transparent)] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(180deg,rgba(125,249,255,0.07)_0,rgba(125,249,255,0.07)_1px,transparent_1px,transparent_8px)] after:opacity-25" style={{ left: panelLeft(detailIndex, 248), top: -88 }}>
           <div className="relative z-10 flex items-center justify-between gap-3">
             <div>
-              <div className="text-[9px] font-black uppercase leading-none tracking-[0.18em] text-cyan-200/72">Era {hoveredEra.index}</div>
-              <div className="mt-1 truncate text-[18px] font-black uppercase leading-none text-white [text-shadow:0_0_14px_rgba(125,249,255,0.34)]">{shortEraName(hoveredEra)}</div>
+              <div className="text-[9px] font-black uppercase leading-none tracking-[0.18em] text-cyan-200/72">{detailIndex > activeIndex + 1 ? "Mystery Era" : `Era ${detailEra.index}`}</div>
+              <div className="mt-1 truncate text-[18px] font-black uppercase leading-none text-white [text-shadow:0_0_14px_rgba(125,249,255,0.34)]">{detailIndex > activeIndex + 1 ? "???" : shortEraName(detailEra)}</div>
             </div>
-            <div className="flex h-9 w-9 items-center justify-center border border-emerald-200/36 bg-emerald-300/12 text-[16px] font-black text-emerald-100 shadow-[0_0_16px_rgba(52,245,106,0.22)]">{hoveredEra.index}</div>
+            <div className="flex h-9 w-9 items-center justify-center border border-emerald-200/36 bg-emerald-300/12 text-[16px] font-black text-emerald-100 shadow-[0_0_16px_rgba(52,245,106,0.22)]">{detailIndex > activeIndex + 1 ? <Lock className="h-5 w-5" /> : detailEra.index}</div>
           </div>
           <div className="relative z-10 mt-3 grid grid-cols-[1fr_auto] items-center gap-2 border-y border-cyan-100/12 py-2">
-            <span className="text-[8px] font-black uppercase tracking-[0.16em] text-cyan-100/54">Unlock Requirements</span>
-            <span className="max-w-[124px] truncate text-right text-[10px] font-black uppercase text-cyan-50/82">{eraUnlockSummary(hoveredEra, orderedEras, hoveredIndex)}</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.16em] text-cyan-100/54">{detailIndex > activeIndex + 1 ? "Status" : "Unlock Requirements"}</span>
+            <span className="max-w-[124px] truncate text-right text-[10px] font-black uppercase text-cyan-50/82">{detailIndex > activeIndex + 1 ? "Locked" : eraUnlockSummary(detailEra, orderedEras, detailIndex)}</span>
           </div>
           <div className="relative z-10 mt-2">
             <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-[0.16em] text-cyan-100/50">
               <span>Progress Channel</span>
-              <span>{hoveredIndex < activeIndex ? "Complete" : hoveredIndex === activeIndex ? `${Math.round(progressPercent)}%` : "Locked"}</span>
+              <span>{detailIndex < activeIndex ? "Complete" : detailIndex === activeIndex ? `${Math.round(progressPercent)}%` : "Locked"}</span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-cyan-950/80">
-              <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(52,245,106,0.95),rgba(125,249,255,0.86))] shadow-[0_0_12px_rgba(52,245,106,0.52)]" style={{ width: `${hoveredIndex < activeIndex ? 100 : hoveredIndex === activeIndex ? Math.max(8, Math.min(100, progressPercent)) : 8}%` }} />
+              <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(52,245,106,0.95),rgba(125,249,255,0.86))] shadow-[0_0_12px_rgba(52,245,106,0.52)]" style={{ width: `${detailIndex < activeIndex ? 100 : detailIndex === activeIndex ? Math.max(8, Math.min(100, progressPercent)) : 8}%` }} />
             </div>
+            {detailIndex > activeIndex + 1 ? <p className="mt-2 text-[10px] font-bold leading-tight text-cyan-50/62">Continue progressing to reveal this era.</p> : null}
           </div>
         </div>
       ) : null}

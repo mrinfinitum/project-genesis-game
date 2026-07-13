@@ -71,6 +71,17 @@ describe("dashboard era rail", () => {
     expect(screen.getByTestId("era-rail-node-industrial")).toContainElement(screen.getByTestId("era-lock-inside-industrial"));
   });
 
+  it("shows only current and immediate-next era names while hiding deeper future names", async () => {
+    const data = await bundledRuntime();
+    renderEraRail(data, { activeEraId: "survival" });
+
+    expect(screen.getByTestId("era-rail-label-survival")).toHaveTextContent("Survival");
+    expect(screen.getByTestId("era-rail-label-ancient")).toHaveTextContent("Ancient");
+    expect(screen.getByTestId("era-rail-label-medieval")).toHaveTextContent("???");
+    expect(screen.getByTestId("era-rail-label-galactic")).toHaveTextContent("???");
+    expect(screen.getByTestId("era-rail-node-medieval")).toContainElement(screen.getByTestId("era-lock-inside-medieval"));
+  });
+
   it("uses a premium animated progression connector instead of a static line", async () => {
     const data = await bundledRuntime();
     renderEraRail(data, { activeEraId: "renaissance", progressPercent: 42 });
@@ -80,14 +91,18 @@ describe("dashboard era rail", () => {
     expect(screen.getByTestId("era-rail-connector-sweep")).toHaveClass("genesis-era-sweep");
   });
 
-  it("does not open a click preview panel when an era is clicked", async () => {
+  it("opens only the compact mystery HUD when a deep future era is clicked", async () => {
     const data = await bundledRuntime();
-    renderEraRail(data, { activeEraId: "renaissance" });
+    renderEraRail(data, { activeEraId: "survival" });
 
-    fireEvent.click(screen.getByTestId("era-rail-node-industrial"));
+    fireEvent.click(screen.getByTestId("era-rail-node-galactic"));
 
     expect(screen.queryByTestId("era-floating-preview-panel")).toBeNull();
-    expect(screen.queryByText(/preview only/i)).toBeNull();
+    expect(screen.getByTestId("era-hover-tooltip")).toHaveTextContent("Mystery Era");
+    expect(screen.getByTestId("era-hover-tooltip")).toHaveTextContent("???");
+    expect(screen.getByTestId("era-hover-tooltip")).toHaveTextContent("Locked");
+    expect(screen.getByTestId("era-hover-tooltip")).toHaveTextContent("Continue progressing to reveal this era.");
+    expect(screen.getByTestId("era-hover-tooltip")).not.toHaveTextContent("Galactic");
   });
 
   it("shows a high-tech hover HUD with era, name, unlock requirements, and progress", async () => {
@@ -103,5 +118,17 @@ describe("dashboard era rail", () => {
     expect(tooltip).toHaveTextContent("Unlock Requirements");
     expect(tooltip).toHaveTextContent("Progress Channel");
     expect(tooltip.textContent).toMatch(/Complete|Requires|Starting/);
+  });
+
+  it("does not reveal canonical names in mystery hover HUDs", async () => {
+    const data = await bundledRuntime();
+    renderEraRail(data, { activeEraId: "survival" });
+
+    fireEvent.mouseEnter(screen.getByTestId("era-rail-node-galactic"));
+
+    const tooltip = screen.getByTestId("era-hover-tooltip");
+    expect(tooltip).toHaveTextContent("Mystery Era");
+    expect(tooltip).toHaveTextContent("???");
+    expect(tooltip).not.toHaveTextContent("Galactic");
   });
 });

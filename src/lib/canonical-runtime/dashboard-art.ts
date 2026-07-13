@@ -451,6 +451,14 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/UI/critical-star-96x96.png",
     sourceStatus: "mapped"
   },
+  dashboard_era_lock_icon: {
+    key: "dashboard_era_lock_icon",
+    label: "Era lock icon",
+    viteUsage: "Dashboard era rail locked state",
+    iconKey: "dashboard_era_lock_icon",
+    sourceStatus: "source-missing",
+    notes: "Semantic shared lock key. Falls back to the standard Lucide lock until a Roblox lock bitmap is exported."
+  },
   dashboard_city_hero: {
     key: "dashboard_city_hero",
     label: "City hero",
