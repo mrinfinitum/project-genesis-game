@@ -853,6 +853,7 @@ type RotatingControlRingProps = {
   middleArt?: DashboardArtResolution;
   innerArt?: DashboardArtResolution;
   variant: "click" | "auto";
+  centerScale?: number;
   active?: boolean;
   disabled?: boolean;
   pulseKey?: number;
@@ -866,13 +867,14 @@ function ringDurationStyle(seconds: number): CSSProperties {
   return { "--genesis-ring-duration": `${seconds}s` } as CSSProperties;
 }
 
-export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, variant, active = true, disabled = false, pulseKey = 0, onActivate, className = "", "data-testid": dataTestId, "data-rojo-rect": dataRojoRect }: RotatingControlRingProps) {
+export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, variant, centerScale = 31, active = true, disabled = false, pulseKey = 0, onActivate, className = "", "data-testid": dataTestId, "data-rojo-rect": dataRojoRect }: RotatingControlRingProps) {
   const outerPath = dashboardImagePath(outerArt);
   const middlePath = middleArt ? dashboardImagePath(middleArt) : undefined;
   const innerPath = innerArt ? dashboardImagePath(innerArt) : undefined;
   const centerPath = dashboardImagePath(centerArt);
   const glow = variant === "auto" ? "rgba(52,245,106,0.42)" : "rgba(45,212,255,0.48)";
   const FallbackIcon = variant === "auto" ? Bot : MousePointerClick;
+  const centerSize = `${centerScale}%`;
 
   return (
     <button
@@ -915,10 +917,11 @@ export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, 
         <img
           src={centerPath}
           alt=""
-          className="relative h-[31%] w-[31%] object-contain transition-transform group-active:scale-90"
+          className="relative object-contain transition-transform group-active:scale-90"
+          style={{ width: centerSize, height: centerSize }}
         />
       ) : (
-        <FallbackIcon className={`relative h-[31%] w-[31%] ${variant === "auto" ? "text-emerald-100" : "text-cyan-100"}`} />
+        <FallbackIcon className={`relative ${variant === "auto" ? "text-emerald-100" : "text-cyan-100"}`} style={{ width: centerSize, height: centerSize }} />
       )}
     </button>
   );
@@ -1019,12 +1022,13 @@ export function AutoClickPanel({
         outerArt={art.dashboard_auto_ring}
         centerArt={art.dashboard_auto_robot}
         variant="auto"
+        centerScale={43}
         active={autoEnabled}
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
         data-testid="auto-click-ring"
-        data-rojo-rect="42,76,140,140"
-        className="left-[42px] top-[76px] h-[140px] w-[140px]"
+        data-rojo-rect="48,82,128,128"
+        className="left-[48px] top-[82px] h-[128px] w-[128px]"
       />
       <div data-testid="auto-click-stat-block" data-rojo-rect="198,72,122,120" className="absolute left-[198px] top-[72px] h-[120px] w-[122px] text-center">
         <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>

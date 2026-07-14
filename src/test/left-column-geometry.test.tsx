@@ -322,7 +322,7 @@ describe("Roblox left column geometry", () => {
     expectInside("0,0,350,270", screen.getByTestId("auto-click-ring").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-stat-block").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-button").getAttribute("data-rojo-rect") ?? "");
-    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "42,76,140,140");
+    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "48,82,128,128");
     expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "198,72,122,120");
     expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "33,209,286,47");
   });
