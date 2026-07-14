@@ -41,6 +41,7 @@ import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashb
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
+import type { CloudSave, CloudSyncMetadata } from "@/lib/supabase";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
 import robloxReferenceManifest from "../../design-reference/roblox/reference-manifest.json";
 
@@ -70,6 +71,9 @@ type PlayerRuntimeDashboardActions = {
   saveNow: () => void;
   resetSave: () => void;
   deleteLocalSave: () => void;
+  saveToCloud?: () => void;
+  chooseCloudSave?: () => void;
+  deleteCloudSave?: () => void;
   exportSave: () => string;
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
@@ -79,6 +83,12 @@ type PlayerRuntimeDashboardActions = {
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
   activateBoost?: (definitionId: string) => void;
+};
+
+type SettingsAccountState = {
+  status: "guest" | "authenticated" | "signed_out" | "error" | "initializing" | "signing_in";
+  email?: string;
+  supabaseStatus?: string;
 };
 
 export type BoostSlotState = "available" | "active" | "locked" | "unavailable" | "cooldown";
@@ -1201,7 +1211,286 @@ function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, classN
   );
 }
 
-function RobloxTopHud({ model, assets, art, showDevWarnings = false }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean }) {
+type SettingsTabId = "general" | "account" | "cloud" | "graphics" | "audio" | "gameplay" | "controls" | "about";
+
+const settingsTabs: Array<{ id: SettingsTabId; label: string }> = [
+  { id: "general", label: "General" },
+  { id: "account", label: "Account" },
+  { id: "cloud", label: "Cloud Saves" },
+  { id: "graphics", label: "Graphics" },
+  { id: "audio", label: "Audio" },
+  { id: "gameplay", label: "Gameplay" },
+  { id: "controls", label: "Controls" },
+  { id: "about", label: "About" }
+];
+
+function SettingsButton({ children, tone = "default", disabled = false, onClick }: { children: ReactNode; tone?: "default" | "danger" | "muted"; disabled?: boolean; onClick?: () => void }) {
+  const toneClass = tone === "danger" ? "border-rose-200/35 bg-rose-400/12 text-rose-50" : tone === "muted" ? "border-cyan-200/18 bg-white/[0.035] text-cyan-50/55" : "border-cyan-200/28 bg-cyan-300/10 text-cyan-50";
+  return <button disabled={disabled} onClick={onClick} className={`rounded-sm border px-3 py-2 text-left text-[0.72rem] font-black uppercase tracking-wide transition hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-45 ${toneClass}`}>{children}</button>;
+}
+
+function SettingsRow({ label, value }: { label: string; value?: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[12rem_1fr] gap-3 border-b border-cyan-100/8 py-2 text-sm">
+      <div className="font-black uppercase text-cyan-100/48">{label}</div>
+      <div className="font-bold text-cyan-50/88">{value ?? "Future"}</div>
+    </div>
+  );
+}
+
+function SettingsModal({
+  open,
+  onClose,
+  openerRef,
+  data,
+  model,
+  playerRuntime,
+  playerRuntimeActions,
+  cloudSync,
+  cloudSave,
+  cloudError,
+  account
+}: {
+  open: boolean;
+  onClose: () => void;
+  openerRef: RefObject<HTMLButtonElement | null>;
+  data: GameRuntimeData;
+  model: DashboardModel;
+  playerRuntime?: PlayerRuntimeState;
+  playerRuntimeActions?: PlayerRuntimeDashboardActions;
+  cloudSync?: CloudSyncMetadata;
+  cloudSave?: CloudSave | null;
+  cloudError?: string;
+  account?: SettingsAccountState;
+}) {
+  const [activeTab, setActiveTab] = useState<SettingsTabId>("general");
+  const [pendingDanger, setPendingDanger] = useState<"reset" | "delete-local" | "delete-cloud" | "restore-cloud" | null>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const firstButtonRef = useRef<HTMLButtonElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const authenticated = account?.status === "authenticated";
+  const guest = account?.status === "guest" || !authenticated;
+  const cloudStatus = cloudSync?.status ?? "Local Only";
+  const saveSource = cloudSync?.activeSaveSource ?? playerRuntime?.runtimeLoadReport.loadedFrom ?? "new_game";
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const opener = openerRef.current;
+    const id = window.setTimeout(() => firstButtonRef.current?.focus(), 20);
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !modalRef.current) return;
+      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(id);
+      document.removeEventListener("keydown", onKeyDown);
+      (opener ?? previous)?.focus();
+    };
+  }, [onClose, open, openerRef]);
+
+  if (!open) return null;
+
+  function exportLocalSave() {
+    if (!playerRuntimeActions) return;
+    const blob = new Blob([playerRuntimeActions.exportSave()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "noveris-player-runtime-save.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importLocalSave(file?: File) {
+    if (!file || !playerRuntimeActions) return;
+    playerRuntimeActions.importSave(await file.text());
+  }
+
+  function confirmDanger() {
+    if (pendingDanger === "reset") playerRuntimeActions?.resetSave();
+    if (pendingDanger === "delete-local") playerRuntimeActions?.deleteLocalSave();
+    if (pendingDanger === "delete-cloud") playerRuntimeActions?.deleteCloudSave?.();
+    if (pendingDanger === "restore-cloud") playerRuntimeActions?.chooseCloudSave?.();
+    setPendingDanger(null);
+  }
+
+  const content: Record<SettingsTabId, ReactNode> = {
+    general: (
+      <>
+        <SettingsRow label="Player Name" value={model.playerState.civilizationName ?? "Local Genesis Initiative"} />
+        <SettingsRow label="Current Era" value={shortEraName(model.currentEra)} />
+        <SettingsRow label="Content Version" value={`v${data.metadata.contentVersion}`} />
+        <SettingsRow label="Save Version" value={playerRuntime?.saveVersion ?? "Story"} />
+        <SettingsRow label="Language" value="Future" />
+        <SettingsRow label="Theme" value="Future" />
+        <div className="mt-5"><SettingsButton onClick={onClose}>Return to Game</SettingsButton></div>
+      </>
+    ),
+    account: guest ? (
+      <>
+        <SettingsRow label="Status" value="Playing as Guest" />
+        <p className="mt-3 max-w-[34rem] text-sm font-semibold leading-6 text-cyan-50/62">Your progress is currently stored on this device.</p>
+        <div className="mt-5 grid max-w-[24rem] gap-2">
+          <SettingsButton onClick={() => { window.history.pushState({}, "", "/signup"); window.dispatchEvent(new PopStateEvent("popstate")); }}>Create Account</SettingsButton>
+          <SettingsButton onClick={() => { window.history.pushState({}, "", "/login"); window.dispatchEvent(new PopStateEvent("popstate")); }}>Sign In</SettingsButton>
+        </div>
+      </>
+    ) : (
+      <>
+        <SettingsRow label="Email" value={account?.email ?? "Signed in"} />
+        <SettingsRow label="Status" value="Signed in" />
+        <SettingsRow label="Device Name" value={cloudSync?.deviceName ?? "This browser"} />
+        <SettingsRow label="Last Sync" value={cloudSync?.lastSuccessfulSyncAt ?? "Never"} />
+        <SettingsRow label="Cloud Status" value={cloudStatus} />
+        <div className="mt-5"><SettingsButton tone="danger" disabled>Sign Out</SettingsButton></div>
+      </>
+    ),
+    cloud: (
+      <>
+        <SettingsRow label="Cloud Save Status" value={cloudStatus} />
+        <SettingsRow label="Current Revision" value={cloudSync?.cloudRevision ?? cloudSave?.revision ?? "None"} />
+        <SettingsRow label="Last Sync Time" value={cloudSync?.lastSuccessfulSyncAt ?? "Never"} />
+        <SettingsRow label="Current Save Source" value={saveSource} />
+        <SettingsRow label="Local" value={playerRuntime ? `Revision ${playerRuntime.revision}` : "Unavailable"} />
+        <SettingsRow label="Cloud" value={cloudSave ? `Revision ${cloudSave.revision}` : "No cloud save loaded"} />
+        <SettingsRow label="Synced" value={cloudStatus === "Synced" ? "Yes" : "No"} />
+        <SettingsRow label="Pending" value={cloudSync?.pendingRetry || cloudSync?.dirty ? "Yes" : "No"} />
+        <SettingsRow label="Offline" value={cloudStatus === "Offline" ? "Yes" : "No"} />
+        {cloudError ? <div className="mt-2 rounded-sm border border-amber-200/30 bg-amber-300/10 p-2 text-xs font-bold text-amber-100">{cloudError}</div> : null}
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <SettingsButton disabled={!authenticated || !cloudSync?.dirty} onClick={playerRuntimeActions?.saveToCloud}>Save Now</SettingsButton>
+          <SettingsButton disabled={!authenticated} onClick={playerRuntimeActions?.saveToCloud}>Save Progress to Cloud</SettingsButton>
+          <SettingsButton disabled={!cloudSave || !playerRuntimeActions?.chooseCloudSave} onClick={() => setPendingDanger("restore-cloud")}>Restore Cloud Save</SettingsButton>
+          <SettingsButton disabled tone="muted">View Backups</SettingsButton>
+          <SettingsButton onClick={exportLocalSave}>Export Local Save</SettingsButton>
+          <SettingsButton onClick={() => fileInputRef.current?.click()}>Import Save</SettingsButton>
+          <input ref={fileInputRef} className="hidden" type="file" accept="application/json" onChange={(event) => void importLocalSave(event.currentTarget.files?.[0])} />
+        </div>
+        <div className="mt-5 rounded-sm border border-rose-200/24 bg-rose-950/22 p-3">
+          <div className="text-xs font-black uppercase text-rose-100">Danger Zone</div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <SettingsButton tone="danger" onClick={() => setPendingDanger("delete-local")}>Delete Local Save</SettingsButton>
+            <SettingsButton tone="danger" disabled={!authenticated || !playerRuntimeActions?.deleteCloudSave} onClick={() => setPendingDanger("delete-cloud")}>Delete Cloud Save</SettingsButton>
+            <SettingsButton tone="danger" onClick={() => setPendingDanger("reset")}>Reset to Canonical New Game</SettingsButton>
+          </div>
+        </div>
+      </>
+    ),
+    graphics: (
+      <>
+        <SettingsRow label="Window Scale" value="Auto" />
+        <SettingsRow label="Fullscreen" value="Future" />
+        <SettingsRow label="UI Scale" value="100%" />
+        <SettingsRow label="Motion" value="Enabled" />
+        <SettingsRow label="Reduce Motion" value="Off" />
+        <SettingsRow label="DLSS" value="Future" />
+        <SettingsRow label="FSR" value="Future" />
+        <SettingsRow label="Frame Rate" value="Future" />
+      </>
+    ),
+    audio: (
+      <>
+        <SettingsRow label="Master" value="100%" />
+        <SettingsRow label="Music" value="80%" />
+        <SettingsRow label="Effects" value="85%" />
+        <SettingsRow label="Ambient" value="70%" />
+        <SettingsRow label="Voice" value="Future" />
+      </>
+    ),
+    gameplay: (
+      <>
+        <SettingsRow label="Current Difficulty" value="Standard" />
+        <SettingsRow label="Autosave Enabled" value="Yes" />
+        <SettingsRow label="Autosave Interval" value={`${data.balance.autosaveSeconds}s`} />
+        <SettingsRow label="Offline Progression" value="Enabled" />
+        <SettingsRow label="Show FPS" value={dashboardDevToolsEnabled ? "Dev option" : "Dev only"} />
+        {dashboardDevToolsEnabled ? <SettingsRow label="Developer Mode" value="Enabled" /> : null}
+      </>
+    ),
+    controls: <p className="text-sm font-semibold text-cyan-50/62">Control remapping is planned for a future release.</p>,
+    about: (
+      <>
+        <div className="text-[0.72rem] font-black uppercase tracking-[0.58em] text-cyan-100/70">N O V E R I S</div>
+        <div className="mt-2 text-2xl font-black uppercase text-white">The Future We Build</div>
+        <div className="mt-5">
+          <SettingsRow label="Version" value="0.0.0" />
+          <SettingsRow label="Content Version" value={`v${data.metadata.contentVersion}`} />
+          <SettingsRow label="Build Number" value="Local Build" />
+          <SettingsRow label="Git Commit" value="Runtime" />
+          <SettingsRow label="Studio Runtime Version" value={`v${data.metadata.contentVersion}`} />
+          <SettingsRow label="Supabase Status" value={account?.supabaseStatus ?? cloudStatus} />
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {["Discord", "Website", "Privacy"].map((label) => <SettingsButton key={label} tone="muted" disabled>{label}</SettingsButton>)}
+        </div>
+      </>
+    )
+  };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/72 p-4 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
+      data-testid="settings-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <style>{`@keyframes settingsFade{from{opacity:0}to{opacity:1}}@keyframes settingsScale{from{opacity:.6;transform:scale(.965)}to{opacity:1;transform:scale(1)}}`}</style>
+      <section ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="settings-title" data-testid="settings-modal" className="grid h-[min(700px,calc(100dvh-32px))] w-[min(1060px,calc(100dvw-32px))] grid-cols-[220px_1fr] overflow-hidden rounded-sm border border-cyan-200/30 bg-slate-950/96 text-cyan-50 shadow-[0_0_52px_rgba(34,211,238,0.18),inset_0_0_28px_rgba(8,145,178,0.12)] animate-[settingsScale_220ms_ease-out]">
+        <nav className="border-r border-cyan-200/18 bg-black/30 p-4">
+          <div id="settings-title" className="mb-4 text-sm font-black uppercase tracking-[0.28em] text-cyan-100/75">Settings</div>
+          <div className="grid gap-2">
+            {settingsTabs.map((tab, index) => (
+              <button key={tab.id} ref={index === 0 ? firstButtonRef : undefined} className={`rounded-sm border px-3 py-3 text-left text-xs font-black uppercase tracking-wide transition ${activeTab === tab.id ? "border-cyan-200/45 bg-cyan-300/14 text-white shadow-[0_0_18px_rgba(34,211,238,0.12)]" : "border-cyan-200/12 bg-white/[0.03] text-cyan-50/62 hover:border-cyan-200/28 hover:text-cyan-50"}`} onClick={() => setActiveTab(tab.id)}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+        <div className="relative overflow-auto p-6">
+          <button className="absolute right-4 top-4 rounded-sm border border-cyan-200/20 bg-black/28 p-2 text-cyan-100 hover:brightness-125" aria-label="Close settings" onClick={onClose}><X className="h-5 w-5" /></button>
+          <div className="mb-5 pr-12">
+            <div className="text-xs font-black uppercase tracking-[0.34em] text-cyan-100/58">{settingsTabs.find((tab) => tab.id === activeTab)?.label}</div>
+            <div className="mt-1 h-px w-full bg-gradient-to-r from-cyan-200/36 via-cyan-200/12 to-transparent" />
+          </div>
+          {content[activeTab]}
+          {pendingDanger ? (
+            <div className="absolute inset-x-6 bottom-6 rounded-sm border border-rose-200/35 bg-rose-950/92 p-4 shadow-[0_0_32px_rgba(244,63,94,0.2)]" data-testid="settings-confirmation">
+              <div className="text-sm font-black uppercase text-rose-50">Confirm {pendingDanger.replace("-", " ")}</div>
+              <div className="mt-1 text-xs font-semibold text-rose-100/70">This action can replace or remove progress. Choose carefully.</div>
+              <div className="mt-3 flex gap-2">
+                <SettingsButton tone="danger" onClick={confirmDanger}>Confirm</SettingsButton>
+                <SettingsButton onClick={() => setPendingDanger(null)}>Cancel</SettingsButton>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </section>
+    </div>,
+    document.body
+  );
+}
+
+function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsClick, settingsButtonRef }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean; onSettingsClick?: () => void; settingsButtonRef?: RefObject<HTMLButtonElement | null> }) {
   const resourceSlots = [
     { x: 515, w: 230, iconX: 30, valueX: 92, textW: 128 },
     { x: 755, w: 230, iconX: 24, valueX: 86, textW: 128 },
@@ -1259,7 +1548,16 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false }: { model: 
           { label: "Trophies", icon: Trophy, value: "" },
           { label: "Settings", icon: Settings, value: "" }
         ].map(({ label, icon: Icon, value }, index) => (
-          <button key={label} title={label} className="absolute flex h-20 w-20 items-center justify-center text-cyan-100 transition hover:brightness-125" style={{ left: index * 58, top: 0 }} data-testid={`top-hud-right-utility-${index}`}>
+          <button
+            key={label}
+            ref={label === "Settings" ? settingsButtonRef : undefined}
+            title={label}
+            aria-label={label}
+            className="absolute flex h-20 w-20 items-center justify-center text-cyan-100 transition hover:brightness-125"
+            style={{ left: index * 58, top: 0 }}
+            data-testid={`top-hud-right-utility-${index}`}
+            onClick={label === "Settings" ? onSettingsClick : undefined}
+          >
             {dashboardImagePath(art.topbar_hex_button) ? <img src={dashboardImagePath(art.topbar_hex_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : null}
             {dashboardImagePath(art[topbarIconKeys[index]]) ? <img src={dashboardImagePath(art[topbarIconKeys[index]])} alt="" className="relative h-14 w-14 object-contain" /> : <Icon className="relative h-6 w-6" />}
             {value ? <span className="text-xs font-black text-white">{value}</span> : null}
@@ -2632,22 +2930,32 @@ export function GameShell({
   playerState,
   playerRuntime,
   playerRuntimeActions,
+  cloudSync,
+  cloudSave,
+  cloudError,
+  settingsAccount,
   activeScreen = "dashboard",
   activeEraId = "survival",
   activeCategoryId = "workforce",
   frameScale,
-  embedded = false
+  embedded = false,
+  initialSettingsOpen = false
 }: {
   data: GameRuntimeData;
   runtimeState?: RuntimeContentState;
   playerState?: DashboardPlayerState;
   playerRuntime?: PlayerRuntimeState;
   playerRuntimeActions?: PlayerRuntimeDashboardActions;
+  cloudSync?: CloudSyncMetadata;
+  cloudSave?: CloudSave | null;
+  cloudError?: string;
+  settingsAccount?: SettingsAccountState;
   activeScreen?: string;
   activeEraId?: string;
   activeCategoryId?: string;
   frameScale?: number;
   embedded?: boolean;
+  initialSettingsOpen?: boolean;
 }) {
   const category = data.upgradeCategories.find((item) => item.id === activeCategoryId) ?? data.upgradeCategories[0];
   const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
@@ -2655,7 +2963,9 @@ export function GameShell({
   const artAudit = useMemo(() => getDashboardArtAudit(data.assets), [data.assets]);
   const scaleAssetWarnings = useMemo(() => getDashboardScaleAssetWarnings(2), []);
   const [boostsTrayOpen, setBoostsTrayOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(initialSettingsOpen);
   const boostTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
   const [boostOverlayRoot, setBoostOverlayRoot] = useState<HTMLDivElement | null>(null);
   const activeRuntimeBoosts = playerRuntime?.boosts.active ?? [];
   const boostCount = model.playerState.boosts?.length ?? 0;
@@ -2678,7 +2988,7 @@ export function GameShell({
       <GameViewportScaler explicitScale={frameScale} embedded={embedded} assetWarnings={scaleAssetWarnings}>
           {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud)}>
-            <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} />
+            <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} onSettingsClick={() => setSettingsOpen(true)} settingsButtonRef={settingsButtonRef} />
           </div>
           {dashboardDevToolsEnabled ? <RuntimeSourceBadge model={model} /> : null}
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar)}>
@@ -2724,6 +3034,19 @@ export function GameShell({
             portalRoot={boostOverlayRoot}
             onClose={() => setBoostsTrayOpen(false)}
             onActivate={playerRuntimeActions?.activateBoost}
+          />
+          <SettingsModal
+            open={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            openerRef={settingsButtonRef}
+            data={data}
+            model={model}
+            playerRuntime={playerRuntime}
+            playerRuntimeActions={playerRuntimeActions}
+            cloudSync={cloudSync}
+            cloudSave={cloudSave}
+            cloudError={cloudError}
+            account={settingsAccount}
           />
           {dashboardDevToolsEnabled ? <DashboardDataArtInspector data={data} model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
       </GameViewportScaler>

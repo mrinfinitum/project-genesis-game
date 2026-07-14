@@ -5,6 +5,7 @@ import { AutoClickPanel, ClickPowerPanel, GameShell, RobloxNavigation } from "@/
 import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT } from "@/lib/dashboard/dashboard-layout";
+import { createNewPlayerRuntimeState } from "@/lib/player-runtime";
 
 async function bundledRuntime() {
   const runtime = await getBundledStudioRuntimeSnapshot();
@@ -356,6 +357,75 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[50px]");
     expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[30px]");
     expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[15px]");
+  });
+
+  it("opens and closes the Settings modal from the top-right gear with focus restoration", async () => {
+    const data = await bundledRuntime();
+    render(<GameShell data={data} playerRuntime={createNewPlayerRuntimeState(data)} settingsAccount={{ status: "guest" }} />);
+
+    const gear = screen.getByTestId("top-hud-right-utility-2");
+    fireEvent.click(gear);
+
+    expect(screen.getByRole("dialog", { name: /settings/i })).toBeInTheDocument();
+    expect(screen.getByText("Player Name")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: /settings/i })).not.toBeInTheDocument();
+    expect(gear).toHaveFocus();
+
+    fireEvent.click(gear);
+    expect(screen.getByRole("dialog", { name: /settings/i })).toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByTestId("settings-backdrop"));
+    expect(screen.queryByRole("dialog", { name: /settings/i })).not.toBeInTheDocument();
+  });
+
+  it("switches Settings tabs and shows guest account actions", async () => {
+    const data = await bundledRuntime();
+    render(<GameShell data={data} playerRuntime={createNewPlayerRuntimeState(data)} settingsAccount={{ status: "guest" }} />);
+
+    fireEvent.click(screen.getByTestId("top-hud-right-utility-2"));
+    fireEvent.click(screen.getByRole("button", { name: "Account" }));
+
+    expect(screen.getByText("Playing as Guest")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create Account" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
+  });
+
+  it("shows authenticated Cloud Saves controls and disables Save Now when clean", async () => {
+    const data = await bundledRuntime();
+    const playerRuntime = createNewPlayerRuntimeState(data);
+    render(
+      <GameShell
+        data={data}
+        playerRuntime={playerRuntime}
+        playerRuntimeActions={{
+          saveNow: vi.fn(),
+          resetSave: vi.fn(),
+          deleteLocalSave: vi.fn(),
+          saveToCloud: vi.fn(),
+          chooseCloudSave: vi.fn(),
+          deleteCloudSave: vi.fn(),
+          exportSave: () => "{}",
+          importSave: () => true,
+          advanceSimulation: vi.fn(),
+          grantTestResources: vi.fn(),
+          grantTestPrimaryEconomy: vi.fn(),
+          grantTestResearch: vi.fn(),
+          performManualLaborClick: vi.fn(),
+          toggleAutomation: vi.fn()
+        }}
+        cloudSync={{ activeSaveSource: "cloud", status: "Synced", dirty: false, pendingRetry: false, offlineProgressionApplyCount: 1, cloudRevision: 3, lastSyncedRevision: 3, lastSuccessfulSyncAt: "2026-07-14T12:00:00.000Z" }}
+        cloudSave={{ id: "cloud", userId: "user", slotId: "primary", saveVersion: playerRuntime.saveVersion, contentVersion: playerRuntime.contentVersion, playerState: playerRuntime, unresolvedState: playerRuntime.unresolved, revision: 3, createdAt: playerRuntime.createdAt, updatedAt: playerRuntime.updatedAt }}
+        settingsAccount={{ status: "authenticated", email: "player@noveris.life", supabaseStatus: "Available" }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("top-hud-right-utility-2"));
+    fireEvent.click(screen.getByRole("button", { name: "Cloud Saves" }));
+
+    expect(screen.getAllByText("Synced").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Save Now" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save Progress to Cloud" })).toBeEnabled();
   });
 
   it("does not introduce direct Roblox asset paths in JSX", () => {

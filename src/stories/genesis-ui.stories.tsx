@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { createDashboardArtMap } from "@/lib/canonical-runtime";
 import { createDashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { calculateGameViewportScale } from "@/lib/dashboard/viewport-scaling";
+import { createNewPlayerRuntimeState } from "@/lib/player-runtime";
 import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
 import {
   AlignmentPanel,
@@ -1256,6 +1257,72 @@ export const DashboardTopHudCanonical2560: Story = {
 
 export const DashboardTopHudCanonical3840: Story = {
   render: () => <DashboardViewportStory width={3840} height={2160} playerState={topHudStoryPlayerState()} />
+};
+
+function SettingsStory({ variant }: { variant: "guest" | "authenticated" | "pending" | "offline" | "conflict" }) {
+  const { data } = useGenesisStoryContent();
+  const runtime = createNewPlayerRuntimeState(data);
+  const playerRuntime = {
+    ...runtime,
+    revision: variant === "guest" ? 1 : 8,
+    economy: {
+      ...runtime.economy,
+      balances: {
+        ...runtime.economy.balances,
+        "ECON-LABOR": variant === "guest" ? 0 : 220,
+        "ECON-CREDITS": variant === "guest" ? 0 : 45
+      }
+    }
+  };
+  const cloudSync = {
+    activeSaveSource: variant === "guest" ? "new_game" as const : variant === "conflict" ? "local_selected_after_conflict" as const : "cloud" as const,
+    status: variant === "offline" ? "Offline" as const : variant === "conflict" ? "Conflict" as const : variant === "pending" ? "Pending Sync" as const : variant === "guest" ? "Local Only" as const : "Synced" as const,
+    dirty: variant === "pending" || variant === "conflict",
+    pendingRetry: variant === "pending",
+    offlineProgressionApplyCount: 1,
+    cloudRevision: variant === "guest" ? undefined : 8,
+    lastSyncedRevision: variant === "guest" ? undefined : 8,
+    lastSuccessfulSyncAt: variant === "guest" ? undefined : "2026-07-14T12:00:00.000Z",
+    deviceName: "Story Browser",
+    lastCloudError: variant === "offline" ? "Cloud service unavailable." : variant === "conflict" ? "Revision conflict" : undefined
+  };
+  return (
+    <GameShell
+      data={data}
+      playerState={topHudStoryPlayerState({ economyBalances: playerRuntime.economy.balances })}
+      playerRuntime={playerRuntime}
+      cloudSync={cloudSync}
+      cloudSave={variant === "guest" ? null : { id: "story-cloud", userId: "story-user", slotId: "primary", saveVersion: playerRuntime.saveVersion, contentVersion: playerRuntime.contentVersion, playerState: playerRuntime, unresolvedState: playerRuntime.unresolved, revision: 8, deviceName: "Story Browser", createdAt: playerRuntime.createdAt, updatedAt: playerRuntime.updatedAt }}
+      cloudError={cloudSync.lastCloudError}
+      settingsAccount={variant === "guest" ? { status: "guest", supabaseStatus: "Available" } : { status: "authenticated", email: "player@noveris.life", supabaseStatus: "Available" }}
+      activeScreen="dashboard"
+      activeEraId="survival"
+      activeCategoryId="workforce"
+      frameScale={0.72}
+      embedded
+      initialSettingsOpen
+    />
+  );
+}
+
+export const SettingsGuest: Story = {
+  render: () => <StoryCanvas><SettingsStory variant="guest" /></StoryCanvas>
+};
+
+export const SettingsAuthenticated: Story = {
+  render: () => <StoryCanvas><SettingsStory variant="authenticated" /></StoryCanvas>
+};
+
+export const SettingsCloudPending: Story = {
+  render: () => <StoryCanvas><SettingsStory variant="pending" /></StoryCanvas>
+};
+
+export const SettingsOffline: Story = {
+  render: () => <StoryCanvas><SettingsStory variant="offline" /></StoryCanvas>
+};
+
+export const SettingsConflict: Story = {
+  render: () => <StoryCanvas><SettingsStory variant="conflict" /></StoryCanvas>
 };
 
 export const Production: Story = {

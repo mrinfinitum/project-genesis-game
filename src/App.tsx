@@ -86,6 +86,7 @@ type PlayerRuntimeActions = {
   saveToCloud: () => void;
   chooseCloudSave: () => void;
   chooseLocalSave: () => void;
+  deleteCloudSave: () => void;
   exportSave: () => string;
   importSave: (serialized: string) => boolean;
   advanceSimulation: (seconds?: number) => void;
@@ -432,6 +433,17 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
       saveToCloud() {
         void syncCloudNow(playerRuntime, "account-save-now");
       },
+      deleteCloudSave() {
+        if (authState.status !== "authenticated" || !authState.user) return;
+        void cloudService.deleteCloudSave(authState.user).then((result) => {
+          if (result.status === "saved") {
+            setCloudSave(null);
+            updateCloudSync({ status: "Local Only", cloudRevision: undefined, lastSyncedRevision: undefined, dirty: true, pendingRetry: false });
+          } else {
+            updateCloudSync({ status: "Error", lastCloudError: result.reason, pendingRetry: result.status === "offline_queued" });
+          }
+        });
+      },
       chooseCloudSave() {
         if (!cloudSave) return;
         if (authState.status === "authenticated" && authState.user) {
@@ -595,9 +607,25 @@ function LazyDataRoute({ component: Component, label }: { component: ComponentTy
 }
 
 function DashboardRoute() {
-  const { data, state, playerRuntime, playerRuntimeActions } = useGenesisRouteContext();
+  const { data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError } = useGenesisRouteContext();
+  const auth = useNoverisAuth();
   const dashboardPlayerState = useMemo(() => playerRuntimeToDashboardPlayerState(data, playerRuntime), [data, playerRuntime]);
-  return <GameShell data={data} runtimeState={state} playerState={dashboardPlayerState} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} activeScreen="dashboard" activeEraId={playerRuntime.civilization.currentEraId} activeCategoryId="workforce" />;
+  return (
+    <GameShell
+      data={data}
+      runtimeState={state}
+      playerState={dashboardPlayerState}
+      playerRuntime={playerRuntime}
+      playerRuntimeActions={playerRuntimeActions}
+      cloudSync={cloudSync}
+      cloudSave={cloudSave}
+      cloudError={cloudError}
+      settingsAccount={{ status: auth.state.status, email: auth.state.email, supabaseStatus: auth.state.cloudAvailable ? "Available" : "Unavailable" }}
+      activeScreen="dashboard"
+      activeEraId={playerRuntime.civilization.currentEraId}
+      activeCategoryId="workforce"
+    />
+  );
 }
 
 export default function App() {
