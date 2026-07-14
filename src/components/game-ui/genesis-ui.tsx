@@ -38,6 +38,7 @@ import type { AssetDefinition, ClientProfile, EraDefinition, GameRuntimeData, Re
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
+import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
@@ -1640,21 +1641,55 @@ function SettingsModal({
   );
 }
 
-function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsClick, settingsButtonRef }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean; onSettingsClick?: () => void; settingsButtonRef?: RefObject<HTMLButtonElement | null> }) {
-  const resourceSlots = [
-    { x: 500, w: 292, iconX: 34, valueX: 110, textW: 150 },
-    { x: 810, w: 292, iconX: 48, valueX: 126, textW: 146 },
-    { x: 1010, w: 285, iconX: 0, valueX: 66, textW: 150 },
-    { x: 1260, w: 270, iconX: 0, valueX: 64, textW: 132 },
-    { x: 1500, w: 240, iconX: 0, valueX: 66, textW: 118 }
-  ];
-  const hudResources = model.hudResources.slice(0, resourceSlots.length);
+function CalibrationRect({ rect, label, tone = "cyan" }: { rect: { x: number; y: number; width: number; height: number }; label: string; tone?: "cyan" | "gold" | "green" | "purple" | "rose" }) {
+  const toneClass = {
+    cyan: "border-cyan-200/70 text-cyan-100",
+    gold: "border-amber-200/80 text-amber-100",
+    green: "border-emerald-200/75 text-emerald-100",
+    purple: "border-fuchsia-200/70 text-fuchsia-100",
+    rose: "border-rose-200/75 text-rose-100"
+  }[tone];
+  return (
+    <div className={`pointer-events-none absolute border ${toneClass} bg-black/10`} style={topHudRectStyle(rect)}>
+      <span className="absolute -top-4 left-0 whitespace-nowrap bg-black/75 px-1 text-[9px] font-black uppercase leading-3">{label} {rect.x},{rect.y}</span>
+      <span className="absolute left-1/2 top-0 h-full border-l border-current/55" />
+      <span className="absolute left-0 top-1/2 w-full border-t border-current/55" />
+    </div>
+  );
+}
+
+function TopHudCalibrationOverlay() {
+  const economyEntries = Object.entries(TOP_HUD_LAYOUT.economies);
+  const utilityEntries = Object.entries(TOP_HUD_LAYOUT.utilities);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20" data-testid="top-hud-calibration-overlay" aria-hidden="true">
+      <CalibrationRect rect={TOP_HUD_BACKGROUND_ASSET.designBounds} label="background native 1920x104 / design 1920x108" tone="rose" />
+      <CalibrationRect rect={TOP_HUD_LAYOUT.identity} label="identity" tone="cyan" />
+      <CalibrationRect rect={TOP_HUD_LAYOUT.identity.title} label="identity title baseline" tone="gold" />
+      <CalibrationRect rect={TOP_HUD_LAYOUT.identity.subtitle} label="identity subtitle baseline" tone="gold" />
+      {economyEntries.map(([id, layout]) => (
+        <Fragment key={id}>
+          <CalibrationRect rect={layout.slot} label={id} tone="cyan" />
+          <CalibrationRect rect={layout.icon} label={`${id} icon`} tone="green" />
+          <CalibrationRect rect={layout.value} label={`${id} value`} tone="gold" />
+          <CalibrationRect rect={layout.rate} label={`${id} rate`} tone="purple" />
+        </Fragment>
+      ))}
+      {utilityEntries.map(([id, rect]) => <CalibrationRect key={id} rect={rect} label={`utility ${id}`} tone="rose" />)}
+    </div>
+  );
+}
+
+function RobloxTopHud({ model, assets, art, showDevWarnings = false, initialCalibrationOpen = false, onSettingsClick, settingsButtonRef }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean; initialCalibrationOpen?: boolean; onSettingsClick?: () => void; settingsButtonRef?: RefObject<HTMLButtonElement | null> }) {
+  const [calibrationOpen, setCalibrationOpen] = useState(initialCalibrationOpen);
+  const hudResources = model.hudResources.filter((resource) => resource.resourceId in TOP_HUD_LAYOUT.economies).slice(0, Object.keys(TOP_HUD_LAYOUT.economies).length);
   const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
   const civilizationTitleFontSize = topHudTitleFontSize(civilizationTitle);
 
   return (
     <header className="relative h-full w-full" data-testid="roblox-top-hud" data-layout-mode="fixed-rojo-coordinates">
-      {dashboardImagePath(art.dashboard_top_hud) ? <img src={dashboardImagePath(art.dashboard_top_hud)} alt="" data-testid="roblox-top-hud-background" data-art-key="dashboard_top_hud" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_top_hud} className="absolute inset-0" />}
+      {dashboardImagePath(art.dashboard_top_hud) ? <img src={dashboardImagePath(art.dashboard_top_hud)} alt="" data-testid="roblox-top-hud-background" data-art-key={TOP_HUD_BACKGROUND_ASSET.semanticArtKey} data-source-filename={TOP_HUD_BACKGROUND_ASSET.sourceFilename} data-native-size={`${TOP_HUD_BACKGROUND_ASSET.nativeWidth}x${TOP_HUD_BACKGROUND_ASSET.nativeHeight}`} data-render-mode={TOP_HUD_BACKGROUND_ASSET.renderMode} className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_top_hud} className="absolute inset-0" />}
 
       <div className="hidden absolute left-[23px] top-[15px] h-[58px] w-[142px]" data-testid="top-hud-left-utility-cluster" aria-hidden="true">
         {[Hexagon, Gauge, CircleHelp].map((Icon, index) => (
@@ -1665,16 +1700,16 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
         ))}
       </div>
 
-      <div className="absolute top-0 min-w-0" style={{ left: 58, width: 390, height: "100%" }} data-testid="top-hud-civilization-identity">
+      <div className="absolute min-w-0" style={topHudRectStyle(TOP_HUD_LAYOUT.identity)} data-testid="top-hud-civilization-identity" data-layout-source="TOP_HUD_LAYOUT">
         <div
-          className="absolute left-[82px] top-[18px] w-[286px] truncate font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
+          className="absolute truncate font-black uppercase text-white [font-variant-numeric:tabular-nums] [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
           data-testid="top-hud-civilization-title"
-          style={{ fontSize: civilizationTitleFontSize }}
+          style={{ ...topHudLocalTextStyle(TOP_HUD_LAYOUT.identity.title, TOP_HUD_LAYOUT.identity), fontSize: civilizationTitleFontSize }}
           title={civilizationTitle}
         >
           {civilizationTitle}
         </div>
-        <div data-testid="top-hud-civilization-era" className="absolute left-[82px] top-[64px] w-[286px] truncate text-[21px] font-medium leading-none text-cyan-50/84">Era 1 - {shortEraName(model.currentEra)}</div>
+        <div data-testid="top-hud-civilization-era" className="absolute truncate font-medium text-cyan-50/84 [font-variant-numeric:tabular-nums]" style={topHudLocalTextStyle(TOP_HUD_LAYOUT.identity.subtitle, TOP_HUD_LAYOUT.identity)}>Era 1 - {shortEraName(model.currentEra)}</div>
       </div>
 
       {showDevWarnings && model.economyWarnings.length ? (
@@ -1683,37 +1718,38 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
         </div>
       ) : null}
 
-      {hudResources.map((resource, index) => {
-        const slot = resourceSlots[index];
+      {hudResources.map((resource) => {
+        const slot = TOP_HUD_LAYOUT.economies[resource.resourceId as TopHudEconomyId];
           const Icon = hudIconForResource(resource);
           const icon = resolveTopHudIcon(resource, assets, art);
           return (
-          <div key={resource.resourceId} className="absolute top-0 h-full min-w-0" style={{ left: `${(slot.x / 1920) * 100}%`, width: `${(slot.w / 1920) * 100}%` }}>
-            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="h-[48px] w-[48px]" style={{ left: slot.iconX, top: 32 }} />
-            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate text-[31px] font-semibold leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={{ left: slot.valueX, top: 24, width: slot.textW }}>{compactNumber(resource.amount)}</div>
-            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate text-[17px] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 64, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
+          <div key={resource.resourceId} className="absolute min-w-0" style={topHudRectStyle(slot.slot)} data-testid={`top-hud-economy-slot-${resource.resourceId}`} data-layout-source="TOP_HUD_LAYOUT" data-economy-id={resource.resourceId}>
+            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="" style={topHudLocalRectStyle(slot.icon, slot.slot)} />
+            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate font-semibold text-white [font-variant-numeric:tabular-nums] [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={topHudLocalTextStyle(slot.value, slot.slot)}>{compactNumber(resource.amount)}</div>
+            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate font-bold text-emerald-200 [font-variant-numeric:tabular-nums]" style={topHudLocalTextStyle(slot.rate, slot.slot)}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
           </div>
           );
       })}
 
-      <button title="Add resources" className="absolute flex items-center justify-center" style={{ left: 1668, top: 30, width: 46, height: 46 }}>
+      <button title="Add resources" data-testid="top-hud-utility-add" data-layout-source="TOP_HUD_LAYOUT" className="absolute flex items-center justify-center" style={topHudRectStyle(TOP_HUD_LAYOUT.utilities.add)}>
         {dashboardImagePath(art.topbar_plus_button) ? <img src={dashboardImagePath(art.topbar_plus_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.topbar_plus_button} className="h-full w-full" />}
       </button>
 
-      <div className="absolute" style={{ left: 1715, top: 12, width: 190, height: 80 }} data-testid="top-hud-right-utility-cluster">
+      <div className="absolute inset-0" data-testid="top-hud-right-utility-cluster" data-layout-source="TOP_HUD_LAYOUT">
         {[
-          { label: "Calendar", icon: CalendarDays, value: "" },
-          { label: "Trophies", icon: Trophy, value: "" },
-          { label: "Settings", icon: Settings, value: "" }
-        ].map(({ label, icon: Icon, value }, index) => (
+          { id: "calendar", label: "Calendar", icon: CalendarDays, value: "" },
+          { id: "trophy", label: "Trophies", icon: Trophy, value: "" },
+          { id: "settings", label: "Settings", icon: Settings, value: "" }
+        ].map(({ id, label, icon: Icon, value }, index) => (
           <button
             key={label}
             ref={label === "Settings" ? settingsButtonRef : undefined}
             title={label}
             aria-label={label}
             className="absolute flex h-20 w-20 items-center justify-center text-cyan-100 transition hover:brightness-125"
-            style={{ left: index * 58, top: 0 }}
+            style={topHudRectStyle(TOP_HUD_LAYOUT.utilities[id as keyof typeof TOP_HUD_LAYOUT.utilities])}
             data-testid={`top-hud-right-utility-${index}`}
+            data-utility-id={id}
             onClick={label === "Settings" ? onSettingsClick : undefined}
           >
             {dashboardImagePath(art.topbar_hex_button) ? <img src={dashboardImagePath(art.topbar_hex_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : null}
@@ -1722,6 +1758,12 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
           </button>
         ))}
       </div>
+      {showDevWarnings ? (
+        <button type="button" className="absolute left-[8px] top-[8px] z-30 rounded-sm border border-cyan-100/28 bg-black/65 px-2 py-1 text-[10px] font-black uppercase text-cyan-50" data-testid="top-hud-calibration-toggle" onClick={() => setCalibrationOpen((open) => !open)}>
+          Top HUD Calibration
+        </button>
+      ) : null}
+      {calibrationOpen && showDevWarnings ? <TopHudCalibrationOverlay /> : null}
     </header>
   );
 }
@@ -3169,6 +3211,7 @@ export function GameShell({
   frameScale,
   embedded = false,
   initialSettingsOpen = false,
+  initialTopHudCalibrationOpen = false,
   platform,
   profileViewport
 }: {
@@ -3188,6 +3231,7 @@ export function GameShell({
   frameScale?: number;
   embedded?: boolean;
   initialSettingsOpen?: boolean;
+  initialTopHudCalibrationOpen?: boolean;
   platform?: RuntimePlatform;
   profileViewport?: { width: number; height: number };
 }) {
@@ -3245,7 +3289,7 @@ export function GameShell({
       <GameViewportScaler explicitScale={frameScale} embedded={embedded} assetWarnings={scaleAssetWarnings}>
           {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
           <div data-safe-area-target="top-hud" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud), paddingTop: "var(--safe-top)" }}>
-            <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} onSettingsClick={() => setSettingsOpen(true)} settingsButtonRef={settingsButtonRef} />
+            <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled || initialTopHudCalibrationOpen} initialCalibrationOpen={initialTopHudCalibrationOpen} onSettingsClick={() => setSettingsOpen(true)} settingsButtonRef={settingsButtonRef} />
           </div>
           {dashboardDevToolsEnabled ? <RuntimeSourceBadge model={model} /> : null}
           <div data-safe-area-target="navigation" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar), paddingLeft: "var(--safe-left)" }}>

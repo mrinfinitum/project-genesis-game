@@ -5,6 +5,7 @@ import { AutoClickPanel, ClickPowerPanel, GameShell, RobloxNavigation } from "@/
 import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT } from "@/lib/dashboard/dashboard-layout";
+import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectInsideSlot, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { createNewPlayerRuntimeState } from "@/lib/player-runtime";
 
 async function bundledRuntime() {
@@ -346,6 +347,9 @@ describe("Roblox left column geometry", () => {
 
     expect(screen.getByTestId("roblox-top-hud")).toHaveAttribute("data-layout-mode", "fixed-rojo-coordinates");
     expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-art-key", "dashboard_top_hud");
+    expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-source-filename", TOP_HUD_BACKGROUND_ASSET.sourceFilename);
+    expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-native-size", "1920x104");
+    expect(screen.getByTestId("roblox-top-hud-background")).toHaveAttribute("data-render-mode", "object-fill");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-icon-key", "economy_labor");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-source-art-key", "hud_civilization_energy_icon");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveAttribute("data-fallback-used", "true");
@@ -358,51 +362,69 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-icon-ECON-PREMIUM-CRYSTALS").getAttribute("src")).toContain("icon_civilization_points_crystal_96x96.png");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toBe(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS").getAttribute("src"));
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toContain("leaf");
-    expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle({
-      left: "58px",
-      width: "390px"
+    expect(screen.getByTestId("top-hud-civilization-identity")).toHaveAttribute("data-layout-source", "TOP_HUD_LAYOUT");
+    expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle(topHudRectStyle(TOP_HUD_LAYOUT.identity));
+    const titleRect = topHudLocalTextStyle(TOP_HUD_LAYOUT.identity.title, TOP_HUD_LAYOUT.identity);
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveStyle({
+      left: titleRect.left,
+      top: titleRect.top,
+      width: titleRect.width,
+      height: titleRect.height,
+      lineHeight: titleRect.lineHeight,
+      textAlign: titleRect.textAlign
     });
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("left-[82px]");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("top-[18px]");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[286px]");
-    expect(screen.getByTestId("top-hud-civilization-era")).toHaveClass("left-[82px]");
-    expect(screen.getByTestId("top-hud-civilization-era")).toHaveClass("w-[286px]");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveStyle({
-      left: "34px",
-      top: "32px"
+    expect(screen.getByTestId("top-hud-civilization-era")).toHaveStyle(topHudLocalTextStyle(TOP_HUD_LAYOUT.identity.subtitle, TOP_HUD_LAYOUT.identity));
+
+    (Object.keys(TOP_HUD_LAYOUT.economies) as TopHudEconomyId[]).forEach((economyId) => {
+      const layout = TOP_HUD_LAYOUT.economies[economyId];
+      expect(screen.getByTestId(`top-hud-economy-slot-${economyId}`)).toHaveAttribute("data-layout-source", "TOP_HUD_LAYOUT");
+      expect(screen.getByTestId(`top-hud-economy-slot-${economyId}`)).toHaveStyle(topHudRectStyle(layout.slot));
+      expect(screen.getByTestId(`top-hud-economy-icon-${economyId}`)).toHaveStyle(topHudLocalRectStyle(layout.icon, layout.slot));
+      expect(screen.getByTestId(`top-hud-economy-value-${economyId}`)).toHaveStyle(topHudLocalTextStyle(layout.value, layout.slot));
+      expect(screen.getByTestId(`top-hud-economy-rate-${economyId}`)).toHaveStyle(topHudLocalTextStyle(layout.rate, layout.slot));
+      expect(topHudRectInsideSlot(layout.icon, layout.slot)).toBe(true);
+      expect(topHudRectInsideSlot(layout.value, layout.slot)).toBe(true);
+      expect(topHudRectInsideSlot(layout.rate, layout.slot)).toBe(true);
     });
-    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveStyle({
-      left: "110px",
-      width: "150px"
-    });
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveStyle({
-      left: "48px",
-      top: "32px"
-    });
-    expect(screen.getByTestId("top-hud-economy-value-ECON-CREDITS")).toHaveStyle({
-      left: "126px",
-      width: "146px"
-    });
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-POPULATION")).toHaveStyle({
-      left: "0px",
-      top: "32px"
-    });
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-RESEARCH")).toHaveStyle({
-      left: "0px",
-      top: "32px"
-    });
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-PREMIUM-CRYSTALS")).toHaveStyle({
-      left: "0px",
-      top: "32px"
-    });
+    expect(screen.getByTestId("top-hud-utility-add")).toHaveStyle(topHudRectStyle(TOP_HUD_LAYOUT.utilities.add));
     expect(screen.getByTestId("top-hud-left-utility-1")).toHaveStyle({
       left: "50px",
       top: "8px"
     });
     expect(screen.getByTestId("top-hud-right-utility-2")).toHaveStyle({
-      left: "116px",
-      top: "0px"
+      left: "1840px",
+      top: "12px"
     });
+  });
+
+  it("drives top HUD placement from the desktop manifest instead of equal columns", () => {
+    const source = readFileSync("src/components/game-ui/genesis-ui.tsx", "utf8");
+    const topHudSource = source.slice(source.indexOf("function RobloxTopHud"), source.indexOf("function RobloxNavigation"));
+
+    expect(TOP_HUD_LAYOUT.coordinateSpace).toEqual({ width: 1920, height: 1080 });
+    expect(Object.keys(TOP_HUD_LAYOUT.economies)).toEqual([
+      "ECON-LABOR",
+      "ECON-CREDITS",
+      "ECON-POPULATION",
+      "ECON-RESEARCH",
+      "ECON-PREMIUM-CRYSTALS"
+    ]);
+    expect(new Set(Object.values(TOP_HUD_LAYOUT.economies).map((layout) => `${layout.slot.x},${layout.slot.y},${layout.slot.width},${layout.slot.height}`)).size).toBe(5);
+    expect(topHudSource).toContain("TOP_HUD_LAYOUT.economies[resource.resourceId as TopHudEconomyId]");
+    expect(topHudSource).not.toContain("space-between");
+    expect(topHudSource).not.toContain("grid-cols");
+    expect(topHudSource).not.toMatch(/slot\.x\s*\/\s*1920/);
+    expect(topHudRectInsideSlot(TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].value, TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].slot)).toBe(true);
+    expect(TOP_HUD_LAYOUT.utilities.add.x).toBeGreaterThan(TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].icon.x);
+    expect(TOP_HUD_LAYOUT.utilities.add.x).not.toBe(TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].value.x);
+  });
+
+  it("keeps top HUD calibration overlay behind development controls", async () => {
+    render(<GameShell data={await bundledRuntime()} initialTopHudCalibrationOpen />);
+
+    expect(screen.getByTestId("top-hud-calibration-toggle")).toBeInTheDocument();
+    expect(screen.getByTestId("top-hud-calibration-overlay")).toBeInTheDocument();
+    expect(screen.getByText(/ECON-LABOR icon/i)).toBeInTheDocument();
   });
 
   it("swaps failed top HUD icon images to semantic fallback without broken-image chrome", async () => {
@@ -451,12 +473,11 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveTextContent("5.39K");
     expect(screen.getByTestId("top-hud-economy-value-ECON-RESEARCH")).toHaveTextContent("1.84M");
     expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveTextContent("+1/s");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("h-[48px]");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[48px]");
-    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[31px]");
-    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[17px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveStyle(topHudLocalRectStyle(TOP_HUD_LAYOUT.economies["ECON-LABOR"].icon, TOP_HUD_LAYOUT.economies["ECON-LABOR"].slot));
+    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveStyle(topHudLocalTextStyle(TOP_HUD_LAYOUT.economies["ECON-LABOR"].value, TOP_HUD_LAYOUT.economies["ECON-LABOR"].slot));
+    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveStyle(topHudLocalTextStyle(TOP_HUD_LAYOUT.economies["ECON-LABOR"].rate, TOP_HUD_LAYOUT.economies["ECON-LABOR"].slot));
     expect(screen.getByTestId("top-hud-civilization-title").style.fontSize).toBe("21px");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[286px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveStyle({ width: `${TOP_HUD_LAYOUT.identity.title.width}px` });
     expect(screen.getByTestId("top-hud-civilization-title")).toHaveAttribute("title", "The Really Long Civilization Name");
   });
 

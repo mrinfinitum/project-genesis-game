@@ -1180,7 +1180,7 @@ function topHudStoryPlayerState(overrides: Partial<DashboardPlayerState> = {}): 
   };
 }
 
-function DashboardViewportStory({ width, height, playerState, missingIcon = false }: { width: number; height: number; playerState?: DashboardPlayerState; missingIcon?: boolean }) {
+function DashboardViewportStory({ width, height, playerState, missingIcon = false, calibration = false, referenceOverlay = false }: { width: number; height: number; playerState?: DashboardPlayerState; missingIcon?: boolean; calibration?: boolean; referenceOverlay?: boolean }) {
   const { data } = useGenesisStoryContent();
   const storyData = missingIcon
     ? {
@@ -1195,7 +1195,10 @@ function DashboardViewportStory({ width, height, playerState, missingIcon = fals
         <div className="mb-3 inline-flex rounded-sm border border-cyan-200/20 bg-black/35 px-3 py-2 text-xs font-black uppercase text-cyan-50">
           {width} x {height} · scale {scale.toFixed(3)}
         </div>
-        <GameShell data={storyData} playerState={playerState} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" frameScale={scale} embedded />
+        <div className="relative" style={{ width: 1920 * scale, height: 1080 * scale }}>
+          <GameShell data={storyData} playerState={playerState} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" frameScale={scale} embedded initialTopHudCalibrationOpen={calibration} />
+          {referenceOverlay ? <img src="/design-reference/roblox/dashboard/dashboard-main-1920.png" alt="" className="pointer-events-none absolute inset-0 opacity-50 mix-blend-screen" style={{ width: 1920 * scale, height: 1080 * scale }} /> : null}
+        </div>
       </div>
     </StoryCanvas>
   );
@@ -1286,6 +1289,43 @@ export const DashboardTopHudLargeValues1920: Story = {
       })}
     />
   )
+};
+
+export const DashboardTopHudMaximumCompactValues1920: Story = {
+  render: () => (
+    <DashboardViewportStory
+      width={1920}
+      height={1080}
+      playerState={topHudStoryPlayerState({
+        economyBalances: {
+          "ECON-LABOR": 999_999_999,
+          "ECON-CREDITS": 999_999_999,
+          "ECON-POPULATION": 999_999,
+          "ECON-RESEARCH": 999_999_999,
+          "ECON-PREMIUM-CRYSTALS": 999_999
+        },
+        economyRates: {
+          "ECON-LABOR": 999_999,
+          "ECON-CREDITS": 999_999,
+          "ECON-POPULATION": 999_999,
+          "ECON-RESEARCH": 999_999,
+          "ECON-PREMIUM-CRYSTALS": 999_999
+        }
+      })}
+    />
+  )
+};
+
+export const DashboardTopHudLongCivilizationName1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState({ civilizationName: "The Really Long Civilization Name" })} />
+};
+
+export const DashboardTopHudCalibrationGuides1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration />
+};
+
+export const DashboardTopHudRobloxReferenceOverlay1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration referenceOverlay />
 };
 
 export const DashboardTopHudMissingIconFallback1920: Story = {
