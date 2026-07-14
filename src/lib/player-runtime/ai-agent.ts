@@ -35,7 +35,7 @@ export const FALLBACK_AI_AGENT: AiAgentDefinition = {
     portraitOpen: "auto_robot_icon",
     portraitBlink: "auto_robot_blink_icon",
     portraitClosed: "auto_robot_blink_icon",
-    portraitOffline: "auto_robot_icon",
+    portraitOffline: "auto_robot_blink_icon",
     portraitWorking: "auto_robot_icon",
     ring: "auto_robot_circle"
   }
@@ -119,7 +119,7 @@ export function resolveAiAgentAsset(content: GameRuntimeData, state?: Pick<Playe
   return {
     openArtKey: typeof keys.portraitOpen === "string" ? keys.portraitOpen : FALLBACK_AI_AGENT.assetKeys?.portraitOpen ?? "auto_robot_icon",
     blinkArtKey: typeof keys.portraitBlink === "string" ? keys.portraitBlink : typeof keys.portraitClosed === "string" ? keys.portraitClosed : FALLBACK_AI_AGENT.assetKeys?.portraitBlink ?? "auto_robot_blink_icon",
-    offlineArtKey: typeof keys.portraitOffline === "string" ? keys.portraitOffline : FALLBACK_AI_AGENT.assetKeys?.portraitOffline ?? "auto_robot_icon",
+    offlineArtKey: typeof keys.portraitOffline === "string" ? keys.portraitOffline : typeof keys.portraitClosed === "string" ? keys.portraitClosed : FALLBACK_AI_AGENT.assetKeys?.portraitOffline ?? "auto_robot_blink_icon",
     workingArtKey: typeof keys.portraitWorking === "string" ? keys.portraitWorking : FALLBACK_AI_AGENT.assetKeys?.portraitWorking ?? "auto_robot_icon",
     ringArtKey: typeof keys.ring === "string" ? keys.ring : FALLBACK_AI_AGENT.assetKeys?.ring ?? "auto_robot_circle",
     source: resolved.source

@@ -958,6 +958,10 @@ export function RotatingControlRing({ outerArt, centerArt, centerBlinkArt, middl
   const FallbackIcon = variant === "auto" ? Bot : MousePointerClick;
   const centerSize = `${centerScale}%`;
   const shouldBlink = useAiAgentBlink({ active: variant === "auto" && active, enabled: blinkEnabled && Boolean(blinkPath), minSeconds: blinkMinSeconds, maxSeconds: blinkMaxSeconds, durationMs: blinkDurationMs, doubleBlinkChance });
+  const ringAnimationClass = active ? "genesis-control-ring" : "";
+  const reverseRingAnimationClass = active ? "genesis-control-ring-reverse" : "";
+  const robotExpression = variant === "auto" && !active ? "offline" : shouldBlink ? "blink" : "open";
+  const robotPortraitPath = shouldBlink && blinkPath ? blinkPath : centerPath;
 
   return (
     <button
@@ -974,7 +978,8 @@ export function RotatingControlRing({ outerArt, centerArt, centerBlinkArt, middl
         <img
           src={outerPath}
           alt=""
-          className={`genesis-control-ring absolute inset-0 h-full w-full object-contain ${active ? "opacity-75" : "opacity-36"} transition-opacity`}
+          data-ring-layer="outer"
+          className={`${ringAnimationClass} absolute inset-0 h-full w-full object-contain ${active ? "opacity-75" : "opacity-36"} transition-opacity`}
           style={ringDurationStyle(variant === "auto" ? 12 : 11)}
         />
       ) : (
@@ -984,7 +989,8 @@ export function RotatingControlRing({ outerArt, centerArt, centerBlinkArt, middl
         <img
           src={middlePath}
           alt=""
-          className={`genesis-control-ring-reverse absolute inset-0 h-full w-full object-contain ${active ? "opacity-62" : "opacity-28"} transition-opacity`}
+          data-ring-layer="middle"
+          className={`${reverseRingAnimationClass} absolute inset-0 h-full w-full object-contain ${active ? "opacity-62" : "opacity-28"} transition-opacity`}
           style={ringDurationStyle(13)}
         />
       ) : null}
@@ -992,15 +998,16 @@ export function RotatingControlRing({ outerArt, centerArt, centerBlinkArt, middl
         <img
           src={innerPath}
           alt=""
-          className={`genesis-control-ring absolute inset-0 h-full w-full object-contain ${active ? "opacity-82" : "opacity-34"} transition-opacity`}
+          data-ring-layer="inner"
+          className={`${ringAnimationClass} absolute inset-0 h-full w-full object-contain ${active ? "opacity-82" : "opacity-34"} transition-opacity`}
           style={ringDurationStyle(8)}
         />
       ) : null}
       {centerPath ? (
         variant === "auto" ? (
           <span className="genesis-auto-robot relative block transition-transform group-active:scale-90" style={{ width: centerSize, height: centerSize }}>
-            <img src={shouldBlink && blinkPath ? blinkPath : centerPath} alt="" data-testid="auto-click-robot-portrait" data-agent-expression={shouldBlink ? "blink" : "open"} className="h-full w-full object-contain" />
-            <span className="sr-only" data-testid="auto-click-robot-blink">{shouldBlink ? "Blinking" : "Open eyes"}</span>
+            <img src={robotPortraitPath} alt="" data-testid="auto-click-robot-portrait" data-agent-expression={robotExpression} className="h-full w-full object-contain" />
+            <span className="sr-only" data-testid="auto-click-robot-blink">{robotExpression === "offline" ? "Closed eyes" : shouldBlink ? "Blinking" : "Open eyes"}</span>
           </span>
         ) : (
           <img

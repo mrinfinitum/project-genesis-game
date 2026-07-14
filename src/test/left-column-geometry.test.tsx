@@ -6,7 +6,7 @@ import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntim
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT } from "@/lib/dashboard/dashboard-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectInsideSlot, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
-import { createNewPlayerRuntimeState } from "@/lib/player-runtime";
+import { createNewPlayerRuntimeState, playerRuntimeToDashboardPlayerState } from "@/lib/player-runtime";
 
 async function bundledRuntime() {
   const runtime = await getBundledStudioRuntimeSnapshot();
@@ -332,6 +332,33 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("auto-click-robot-blink")).toBeInTheDocument();
     expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "198,72,122,120");
     expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "33,209,286,47");
+  });
+
+  it("stops AI Agent ring motion and closes robot eyes while offline", async () => {
+    const data = await bundledRuntime();
+    const runtimeState = createNewPlayerRuntimeState(data);
+    const playerState = playerRuntimeToDashboardPlayerState(data, {
+      ...runtimeState,
+      production: {
+        ...runtimeState.production,
+        automationEnabled: false
+      }
+    });
+    const model = createDashboardModel(data, {
+      activeEraId: data.eras[0]?.id ?? "survival",
+      activeCategoryId: data.upgradeCategories[0]?.id ?? "workforce",
+      playerState
+    });
+
+    render(<AutoClickPanel model={model} art={createDashboardArtMap(data.assets)} />);
+
+    const outerRing = screen.getByTestId("auto-click-ring").querySelector("[data-ring-layer='outer']");
+    expect(outerRing).toBeTruthy();
+    expect(outerRing).not.toHaveClass("genesis-control-ring");
+    const portrait = screen.getByTestId("auto-click-robot-portrait");
+    expect(portrait).toHaveAttribute("data-agent-expression", "offline");
+    expect(portrait.getAttribute("src")).toContain("click-robot-eyes-blink.png");
+    expect(screen.getByTestId("auto-click-robot-blink")).toHaveTextContent("Closed eyes");
   });
 
   it("keeps Critical stats spacing aligned to the reference column", async () => {
