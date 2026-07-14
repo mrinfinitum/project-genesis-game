@@ -1153,10 +1153,10 @@ export const MainDashboard: Story = {
   }
 };
 
-function UpgradeTabsDashboardStory({ categoryId, dataTransform }: { categoryId: string; dataTransform?: (data: ReturnType<typeof useGenesisStoryContent>["data"]) => ReturnType<typeof useGenesisStoryContent>["data"] }) {
+function UpgradeTabsDashboardStory({ categoryId, dataTransform, guides = false }: { categoryId: string; dataTransform?: (data: ReturnType<typeof useGenesisStoryContent>["data"]) => ReturnType<typeof useGenesisStoryContent>["data"]; guides?: boolean }) {
   const { data } = useGenesisStoryContent();
   const storyData = dataTransform?.(data) ?? data;
-  return <GameShell data={storyData} activeScreen="dashboard" activeEraId="survival" activeCategoryId={categoryId} embedded frameScale={0.58} />;
+  return <GameShell data={storyData} activeScreen="dashboard" activeEraId="survival" activeCategoryId={categoryId} embedded frameScale={0.58} initialUpgradeTabGuidesOpen={guides} />;
 }
 
 export const UpgradeTabsWorkforceSelected: Story = {
@@ -1181,6 +1181,23 @@ export const UpgradeTabsKeyboardNavigation: Story = {
 
 export const UpgradeTabsTouchInteraction: Story = {
   render: () => <UpgradeTabsDashboardStory categoryId="industry" />
+};
+
+export const UpgradeTabsAllUnselected: Story = {
+  render: () => {
+    const { data } = useGenesisStoryContent();
+    return (
+      <StoryCanvas>
+        <div className="w-[920px]">
+          <UpgradeCategoryTabs categories={data.upgradeCategories} activeCategoryId="" />
+        </div>
+      </StoryCanvas>
+    );
+  }
+};
+
+export const UpgradeTabsLabelGuides: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="workforce" guides />
 };
 
 export const UpgradeTabsEmptyCategory: Story = {
@@ -1208,7 +1225,7 @@ export const UpgradeTabsLongLabel: Story = {
 };
 
 export const UpgradeTabsSelectedOverlayComparison1920: Story = {
-  render: () => <DashboardViewportStory width={1920} height={1080} />
+  render: () => <DashboardViewportStory width={1920} height={1080} calibration referenceOverlay />
 };
 
 function topHudStoryPlayerState(overrides: Partial<DashboardPlayerState> = {}): DashboardPlayerState {

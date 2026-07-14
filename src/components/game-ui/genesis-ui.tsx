@@ -42,7 +42,7 @@ import { verifyResourceEconomyContracts } from "@/lib/economy/contracts";
 import { resolveLaborRateBreakdown, resolveResearchRateBreakdown } from "@/lib/economy/rate-calculator";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
-import { UPGRADE_TAB_LAYOUT, type UpgradeTabLayoutKey } from "@/lib/dashboard/upgrade-tabs-layout";
+import { UPGRADE_TAB_LAYOUT, UPGRADE_TAB_TYPOGRAPHY, type UpgradeTabLayoutKey } from "@/lib/dashboard/upgrade-tabs-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
 import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId, type PlayerRuntimeState } from "@/lib/player-runtime";
@@ -2490,7 +2490,7 @@ function RobloxHero({ data, model, art: dashboardArt }: { data: GameRuntimeData;
   );
 }
 
-function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, onSelectCategory }: { categories: UpgradeCategory[]; activeCategoryId: string; model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; onSelectCategory: (categoryId: string) => void }) {
+function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, onSelectCategory, showLabelGuides = false }: { categories: UpgradeCategory[]; activeCategoryId: string; model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; onSelectCategory: (categoryId: string) => void; showLabelGuides?: boolean }) {
   const tabPanelId = "dashboard-upgrade-tabpanel";
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const visibleCategories = categories.slice(0, 4);
@@ -2532,7 +2532,7 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, 
             tabIndex={active ? 0 : -1}
             data-testid={`upgrade-tab-${category.id}`}
             data-upgrade-category-id={category.id}
-            className={`pointer-events-auto absolute text-center text-[17px] font-black uppercase outline-none transition hover:brightness-125 focus-visible:ring-2 focus-visible:ring-cyan-100/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:brightness-150 ${active ? "text-white" : "text-cyan-100/72"}`}
+            className={`pointer-events-auto absolute m-0 border-0 bg-transparent p-0 text-center outline-none transition hover:brightness-125 focus-visible:ring-2 focus-visible:ring-cyan-100/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:brightness-150 ${active ? "text-white" : "text-cyan-100/72"}`}
             style={{ left: `${hitArea.left}%`, top: `${hitArea.top}%`, width: `${hitArea.width}%`, height: `${hitArea.height}%` }}
             onClick={() => onSelectCategory(category.id)}
             onKeyDown={(event) => {
@@ -2551,12 +2551,31 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, 
               }
             }}
           >
-            <span className="pointer-events-none absolute flex items-center justify-center whitespace-nowrap leading-none" data-testid={`upgrade-tab-label-${category.id}`} style={labelStyle}>
+            <span className={`pointer-events-none absolute m-0 flex items-center justify-center whitespace-nowrap p-0 text-center ${UPGRADE_TAB_TYPOGRAPHY.className}`} data-testid={`upgrade-tab-label-${category.id}`} style={labelStyle}>
               {category.displayName}
             </span>
           </button>
           );
       })}
+      {showLabelGuides
+        ? visibleCategories.map((category, index) => {
+            const layout = UPGRADE_TAB_LAYOUT[category.id as UpgradeTabLayoutKey]?.panel;
+            const hitArea = layout?.hitArea ?? { left: index * 25, top: 0, width: 25, height: 16 };
+            const label = layout?.label ?? { left: index * 25, top: 1.76, width: 21.5, height: 5.76 };
+            return (
+              <div key={`guide-${category.id}`} className="pointer-events-none absolute" data-testid={`upgrade-tab-guide-${category.id}`} style={{ left: `${hitArea.left}%`, top: `${hitArea.top}%`, width: `${hitArea.width}%`, height: `${hitArea.height}%` }}>
+                <div className="absolute inset-0 border border-amber-200/32" />
+                <div className="absolute bg-amber-200/28" style={{ left: "50%", top: 0, width: 1, height: "100%" }} />
+                <div className="absolute bg-amber-200/28" style={{ left: 0, top: "50%", width: "100%", height: 1 }} />
+                <div className="absolute border border-cyan-200/70 bg-cyan-300/8" style={{ left: `${((label.left - hitArea.left) / hitArea.width) * 100}%`, top: `${((label.top - hitArea.top) / hitArea.height) * 100}%`, width: `${(label.width / hitArea.width) * 100}%`, height: `${(label.height / hitArea.height) * 100}%` }}>
+                  <div className="absolute bg-cyan-100/70" style={{ left: "50%", top: 0, width: 1, height: "100%" }} />
+                  <div className="absolute bg-cyan-100/70" style={{ left: 0, top: "50%", width: "100%", height: 1 }} />
+                  <div className="absolute bg-emerald-200/80" style={{ left: 0, top: "62%", width: "100%", height: 1 }} />
+                </div>
+              </div>
+            );
+          })
+        : null}
       </div>
       <div className="absolute left-[3.4%] top-[16.8%] h-[5%] w-[33%] text-[13px] font-black uppercase text-cyan-200/86">{shortEraName(model.currentEra)} Age</div>
       <div className="absolute left-[33%] right-[7%] top-[19.1%] h-px bg-cyan-100/26" />
@@ -3492,6 +3511,7 @@ export function GameShell({
   embedded = false,
   initialSettingsOpen = false,
   initialTopHudCalibrationOpen = false,
+  initialUpgradeTabGuidesOpen = false,
   platform,
   profileViewport
 }: {
@@ -3512,6 +3532,7 @@ export function GameShell({
   embedded?: boolean;
   initialSettingsOpen?: boolean;
   initialTopHudCalibrationOpen?: boolean;
+  initialUpgradeTabGuidesOpen?: boolean;
   platform?: RuntimePlatform;
   profileViewport?: { width: number; height: number };
 }) {
@@ -3597,7 +3618,7 @@ export function GameShell({
             <RobloxHero data={data} model={model} art={dashboardArt} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
-            <RobloxUpgradePanel categories={upgradeCategories} activeCategoryId={category?.id ?? ""} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} />
+            <RobloxUpgradePanel categories={upgradeCategories} activeCategoryId={category?.id ?? ""} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} showLabelGuides={dashboardDevToolsEnabled || initialUpgradeTabGuidesOpen} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
             <RobloxRightColumn model={model} art={dashboardArt} />

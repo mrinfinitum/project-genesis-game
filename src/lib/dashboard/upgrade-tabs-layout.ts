@@ -1,5 +1,12 @@
 export type UpgradeTabLayoutKey = "workforce" | "industry" | "science" | "technology";
 
+const ASSET = {
+  path: "/roblox-assets/UI/folder-tabs-base-920.png",
+  nativeWidth: 920,
+  nativeHeight: 420,
+  robloxAssetId: "rbxassetid://137465475952770"
+} as const;
+
 const PANEL = {
   x: 550,
   y: 650,
@@ -9,18 +16,33 @@ const PANEL = {
 
 const TAB_HEIGHT = PANEL.height * 0.16;
 const TAB_WIDTH = PANEL.width * 0.25;
-const LABEL_WIDTH = TAB_WIDTH * 0.86;
-const LABEL_HEIGHT = TAB_HEIGHT * 0.36;
-const LABEL_TOP = TAB_HEIGHT * 0.11;
 
-const labelXOffsets: Record<UpgradeTabLayoutKey, number> = {
-  workforce: 0.07,
-  industry: 0.17,
-  science: 0.07,
-  technology: -0.04
+export const UPGRADE_TAB_TYPOGRAPHY = {
+  className: "text-[17px] font-black uppercase leading-none tracking-normal",
+  fontSizePx: 17,
+  fontWeight: 900,
+  lineHeight: 1,
+  letterSpacing: 0,
+  textTransform: "uppercase"
+} as const;
+
+export const UPGRADE_TAB_ASSET = ASSET;
+
+const measuredNativeLabelRects: Record<UpgradeTabLayoutKey, { x: number; y: number; width: number; height: number }> = {
+  workforce: { x: 31, y: 14, width: 198, height: 28 },
+  industry: { x: 285, y: 14, width: 190, height: 28 },
+  science: { x: 526, y: 14, width: 158, height: 28 },
+  technology: { x: 729, y: 14, width: 160, height: 28 }
 };
 
-function tabRect(index: number) {
+const measuredNativeVisualTabRects: Record<UpgradeTabLayoutKey, { x: number; y: number; width: number; height: number }> = {
+  workforce: { x: 0, y: 0, width: 260, height: 53 },
+  industry: { x: 256, y: 0, width: 251, height: 53 },
+  science: { x: 507, y: 0, width: 202, height: 53 },
+  technology: { x: 706, y: 0, width: 214, height: 53 }
+};
+
+function hitAreaRect(index: number) {
   return {
     x: PANEL.x + TAB_WIDTH * index,
     y: PANEL.y,
@@ -29,14 +51,12 @@ function tabRect(index: number) {
   };
 }
 
-function labelRect(index: number, key: UpgradeTabLayoutKey) {
-  const tab = tabRect(index);
-
+function fromNativeAssetRect(rect: { x: number; y: number; width: number; height: number }) {
   return {
-    x: tab.x + TAB_WIDTH * labelXOffsets[key],
-    y: tab.y + LABEL_TOP,
-    width: LABEL_WIDTH,
-    height: LABEL_HEIGHT
+    x: PANEL.x + (rect.x / ASSET.nativeWidth) * PANEL.width,
+    y: PANEL.y + (rect.y / ASSET.nativeHeight) * PANEL.height,
+    width: (rect.width / ASSET.nativeWidth) * PANEL.width,
+    height: (rect.height / ASSET.nativeHeight) * PANEL.height
   };
 }
 
@@ -51,35 +71,35 @@ function toPanelPercent(rect: { x: number; y: number; width: number; height: num
 
 export const UPGRADE_TAB_LAYOUT = {
   workforce: {
-    tab: tabRect(0),
-    label: labelRect(0, "workforce"),
+    tab: fromNativeAssetRect(measuredNativeVisualTabRects.workforce),
+    label: fromNativeAssetRect(measuredNativeLabelRects.workforce),
     panel: {
-      hitArea: toPanelPercent(tabRect(0)),
-      label: toPanelPercent(labelRect(0, "workforce"))
+      hitArea: toPanelPercent(hitAreaRect(0)),
+      label: toPanelPercent(fromNativeAssetRect(measuredNativeLabelRects.workforce))
     }
   },
   industry: {
-    tab: tabRect(1),
-    label: labelRect(1, "industry"),
+    tab: fromNativeAssetRect(measuredNativeVisualTabRects.industry),
+    label: fromNativeAssetRect(measuredNativeLabelRects.industry),
     panel: {
-      hitArea: toPanelPercent(tabRect(1)),
-      label: toPanelPercent(labelRect(1, "industry"))
+      hitArea: toPanelPercent(hitAreaRect(1)),
+      label: toPanelPercent(fromNativeAssetRect(measuredNativeLabelRects.industry))
     }
   },
   science: {
-    tab: tabRect(2),
-    label: labelRect(2, "science"),
+    tab: fromNativeAssetRect(measuredNativeVisualTabRects.science),
+    label: fromNativeAssetRect(measuredNativeLabelRects.science),
     panel: {
-      hitArea: toPanelPercent(tabRect(2)),
-      label: toPanelPercent(labelRect(2, "science"))
+      hitArea: toPanelPercent(hitAreaRect(2)),
+      label: toPanelPercent(fromNativeAssetRect(measuredNativeLabelRects.science))
     }
   },
   technology: {
-    tab: tabRect(3),
-    label: labelRect(3, "technology"),
+    tab: fromNativeAssetRect(measuredNativeVisualTabRects.technology),
+    label: fromNativeAssetRect(measuredNativeLabelRects.technology),
     panel: {
-      hitArea: toPanelPercent(tabRect(3)),
-      label: toPanelPercent(labelRect(3, "technology"))
+      hitArea: toPanelPercent(hitAreaRect(3)),
+      label: toPanelPercent(fromNativeAssetRect(measuredNativeLabelRects.technology))
     }
   }
 } as const;
