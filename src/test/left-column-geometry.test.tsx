@@ -152,6 +152,9 @@ describe("Roblox left column geometry", () => {
     expect(backgrounds[0]).toHaveAttribute("data-native-size", "350x823");
     expect(backgrounds[0]).toHaveAttribute("data-rendered-size", "350x823");
     expect(backgrounds[0]).toHaveAttribute("data-background-size", "100% 100%");
+    expect(backgrounds[0]).toHaveAttribute("data-background-position", "0 13px");
+    expect(backgrounds[0]).toHaveAttribute("data-align-top-with", "right-screen");
+    expect(backgrounds[0]).toHaveStyle({ top: "13px" });
     expect(screen.getByTestId("critical-stats-panel")).toHaveAttribute("data-rojo-rect", "0,638,350,185");
     expect(container.querySelectorAll("[data-art-key='dashboard_click_panel_background']")).toHaveLength(1);
     expect(container.querySelectorAll("[data-art-key='dashboard_auto_panel_background']")).toHaveLength(0);

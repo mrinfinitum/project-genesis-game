@@ -1270,6 +1270,7 @@ const LEFT_COLUMN_GEOMETRY = {
   auto: { x: 0, y: 344, width: 350, height: 270 },
   critical: { x: 0, y: 638, width: 350, height: 185 }
 } as const;
+const LEFT_COLUMN_BACKGROUND_VERTICAL_OFFSET = ROBLOX_DASHBOARD_LAYOUT.rightColumn.y - ROBLOX_DASHBOARD_LAYOUT.leftColumn.y;
 
 function WrenchIcon({ className }: { className?: string }) {
   return <Settings className={className} />;
@@ -2097,9 +2098,11 @@ function RobloxLeftColumn({
           data-native-size="350x823"
           data-rendered-size={`${ROBLOX_DASHBOARD_LAYOUT.leftColumn.width}x${ROBLOX_DASHBOARD_LAYOUT.leftColumn.height}`}
           data-background-size="100% 100%"
-          data-background-position="0 0"
+          data-background-position={`0 ${LEFT_COLUMN_BACKGROUND_VERTICAL_OFFSET}px`}
+          data-align-top-with="right-screen"
           data-repeat="no-repeat"
-          className="pointer-events-none absolute inset-0 h-full w-full object-fill"
+          className="pointer-events-none absolute left-0 h-full w-full object-fill"
+          style={{ top: `${LEFT_COLUMN_BACKGROUND_VERTICAL_OFFSET}px` }}
         />
       ) : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
       <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} controlsEnabled={runtimeStatus?.controlsEnabled ?? true} pressed={clickPressed} pulseKey={clickPulseKey} />
