@@ -102,7 +102,7 @@ describe("canonical player runtime", () => {
     const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
     expect(runtime.metadata.contentVersion).toBe(12);
-    expect(runtime.metadata.checksum).toBe("a037eb2a4ddae234e5acdc48d66e377a0dd58af75981701ce829eb467f4aeea0");
+    expect(runtime.metadata.checksum).toBe("1d90bf85cc3652e4c50ec9557946dc7e856dc813bfff729489dd559b93fb45da");
     expect(resolvePrimaryEconomyIdForCurrentEra(runtime, "survival")).toBe(LABOR_ECONOMY_ID);
     expect(survivalHudIds).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
     expect(survivalIconKeys).toEqual(["economy_labor", "economy_credits", "economy_population", "economy_research", "economy_premium_crystals"]);

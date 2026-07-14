@@ -1248,6 +1248,8 @@ const ROBLOX_NAV_GEOMETRY = {
 const ROBLOX_NAV_SLOT_HEIGHT = (ROBLOX_NAV_GEOMETRY.contentBottom - ROBLOX_NAV_GEOMETRY.contentTop) / robloxNavItems.length;
 const ROBLOX_NAV_GROUP_TOP = (ROBLOX_NAV_SLOT_HEIGHT - ROBLOX_NAV_GEOMETRY.iconHeight - ROBLOX_NAV_GEOMETRY.iconLabelGap - ROBLOX_NAV_GEOMETRY.labelHeight) / 2;
 const ROBLOX_NAV_BAKED_SEPARATOR_TOPS = [131.5, 262, 396, 528.5, 661, 795] as const;
+const ROBLOX_NAV_BACKGROUND_OFFSET_Y = ROBLOX_DASHBOARD_LAYOUT.rightColumn.y - ROBLOX_DASHBOARD_LAYOUT.sidebar.y;
+const ROBLOX_NAV_BACKGROUND_HEIGHT = ROBLOX_DASHBOARD_LAYOUT.rightColumn.height;
 
 function robloxNavItemTop(index: number) {
   return ROBLOX_NAV_GEOMETRY.contentTop + index * ROBLOX_NAV_SLOT_HEIGHT;
@@ -1957,11 +1959,13 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
           data-art-key="dashboard_nav_background"
           data-local-path={art.dashboard_nav_background.path}
           data-native-size="160x790"
-          data-rendered-size={`${ROBLOX_DASHBOARD_LAYOUT.sidebar.width}x${ROBLOX_DASHBOARD_LAYOUT.sidebar.height}`}
+          data-rendered-size={`${ROBLOX_DASHBOARD_LAYOUT.sidebar.width}x${ROBLOX_NAV_BACKGROUND_HEIGHT}`}
           data-background-size="100% 100%"
-          data-background-position="0 0"
+          data-background-position={`0 ${ROBLOX_NAV_BACKGROUND_OFFSET_Y}px`}
+          data-align-top-with="objective-screen"
           data-repeat="no-repeat"
-          className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill"
+          className="pointer-events-none absolute left-0 z-0 w-full object-fill"
+          style={{ top: `${ROBLOX_NAV_BACKGROUND_OFFSET_Y}px`, height: `${ROBLOX_NAV_BACKGROUND_HEIGHT}px` }}
         />
       ) : <DashboardMissingArt art={art.dashboard_nav_background} className="absolute inset-0" />}
       {ROBLOX_NAV_BAKED_SEPARATOR_TOPS.map((top, index) => (

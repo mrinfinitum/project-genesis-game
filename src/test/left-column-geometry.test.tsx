@@ -44,10 +44,15 @@ describe("Roblox left column geometry", () => {
     expect(background).toHaveAttribute("data-art-key", "dashboard_nav_background");
     expect(background).toHaveAttribute("data-local-path", "/roblox-assets/UI/ui_panel_side_menu.png");
     expect(background).toHaveAttribute("data-native-size", "160x790");
-    expect(background).toHaveAttribute("data-rendered-size", "160x944");
+    expect(background).toHaveAttribute("data-rendered-size", "160x927");
     expect(background).toHaveAttribute("data-background-size", "100% 100%");
-    expect(background).toHaveAttribute("data-background-position", "0 0");
+    expect(background).toHaveAttribute("data-background-position", "0 13px");
+    expect(background).toHaveAttribute("data-align-top-with", "objective-screen");
     expect(background).toHaveAttribute("data-repeat", "no-repeat");
+    expect(background).toHaveStyle({
+      top: "13px",
+      height: "927px"
+    });
     expect(background).toHaveClass("object-fill");
     expect(container.querySelectorAll("[data-testid='nav-css-divider']")).toHaveLength(0);
     const masks = screen.getAllByTestId(/roblox-nav-baked-separator-mask-/);
