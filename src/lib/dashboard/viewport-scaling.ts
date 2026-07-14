@@ -1,4 +1,5 @@
 import { ROBLOX_DASHBOARD_REFERENCE } from "./dashboard-layout";
+import { defaultStorageService, readStorageJson, writeStorageJson, type StorageService } from "@/platform/storage";
 
 export type GameDisplayMode = "auto" | "fit" | "fill" | "actual";
 
@@ -71,19 +72,12 @@ export function normalizeGameDisplayPreferences(value: unknown): GameDisplayPref
   };
 }
 
-export function loadGameDisplayPreferences(storage: Storage | undefined = typeof window !== "undefined" ? window.localStorage : undefined): GameDisplayPreferences {
-  if (!storage) return DEFAULT_GAME_DISPLAY_PREFERENCES;
-  try {
-    const raw = storage.getItem(GAME_DISPLAY_PREFERENCES_KEY);
-    return normalizeGameDisplayPreferences(raw ? JSON.parse(raw) : undefined);
-  } catch {
-    return DEFAULT_GAME_DISPLAY_PREFERENCES;
-  }
+export function loadGameDisplayPreferences(storage: StorageService = defaultStorageService): GameDisplayPreferences {
+  return normalizeGameDisplayPreferences(readStorageJson<unknown>(storage, GAME_DISPLAY_PREFERENCES_KEY, undefined));
 }
 
-export function saveGameDisplayPreferences(preferences: GameDisplayPreferences, storage: Storage | undefined = typeof window !== "undefined" ? window.localStorage : undefined) {
-  if (!storage) return;
-  storage.setItem(GAME_DISPLAY_PREFERENCES_KEY, JSON.stringify(normalizeGameDisplayPreferences(preferences)));
+export function saveGameDisplayPreferences(preferences: GameDisplayPreferences, storage: StorageService = defaultStorageService) {
+  writeStorageJson(storage, GAME_DISPLAY_PREFERENCES_KEY, normalizeGameDisplayPreferences(preferences));
 }
 
 export function calculateGameViewportScale(input: GameViewportScaleInput): GameViewportScaleResult {

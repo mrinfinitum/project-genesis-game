@@ -1,5 +1,6 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { PlayerDeviceRow } from "./types";
+import { defaultStorageService, type StorageService } from "@/platform/storage";
 
 const DEVICE_ID_KEY = "noveris-game:device-id";
 
@@ -8,11 +9,11 @@ function randomDeviceId() {
   return `device-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function getOrCreateLocalDeviceId(storage: Storage | undefined = typeof window !== "undefined" ? window.localStorage : undefined) {
-  const existing = storage?.getItem(DEVICE_ID_KEY);
+export function getOrCreateLocalDeviceId(storage: StorageService = defaultStorageService) {
+  const existing = storage.getItem(DEVICE_ID_KEY);
   if (existing) return existing;
   const next = randomDeviceId();
-  storage?.setItem(DEVICE_ID_KEY, next);
+  storage.setItem(DEVICE_ID_KEY, next);
   return next;
 }
 
@@ -26,7 +27,7 @@ export function getDefaultDeviceName() {
 export class NoverisDeviceService {
   constructor(private readonly client: SupabaseClient | null) {}
 
-  async ensureDevice(user: User, appVersion: string, storage?: Storage): Promise<PlayerDeviceRow | null> {
+  async ensureDevice(user: User, appVersion: string, storage?: StorageService): Promise<PlayerDeviceRow | null> {
     if (!this.client) return null;
     const now = new Date().toISOString();
     const device: PlayerDeviceRow = {

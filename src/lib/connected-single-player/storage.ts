@@ -1,56 +1,26 @@
+import { defaultStorageService, MemoryStorageService as PlatformMemoryStorageService, type StorageService } from "@/platform/storage";
+
 export interface KeyValueStore {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
 }
 
-export class MemoryKeyValueStore implements KeyValueStore {
-  constructor(private readonly values = new Map<string, string>()) {}
-
-  getItem(key: string) {
-    return this.values.get(key) ?? null;
-  }
-
-  setItem(key: string, value: string) {
-    this.values.set(key, value);
-  }
-
-  removeItem(key: string) {
-    this.values.delete(key);
-  }
-}
+export class MemoryKeyValueStore extends PlatformMemoryStorageService implements KeyValueStore {}
 
 export class BrowserKeyValueStore implements KeyValueStore {
-  getItem(key: string) {
-    if (typeof window === "undefined") {
-      return null;
-    }
+  constructor(private readonly storage: StorageService = defaultStorageService) {}
 
-    try {
-      return window.localStorage.getItem(key);
-    } catch {
-      return null;
-    }
+  getItem(key: string) {
+    return this.storage.getItem(key);
   }
 
   setItem(key: string, value: string) {
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(key, value);
-      } catch {
-        // Storage can be unavailable in private browsing, quota pressure, or locked-down embeds.
-      }
-    }
+    this.storage.setItem(key, value);
   }
 
   removeItem(key: string) {
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.removeItem(key);
-      } catch {
-        // Best-effort cleanup; gameplay startup must not depend on storage availability.
-      }
-    }
+    this.storage.removeItem(key);
   }
 }
 

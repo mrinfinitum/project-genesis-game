@@ -34,7 +34,7 @@ import {
   Zap
 } from "lucide-react";
 import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
-import type { AssetDefinition, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
+import type { AssetDefinition, ClientProfile, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
@@ -42,6 +42,7 @@ import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplay
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
 import type { CloudSave, CloudSyncMetadata } from "@/lib/supabase";
+import { cssSafeAreaVariables, defaultStorageService, detectRuntimePlatform, getPresentationProfile, resolveDeviceClass, resolveSafeAreaInsets, resolveTouchProfile, shouldShowRotateDevice, type RuntimePlatform } from "@/platform";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
 import robloxReferenceManifest from "../../design-reference/roblox/reference-manifest.json";
 
@@ -1575,8 +1576,10 @@ function SettingsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/88 p-4 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
+      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/88 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
       data-testid="settings-backdrop"
+      data-safe-area-target="settings"
+      style={{ padding: "max(16px, var(--safe-top)) max(16px, var(--safe-right)) max(16px, var(--safe-bottom)) max(16px, var(--safe-left))" }}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -2553,6 +2556,7 @@ export function BoostsTray({
     left: 12,
     right: 12,
     bottom: 8,
+    marginBottom: "var(--safe-bottom)",
     height: 170,
     transform: open ? "translateY(0)" : "translateY(calc(100% + 24px))",
     opacity: open ? 1 : 0,
@@ -2580,6 +2584,7 @@ export function BoostsTray({
         data-open-position="left:12,right:12,bottom:8"
         data-closed-position="translateY(calc(100% + 24px))"
         data-bottom-offset="8"
+        data-safe-area-target="boost-drawer"
         data-transition={prefersReducedMotion ? "none" : "transform-opacity"}
         className={`absolute overflow-hidden rounded-md border border-cyan-100/34 bg-[linear-gradient(180deg,rgba(7,18,38,0.985),rgba(2,7,17,0.99))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.38),0_0_26px_rgba(45,212,255,0.14),inset_0_0_24px_rgba(45,212,255,0.065)] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         style={trayStyle}
@@ -2690,6 +2695,26 @@ function useGameDisplayPreferences() {
   }, [preferences]);
 
   return [preferences, setPreferences] as const;
+}
+
+function useWindowViewportSize(fallback = ROBLOX_DASHBOARD_REFERENCE) {
+  const [size, setSize] = useState(() => {
+    if (typeof window === "undefined") return { width: fallback.width, height: fallback.height };
+    return { width: window.innerWidth, height: window.innerHeight };
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", update);
+    window.screen.orientation?.addEventListener?.("change", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.screen.orientation?.removeEventListener?.("change", update);
+    };
+  }, []);
+
+  return size;
 }
 
 function useViewportScale(
@@ -3098,6 +3123,24 @@ function DashboardDataArtInspector({
   );
 }
 
+function RotateDeviceOverlay({ profile }: { profile: ClientProfile }) {
+  const orientation = profile.orientation && typeof profile.orientation === "object" ? profile.orientation as Record<string, unknown> : {};
+  const notes = typeof orientation.notes === "string" ? orientation.notes : "Gameplay is optimized for landscape.";
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-[radial-gradient(circle_at_50%_20%,rgba(45,212,255,0.18),transparent_24rem),rgba(2,8,23,0.96)] px-[max(var(--safe-left),1rem)] py-[max(var(--safe-top),1rem)] text-center text-cyan-50" data-testid="rotate-device-overlay" data-safe-area-target="orientation-warning">
+      <section className="w-full max-w-[26rem] rounded-sm border border-cyan-200/34 bg-slate-950/92 p-5 shadow-[0_0_44px_rgba(34,211,238,0.2),inset_0_0_24px_rgba(45,212,255,0.08)]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-sm border border-cyan-100/34 bg-cyan-300/10 text-cyan-50 shadow-[0_0_24px_rgba(45,212,255,0.18)]">
+          <Orbit className="h-8 w-8" />
+        </div>
+        <div className="mt-4 text-[0.72rem] font-black uppercase tracking-[0.42em] text-cyan-100/70">Rotate Device</div>
+        <h1 className="mt-2 text-2xl font-black uppercase text-white">Landscape Required</h1>
+        <p className="mt-3 text-sm font-semibold leading-6 text-cyan-50/68">{notes}</p>
+      </section>
+    </div>
+  );
+}
+
 export function GameShell({
   data,
   runtimeState,
@@ -3114,7 +3157,9 @@ export function GameShell({
   activeCategoryId = "workforce",
   frameScale,
   embedded = false,
-  initialSettingsOpen = false
+  initialSettingsOpen = false,
+  platform,
+  profileViewport
 }: {
   data: GameRuntimeData;
   runtimeState?: RuntimeContentState;
@@ -3132,7 +3177,17 @@ export function GameShell({
   frameScale?: number;
   embedded?: boolean;
   initialSettingsOpen?: boolean;
+  platform?: RuntimePlatform;
+  profileViewport?: { width: number; height: number };
 }) {
+  const runtimePlatform = platform ?? detectRuntimePlatform();
+  const measuredViewportSize = useWindowViewportSize();
+  const viewportSize = profileViewport ?? measuredViewportSize;
+  const presentationProfile = useMemo(() => getPresentationProfile(data, runtimePlatform), [data, runtimePlatform]);
+  const safeAreaInsets = useMemo(() => resolveSafeAreaInsets(presentationProfile, viewportSize), [presentationProfile, viewportSize]);
+  const deviceClass = useMemo(() => resolveDeviceClass(presentationProfile, viewportSize.width, viewportSize.height), [presentationProfile, viewportSize.height, viewportSize.width]);
+  const touchProfile = useMemo(() => resolveTouchProfile(presentationProfile), [presentationProfile]);
+  const rotateDevice = !embedded && shouldShowRotateDevice(presentationProfile, activeScreen, viewportSize);
   const category = data.upgradeCategories.find((item) => item.id === activeCategoryId) ?? data.upgradeCategories[0];
   const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
@@ -3147,12 +3202,24 @@ export function GameShell({
   const boostCount = model.playerState.boosts?.length ?? 0;
   useDashboardAssetDiagnostics(artAudit);
   const embeddedScale = frameScale ?? 1;
+  const mobileStyle = {
+    ...cssSafeAreaVariables(safeAreaInsets),
+    ["--mobile-hud-scale" as string]: deviceClass.hudScale,
+    ["--mobile-typography-scale" as string]: deviceClass.typographyScale,
+    ["--mobile-touch-scale" as string]: deviceClass.touchScale,
+    ["--mobile-min-touch-target" as string]: `${touchProfile.minimumTouchTarget}px`
+  } satisfies CSSProperties;
 
   return (
     <main
       className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]`}
+      data-platform={runtimePlatform}
+      data-device-class={deviceClass.id}
+      data-safe-area-profile={runtimePlatform === "web" ? "desktop-web" : "studio-mobile"}
+      data-touch-min-target={touchProfile.minimumTouchTarget}
       style={{
         ...shellStyle,
+        ...mobileStyle,
         ...(embedded
           ? {
               width: ROBLOX_DASHBOARD_REFERENCE.width * embeddedScale,
@@ -3161,13 +3228,16 @@ export function GameShell({
           : undefined)
       }}
     >
+      {rotateDevice ? (
+        <RotateDeviceOverlay profile={presentationProfile} />
+      ) : null}
       <GameViewportScaler explicitScale={frameScale} embedded={embedded} assetWarnings={scaleAssetWarnings}>
           {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
-          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud)}>
+          <div data-safe-area-target="top-hud" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud), paddingTop: "var(--safe-top)" }}>
             <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} onSettingsClick={() => setSettingsOpen(true)} settingsButtonRef={settingsButtonRef} />
           </div>
           {dashboardDevToolsEnabled ? <RuntimeSourceBadge model={model} /> : null}
-          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar)}>
+          <div data-safe-area-target="navigation" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar), paddingLeft: "var(--safe-left)" }}>
             <RobloxNavigation active={activeScreen} art={dashboardArt} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
@@ -3182,7 +3252,7 @@ export function GameShell({
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
             <RobloxRightColumn model={model} art={dashboardArt} />
           </div>
-          <div className="z-20" style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle)}>
+          <div className="z-20" data-safe-area-target="boost-drawer" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle), paddingBottom: "var(--safe-bottom)" }}>
             <RobloxBoostBar
               model={model}
               open={boostsTrayOpen}
@@ -3348,8 +3418,7 @@ export function RobloxParityReview({
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("genesis-dashboard-parity-review");
+    const saved = defaultStorageService.getItem("genesis-dashboard-parity-review");
     if (!saved) return;
     try {
       const parsed = JSON.parse(saved) as Partial<{
@@ -3369,14 +3438,13 @@ export function RobloxParityReview({
       if (typeof parsed.showGuides === "boolean") setShowGuides(parsed.showGuides);
       if (parsed.viewport) setViewport(parsed.viewport);
     } catch {
-      window.localStorage.removeItem("genesis-dashboard-parity-review");
+      defaultStorageService.removeItem("genesis-dashboard-parity-review");
     }
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
+    defaultStorageService.setItem(
       "genesis-dashboard-parity-review",
       JSON.stringify({ selectedReferenceId, mode, overlayOpacity, reviewStatus, reviewNotes, showGuides, viewport })
     );

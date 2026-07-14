@@ -7,7 +7,7 @@ import type { SaveSummary, StartupResult } from "@/lib/startup";
 function NoverisFrame({ children }: { children: ReactNode }) {
   return (
     <StoryCanvas>
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#020813] px-6 text-cyan-50">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#020813] text-cyan-50" data-safe-area-target="startup" style={{ padding: "max(24px, var(--safe-top)) max(24px, var(--safe-right)) max(24px, var(--safe-bottom)) max(24px, var(--safe-left))" }}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(38,208,255,0.22),transparent_34%),linear-gradient(180deg,rgba(2,8,19,0.2),rgba(2,8,19,0.92))]" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[url('/roblox-assets/UI/hud_background_1920x1080.png')] bg-cover bg-center opacity-25" />
         <div className="relative w-full max-w-[62rem]">{children}</div>

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NoverisAuthState } from "./types";
 import { NoverisSupabaseUnavailableError, safeSupabaseErrorMessage } from "./errors";
+import { defaultStorageService } from "@/platform/storage";
 
 export const GUEST_MODE_KEY = "noveris-game:guest-mode";
 const AUTH_RESTORE_TIMEOUT_MS = 4500;
@@ -17,22 +18,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string) {
 }
 
 function guestModeEnabled() {
-  try {
-    return localStorage.getItem(GUEST_MODE_KEY) === "true";
-  } catch {
-    return false;
-  }
+  return defaultStorageService.getItem(GUEST_MODE_KEY) === "true";
 }
 
 function setGuestMode(enabled: boolean) {
-  try {
-    if (enabled) {
-      localStorage.setItem(GUEST_MODE_KEY, "true");
-    } else {
-      localStorage.removeItem(GUEST_MODE_KEY);
-    }
-  } catch {
-    // Browser storage is optional; auth state should still resolve.
+  if (enabled) {
+    defaultStorageService.setItem(GUEST_MODE_KEY, "true");
+  } else {
+    defaultStorageService.removeItem(GUEST_MODE_KEY);
   }
 }
 

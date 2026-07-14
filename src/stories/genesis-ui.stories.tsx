@@ -1201,6 +1201,47 @@ function DashboardViewportStory({ width, height, playerState, missingIcon = fals
   );
 }
 
+function MobilePlatformStory({
+  width,
+  height,
+  platform = "ios",
+  portrait = false
+}: {
+  width: number;
+  height: number;
+  platform?: "ios" | "android";
+  portrait?: boolean;
+}) {
+  const { data } = useGenesisStoryContent();
+  const scale = calculateGameViewportScale({ viewportWidth: width, viewportHeight: height, minScale: 0.28 }).scale;
+  const playerRuntime = createNewPlayerRuntimeState(data);
+  return (
+    <StoryCanvas>
+      <div className="min-h-screen w-full overflow-auto bg-slate-950 p-4 text-cyan-50">
+        <div className="mb-3 flex flex-wrap gap-2 text-xs font-black uppercase">
+          <span className="rounded-sm border border-cyan-200/20 bg-black/35 px-3 py-2">{platform}</span>
+          <span className="rounded-sm border border-cyan-200/20 bg-black/35 px-3 py-2">{width} x {height}</span>
+          <span className="rounded-sm border border-cyan-200/20 bg-black/35 px-3 py-2">scale {scale.toFixed(3)}</span>
+        </div>
+        <div className="relative overflow-hidden rounded-sm border border-cyan-200/20" style={{ width, height }}>
+          <GameShell
+            data={data}
+            playerRuntime={playerRuntime}
+            playerState={topHudStoryPlayerState()}
+            activeScreen="dashboard"
+            activeEraId="survival"
+            activeCategoryId="workforce"
+            frameScale={portrait ? undefined : scale}
+            embedded={!portrait}
+            platform={platform}
+            profileViewport={{ width, height }}
+          />
+        </div>
+      </div>
+    </StoryCanvas>
+  );
+}
+
 export const DashboardViewport1366x768: Story = {
   render: () => <DashboardViewportStory width={1366} height={768} />
 };
@@ -1257,6 +1298,30 @@ export const DashboardTopHudCanonical2560: Story = {
 
 export const DashboardTopHudCanonical3840: Story = {
   render: () => <DashboardViewportStory width={3840} height={2160} playerState={topHudStoryPlayerState()} />
+};
+
+export const MobilePhoneLandscape: Story = {
+  render: () => <MobilePlatformStory width={852} height={393} platform="ios" />
+};
+
+export const MobileTabletLandscape: Story = {
+  render: () => <MobilePlatformStory width={1180} height={820} platform="android" />
+};
+
+export const MobileSafeAreas: Story = {
+  render: () => <MobilePlatformStory width={932} height={430} platform="ios" />
+};
+
+export const MobileLandscapeGameplay: Story = {
+  render: () => <MobilePlatformStory width={812} height={375} platform="ios" />
+};
+
+export const MobilePortraitWarning: Story = {
+  render: () => <MobilePlatformStory width={393} height={852} platform="ios" portrait />
+};
+
+export const MobileTouchTargets: Story = {
+  render: () => <MobilePlatformStory width={736} height={360} platform="android" />
 };
 
 function SettingsStory({ variant }: { variant: "guest" | "authenticated" | "pending" | "offline" | "conflict" }) {

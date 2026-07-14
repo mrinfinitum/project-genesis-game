@@ -2793,6 +2793,597 @@
     "version": "balance-v1"
   },
   "clientProfiles": {
+    "android": {
+      "accessibilityProfile": {
+        "highContrast": true,
+        "minimumTouchTarget": 48,
+        "noHoverRequired": true,
+        "reducedMotion": true,
+        "screenReaderLabelsRequired": true,
+        "switchInput": true
+      },
+      "assetDensityProfile": {
+        "derivativeRules": [
+          {
+            "compression": "balanced",
+            "maxDimension": 512,
+            "scale": "1x"
+          },
+          {
+            "compression": "balanced",
+            "maxDimension": 1024,
+            "scale": "2x"
+          },
+          {
+            "compression": "quality",
+            "maxDimension": 1536,
+            "scale": "3x"
+          }
+        ],
+        "lowResolutionPolicy": "Do not upscale low-resolution Roblox PNGs; mark low-resolution warning and request source art.",
+        "preferredFormats": [
+          "WebP",
+          "PNG",
+          "JPG",
+          "SVG"
+        ],
+        "requiredScales": [
+          "1x",
+          "2x",
+          "3x"
+        ],
+        "sourcePolicy": "Generate mobile derivatives from canonical PSD/PSB/SVG/AI masters when available."
+      },
+      "authenticationProfile": {
+        "accountDeletionTracked": true,
+        "secretsExported": false,
+        "signInWithApple": "available_if_supported",
+        "supportedFlows": [
+          "guest",
+          "email_password",
+          "magic_link",
+          "google_login",
+          "sign_in_with_apple",
+          "account_conversion",
+          "password_reset",
+          "account_deletion",
+          "deep_link_callback",
+          "universal_app_link_callback"
+        ]
+      },
+      "availableGlowEnabled": true,
+      "canonicalDesignSize": {
+        "height": 1080,
+        "unit": "logical_px",
+        "width": 1920
+      },
+      "dashboardLayoutProfile": {
+        "autoClick": "adjacent_touch_control",
+        "boostsDrawer": "bottom_safe_area_drawer",
+        "clickPower": "large_touch_target",
+        "criticalStats": "compact_or_drawer",
+        "eraRail": "compact_current_journey",
+        "hero": "dominant",
+        "leftNavigation": "collapsible",
+        "objective": "compact_panel",
+        "rightColumnPanels": "drawer_or_compact_stack",
+        "settingsModal": "safe_bounds_fullscreen_sheet",
+        "topHud": "fixed_order_safe_area_aware",
+        "upgrades": "touch_friendly_rows"
+      },
+      "defaultUpgradeRowsVisible": 6,
+      "effectsProfile": {
+        "controls": {
+          "backgroundAnimation": "tiered",
+          "blur": "reduced_on_mobile_low",
+          "glowIntensity": "scaled_by_tier",
+          "heroMotion": "subtle",
+          "particles": "limited",
+          "reducedMotionDefault": false,
+          "ringAnimation": "reduced_motion_aware",
+          "shadowComplexity": "tiered",
+          "simultaneousAnimationCount": 6
+        },
+        "defaultTier": "mobile_standard",
+        "tiers": [
+          "mobile_low",
+          "mobile_standard",
+          "mobile_high",
+          "tablet_high"
+        ]
+      },
+      "eraNavigation": {
+        "allowPrimaryHorizontalScroll": false,
+        "dashboardMode": "current_journey",
+        "fullTimelineEnabled": true,
+        "visibleEraCount": 3
+      },
+      "futureUpgradeTeaserCount": 3,
+      "hudProfile": {
+        "compactNumberFormatting": true,
+        "economyOrder": [
+          "ECON-LABOR",
+          "ECON-CREDITS",
+          "ECON-POPULATION",
+          "ECON-RESEARCH",
+          "ECON-PREMIUM-CRYSTALS"
+        ],
+        "iconSize": 24,
+        "labelVisibility": "optional",
+        "minimumTouchTarget": 48,
+        "overflowBehavior": "Preserve all five economies; compress labels and values before moving overflow into an accessible drawer.",
+        "rateSize": 11,
+        "rightSideUtilitySpacing": 12,
+        "slotCompression": "compact_numbers",
+        "slotWidth": 116,
+        "valueSize": 15
+      },
+      "inputCapabilities": {
+        "accessibilitySwitchInput": true,
+        "controller": "future_in_progress",
+        "keyboard": true,
+        "mouse": true,
+        "primary": "touch",
+        "touch": true
+      },
+      "lifecycleProfile": {
+        "events": [
+          "launch",
+          "background",
+          "foreground",
+          "pause",
+          "resume",
+          "interruption",
+          "force_close",
+          "network_lost",
+          "network_restored",
+          "orientation_change"
+        ],
+        "gameplayRuleOwnership": "Client hint only; offline progress rules remain canonical gameplay/service rules.",
+        "presentationHints": [
+          "save_locally_on_background",
+          "queue_cloud_sync",
+          "pause_animations",
+          "calculate_offline_progress_on_resume"
+        ]
+      },
+      "lockedOpacity": 0.55,
+      "mobileAssetRequirements": [
+        {
+          "category": "app_icon",
+          "id": "mobile_app_icon",
+          "label": "NOVERIS app icon",
+          "notes": "Use NOVERIS branding. Do not generate final store artwork unless source art exists.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "app_icon",
+          "id": "mobile_android_adaptive_icon",
+          "label": "Android adaptive icon",
+          "notes": "Foreground/background layers required for Google Play.",
+          "requiredFor": [
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "app_icon",
+          "id": "mobile_ios_icon_set",
+          "label": "iOS app icon set",
+          "notes": "Generate from approved master only.",
+          "requiredFor": [
+            "ios"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "launch",
+          "id": "mobile_splash_screen",
+          "label": "Splash screen",
+          "notes": "NOVERIS / The Future We Build.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "launch",
+          "id": "mobile_launch_background",
+          "label": "Launch background",
+          "notes": "Safe for notches, rounded corners, and home indicators.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "brand",
+          "id": "mobile_noveris_wordmark",
+          "label": "NOVERIS wordmark",
+          "notes": "Canonical product name asset.",
+          "requiredFor": [
+            "ios",
+            "android",
+            "web"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "loading",
+          "id": "mobile_loading_screen",
+          "label": "Mobile loading screen",
+          "notes": "Use approved derivatives only.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "account",
+          "id": "mobile_login_background",
+          "label": "Login background",
+          "notes": "Portrait may be approved for account/login only later.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "store",
+          "id": "mobile_store_feature_graphic",
+          "label": "Google Play feature graphic",
+          "notes": "Store-art requirement only; not runtime gameplay content.",
+          "requiredFor": [
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "store",
+          "id": "mobile_app_store_screenshots",
+          "label": "App Store screenshots",
+          "notes": "Capture from approved mobile UI when ready.",
+          "requiredFor": [
+            "ios"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "store",
+          "id": "mobile_google_play_screenshots",
+          "label": "Google Play screenshots",
+          "notes": "Capture from approved mobile UI when ready.",
+          "requiredFor": [
+            "android"
+          ],
+          "status": "Pending Source Art"
+        }
+      ],
+      "navigationProfile": {
+        "boosts": "bottom_drawer",
+        "leftNavigation": "collapsible",
+        "notes": "Do not shrink desktop density until unreadable; use mobile-specific navigation surfaces.",
+        "rightColumn": "drawer_or_compact_panel",
+        "settings": "modal_or_fullscreen_sheet"
+      },
+      "notificationProfile": {
+        "definitions": [
+          {
+            "category": "production",
+            "cooldownMinutes": 30,
+            "deepLinkDestination": "production",
+            "id": "production_complete",
+            "localizationKey": "notification.production_complete"
+          },
+          {
+            "category": "research",
+            "cooldownMinutes": 30,
+            "deepLinkDestination": "research",
+            "id": "research_complete",
+            "localizationKey": "notification.research_complete"
+          },
+          {
+            "category": "progress",
+            "cooldownMinutes": 60,
+            "deepLinkDestination": "dashboard",
+            "id": "offline_progress_available",
+            "localizationKey": "notification.offline_progress"
+          },
+          {
+            "category": "event",
+            "cooldownMinutes": 120,
+            "deepLinkDestination": "events",
+            "id": "event_starting",
+            "localizationKey": "notification.event_starting"
+          },
+          {
+            "category": "reward",
+            "cooldownMinutes": 1440,
+            "deepLinkDestination": "dashboard",
+            "id": "daily_reward",
+            "localizationKey": "notification.daily_reward"
+          },
+          {
+            "category": "account",
+            "cooldownMinutes": 0,
+            "deepLinkDestination": "cloud-saves",
+            "id": "cloud_conflict",
+            "localizationKey": "notification.cloud_conflict"
+          }
+        ],
+        "optInRequired": true,
+        "sendNotificationsInStudio": false
+      },
+      "orientation": {
+        "notes": "Main dashboard gameplay is landscape only. Portrait may be approved later for account, login, or legal screens.",
+        "portraitAllowedScreens": [
+          "welcome",
+          "login",
+          "signup",
+          "account",
+          "legal"
+        ],
+        "primary": "landscape",
+        "supported": [
+          "landscape-left",
+          "landscape-right"
+        ]
+      },
+      "platform": "android",
+      "primaryHudResources": [
+        "ECON-LABOR",
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_2_econ_credits",
+          "order": 2,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_3_econ_population",
+          "order": 3,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
+      "purchaseProfile": {
+        "acknowledgePurchases": true,
+        "premiumEconomyId": "ECON-PREMIUM-CRYSTALS",
+        "provider": "Google Play Billing",
+        "purchaseVerificationRequired": true,
+        "restorePurchases": true,
+        "secretsExported": false,
+        "serverAuthoritative": true
+      },
+      "safeAreaPolicy": {
+        "bottomDrawerSafeOffset": 28,
+        "criticalControlSafeZone": "Essential buttons, HUD values, and purchase/account controls must stay inside safe bounds.",
+        "decorativeOverflowAllowance": "Hero art, glows, particles, and background decoration may overflow when clipped safely.",
+        "minimumEdgePadding": 16,
+        "modalSafeBounds": "Insets plus 24 logical px on phones, 32 logical px on tablets.",
+        "notes": "No essential control may sit beneath a notch, camera island, rounded corner, or home indicator.",
+        "supportsAndroidDisplayCutouts": true,
+        "supportsBottomInset": true,
+        "supportsCameraCutout": true,
+        "supportsHomeIndicator": true,
+        "supportsLeftInset": true,
+        "supportsRightInset": true,
+        "supportsRoundedCorners": true,
+        "supportsTopInset": true,
+        "topHudSafeOffset": 20
+      },
+      "scalingMode": "responsive_safe_area_fit",
+      "showUnknownUpgradeSlots": true,
+      "supportedDeviceClasses": [
+        {
+          "compactLayoutRules": [
+            "Collapse left navigation into menu button.",
+            "Move right-column panels into drawers.",
+            "Show current and next era only in compact journey."
+          ],
+          "hudScale": 0.82,
+          "id": "phone_compact",
+          "minimumLogicalHeight": 320,
+          "minimumLogicalWidth": 667,
+          "safeAreaPadding": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "targetAspectRange": "1.78-2.25",
+          "touchScale": 1,
+          "typographyScale": 0.9
+        },
+        {
+          "compactLayoutRules": [
+            "Use compact HUD labels.",
+            "Keep upgrades in touch-friendly rows.",
+            "Use bottom drawer for boosts and settings."
+          ],
+          "hudScale": 0.88,
+          "id": "phone_standard",
+          "minimumLogicalHeight": 360,
+          "minimumLogicalWidth": 736,
+          "safeAreaPadding": {
+            "bottom": 24,
+            "left": 22,
+            "right": 22,
+            "top": 22
+          },
+          "targetAspectRange": "1.78-2.35",
+          "touchScale": 1,
+          "typographyScale": 0.95
+        },
+        {
+          "compactLayoutRules": [
+            "Allow slim side navigation.",
+            "Keep critical stats visible when space permits.",
+            "Use drawers for dense right-column content."
+          ],
+          "hudScale": 0.94,
+          "id": "phone_large",
+          "minimumLogicalHeight": 375,
+          "minimumLogicalWidth": 812,
+          "safeAreaPadding": {
+            "bottom": 26,
+            "left": 24,
+            "right": 24,
+            "top": 24
+          },
+          "targetAspectRange": "1.78-2.4",
+          "touchScale": 1.05,
+          "typographyScale": 1
+        },
+        {
+          "compactLayoutRules": [
+            "Use tablet split panels.",
+            "Keep fixed HUD order visible.",
+            "Allow compact right column."
+          ],
+          "hudScale": 1,
+          "id": "tablet_standard",
+          "minimumLogicalHeight": 640,
+          "minimumLogicalWidth": 1024,
+          "safeAreaPadding": {
+            "bottom": 24,
+            "left": 24,
+            "right": 24,
+            "top": 24
+          },
+          "targetAspectRange": "1.33-1.78",
+          "touchScale": 1.05,
+          "typographyScale": 1.05
+        },
+        {
+          "compactLayoutRules": [
+            "Use near-desktop density with touch sizing.",
+            "Keep hero and current journey visible.",
+            "Avoid unreadable compressed labels."
+          ],
+          "hudScale": 1.08,
+          "id": "tablet_large",
+          "minimumLogicalHeight": 740,
+          "minimumLogicalWidth": 1180,
+          "safeAreaPadding": {
+            "bottom": 28,
+            "left": 28,
+            "right": 28,
+            "top": 28
+          },
+          "targetAspectRange": "1.33-1.78",
+          "touchScale": 1.08,
+          "typographyScale": 1.08
+        }
+      ],
+      "touchProfile": {
+        "doubleTapPolicy": "Reserved for explicit zoom/inspect surfaces only.",
+        "dragThreshold": 8,
+        "gestureConflictRules": [
+          "Click Power tap wins over panel swipe.",
+          "Drawers consume vertical swipes only from drag handles.",
+          "Era rail horizontal gestures must not block core tap actions."
+        ],
+        "hoverFallback": "All hover-only detail must also open on tap/focus.",
+        "longPressBehavior": "Secondary details or tooltip; never required for essential actions.",
+        "minimumTouchTarget": 48,
+        "swipeThreshold": 36,
+        "tapFeedback": "Immediate pressed state with audio/haptic hooks optional per client settings.",
+        "tooltipActivation": "Tap info icon, focus, or long-press on nonessential metadata.",
+        "touchPadding": 8
+      },
+      "typographyProfile": {
+        "buttonSize": 15,
+        "compactNumberFormatting": true,
+        "descriptionSize": 13,
+        "dynamicTypePolicy": "Respect accessibility scaling; allow modal/detail screens to scroll.",
+        "hudValueSize": 15,
+        "legalAccountSize": 14,
+        "minimumReadableSize": 12,
+        "modalTitleSize": 20,
+        "multilineRules": "Allow descriptions and legal/account copy to wrap.",
+        "panelTitleSize": 18,
+        "rateSize": 11,
+        "tooltipSize": 12,
+        "truncationRules": "Truncate optional metadata only; never truncate essential economy values without compact formatting."
+      }
+    },
     "default": {
       "availableGlowEnabled": true,
       "defaultUpgradeRowsVisible": 4,
@@ -2986,6 +3577,597 @@
         }
       ],
       "showUnknownUpgradeSlots": true
+    },
+    "ios": {
+      "accessibilityProfile": {
+        "highContrast": true,
+        "minimumTouchTarget": 48,
+        "noHoverRequired": true,
+        "reducedMotion": true,
+        "screenReaderLabelsRequired": true,
+        "switchInput": true
+      },
+      "assetDensityProfile": {
+        "derivativeRules": [
+          {
+            "compression": "balanced",
+            "maxDimension": 512,
+            "scale": "1x"
+          },
+          {
+            "compression": "balanced",
+            "maxDimension": 1024,
+            "scale": "2x"
+          },
+          {
+            "compression": "quality",
+            "maxDimension": 1536,
+            "scale": "3x"
+          }
+        ],
+        "lowResolutionPolicy": "Do not upscale low-resolution Roblox PNGs; mark low-resolution warning and request source art.",
+        "preferredFormats": [
+          "WebP",
+          "PNG",
+          "JPG",
+          "SVG"
+        ],
+        "requiredScales": [
+          "1x",
+          "2x",
+          "3x"
+        ],
+        "sourcePolicy": "Generate mobile derivatives from canonical PSD/PSB/SVG/AI masters when available."
+      },
+      "authenticationProfile": {
+        "accountDeletionTracked": true,
+        "secretsExported": false,
+        "signInWithApple": "required_for_ios_when_social_login_present",
+        "supportedFlows": [
+          "guest",
+          "email_password",
+          "magic_link",
+          "google_login",
+          "sign_in_with_apple",
+          "account_conversion",
+          "password_reset",
+          "account_deletion",
+          "deep_link_callback",
+          "universal_app_link_callback"
+        ]
+      },
+      "availableGlowEnabled": true,
+      "canonicalDesignSize": {
+        "height": 1080,
+        "unit": "logical_px",
+        "width": 1920
+      },
+      "dashboardLayoutProfile": {
+        "autoClick": "adjacent_touch_control",
+        "boostsDrawer": "bottom_safe_area_drawer",
+        "clickPower": "large_touch_target",
+        "criticalStats": "compact_or_drawer",
+        "eraRail": "compact_current_journey",
+        "hero": "dominant",
+        "leftNavigation": "collapsible",
+        "objective": "compact_panel",
+        "rightColumnPanels": "drawer_or_compact_stack",
+        "settingsModal": "safe_bounds_fullscreen_sheet",
+        "topHud": "fixed_order_safe_area_aware",
+        "upgrades": "touch_friendly_rows"
+      },
+      "defaultUpgradeRowsVisible": 6,
+      "effectsProfile": {
+        "controls": {
+          "backgroundAnimation": "tiered",
+          "blur": "reduced_on_mobile_low",
+          "glowIntensity": "scaled_by_tier",
+          "heroMotion": "subtle",
+          "particles": "limited",
+          "reducedMotionDefault": false,
+          "ringAnimation": "reduced_motion_aware",
+          "shadowComplexity": "tiered",
+          "simultaneousAnimationCount": 8
+        },
+        "defaultTier": "mobile_high",
+        "tiers": [
+          "mobile_low",
+          "mobile_standard",
+          "mobile_high",
+          "tablet_high"
+        ]
+      },
+      "eraNavigation": {
+        "allowPrimaryHorizontalScroll": false,
+        "dashboardMode": "current_journey",
+        "fullTimelineEnabled": true,
+        "visibleEraCount": 3
+      },
+      "futureUpgradeTeaserCount": 3,
+      "hudProfile": {
+        "compactNumberFormatting": true,
+        "economyOrder": [
+          "ECON-LABOR",
+          "ECON-CREDITS",
+          "ECON-POPULATION",
+          "ECON-RESEARCH",
+          "ECON-PREMIUM-CRYSTALS"
+        ],
+        "iconSize": 24,
+        "labelVisibility": "optional",
+        "minimumTouchTarget": 48,
+        "overflowBehavior": "Preserve all five economies; compress labels and values before moving overflow into an accessible drawer.",
+        "rateSize": 11,
+        "rightSideUtilitySpacing": 12,
+        "slotCompression": "compact_numbers",
+        "slotWidth": 116,
+        "valueSize": 15
+      },
+      "inputCapabilities": {
+        "accessibilitySwitchInput": true,
+        "controller": "future_in_progress",
+        "keyboard": true,
+        "mouse": true,
+        "primary": "touch",
+        "touch": true
+      },
+      "lifecycleProfile": {
+        "events": [
+          "launch",
+          "background",
+          "foreground",
+          "pause",
+          "resume",
+          "interruption",
+          "force_close",
+          "network_lost",
+          "network_restored",
+          "orientation_change"
+        ],
+        "gameplayRuleOwnership": "Client hint only; offline progress rules remain canonical gameplay/service rules.",
+        "presentationHints": [
+          "save_locally_on_background",
+          "queue_cloud_sync",
+          "pause_animations",
+          "calculate_offline_progress_on_resume"
+        ]
+      },
+      "lockedOpacity": 0.55,
+      "mobileAssetRequirements": [
+        {
+          "category": "app_icon",
+          "id": "mobile_app_icon",
+          "label": "NOVERIS app icon",
+          "notes": "Use NOVERIS branding. Do not generate final store artwork unless source art exists.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "app_icon",
+          "id": "mobile_android_adaptive_icon",
+          "label": "Android adaptive icon",
+          "notes": "Foreground/background layers required for Google Play.",
+          "requiredFor": [
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "app_icon",
+          "id": "mobile_ios_icon_set",
+          "label": "iOS app icon set",
+          "notes": "Generate from approved master only.",
+          "requiredFor": [
+            "ios"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "launch",
+          "id": "mobile_splash_screen",
+          "label": "Splash screen",
+          "notes": "NOVERIS / The Future We Build.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "launch",
+          "id": "mobile_launch_background",
+          "label": "Launch background",
+          "notes": "Safe for notches, rounded corners, and home indicators.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "brand",
+          "id": "mobile_noveris_wordmark",
+          "label": "NOVERIS wordmark",
+          "notes": "Canonical product name asset.",
+          "requiredFor": [
+            "ios",
+            "android",
+            "web"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "loading",
+          "id": "mobile_loading_screen",
+          "label": "Mobile loading screen",
+          "notes": "Use approved derivatives only.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "account",
+          "id": "mobile_login_background",
+          "label": "Login background",
+          "notes": "Portrait may be approved for account/login only later.",
+          "requiredFor": [
+            "ios",
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "store",
+          "id": "mobile_store_feature_graphic",
+          "label": "Google Play feature graphic",
+          "notes": "Store-art requirement only; not runtime gameplay content.",
+          "requiredFor": [
+            "android"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "store",
+          "id": "mobile_app_store_screenshots",
+          "label": "App Store screenshots",
+          "notes": "Capture from approved mobile UI when ready.",
+          "requiredFor": [
+            "ios"
+          ],
+          "status": "Pending Source Art"
+        },
+        {
+          "category": "store",
+          "id": "mobile_google_play_screenshots",
+          "label": "Google Play screenshots",
+          "notes": "Capture from approved mobile UI when ready.",
+          "requiredFor": [
+            "android"
+          ],
+          "status": "Pending Source Art"
+        }
+      ],
+      "navigationProfile": {
+        "boosts": "bottom_drawer",
+        "leftNavigation": "collapsible",
+        "notes": "Do not shrink desktop density until unreadable; use mobile-specific navigation surfaces.",
+        "rightColumn": "drawer_or_compact_panel",
+        "settings": "modal_or_fullscreen_sheet"
+      },
+      "notificationProfile": {
+        "definitions": [
+          {
+            "category": "production",
+            "cooldownMinutes": 30,
+            "deepLinkDestination": "production",
+            "id": "production_complete",
+            "localizationKey": "notification.production_complete"
+          },
+          {
+            "category": "research",
+            "cooldownMinutes": 30,
+            "deepLinkDestination": "research",
+            "id": "research_complete",
+            "localizationKey": "notification.research_complete"
+          },
+          {
+            "category": "progress",
+            "cooldownMinutes": 60,
+            "deepLinkDestination": "dashboard",
+            "id": "offline_progress_available",
+            "localizationKey": "notification.offline_progress"
+          },
+          {
+            "category": "event",
+            "cooldownMinutes": 120,
+            "deepLinkDestination": "events",
+            "id": "event_starting",
+            "localizationKey": "notification.event_starting"
+          },
+          {
+            "category": "reward",
+            "cooldownMinutes": 1440,
+            "deepLinkDestination": "dashboard",
+            "id": "daily_reward",
+            "localizationKey": "notification.daily_reward"
+          },
+          {
+            "category": "account",
+            "cooldownMinutes": 0,
+            "deepLinkDestination": "cloud-saves",
+            "id": "cloud_conflict",
+            "localizationKey": "notification.cloud_conflict"
+          }
+        ],
+        "optInRequired": true,
+        "sendNotificationsInStudio": false
+      },
+      "orientation": {
+        "notes": "Main dashboard gameplay is landscape only. Portrait may be approved later for account, login, or legal screens.",
+        "portraitAllowedScreens": [
+          "welcome",
+          "login",
+          "signup",
+          "account",
+          "legal"
+        ],
+        "primary": "landscape",
+        "supported": [
+          "landscape-left",
+          "landscape-right"
+        ]
+      },
+      "platform": "ios",
+      "primaryHudResources": [
+        "ECON-LABOR",
+        "ECON-CREDITS",
+        "ECON-POPULATION",
+        "ECON-RESEARCH",
+        "ECON-PREMIUM-CRYSTALS"
+      ],
+      "primaryHudSlots": [
+        {
+          "compactLabel": "Labor",
+          "economyId": "ECON-LABOR",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_labor",
+          "id": "hud_slot_1_econ_labor",
+          "order": 1,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Credits",
+          "economyId": "ECON-CREDITS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_credits",
+          "id": "hud_slot_2_econ_credits",
+          "order": 2,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Population",
+          "economyId": "ECON-POPULATION",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_population",
+          "id": "hud_slot_3_econ_population",
+          "order": 3,
+          "premium": false,
+          "showRate": false
+        },
+        {
+          "compactLabel": "Research",
+          "economyId": "ECON-RESEARCH",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_research",
+          "id": "hud_slot_4_econ_research",
+          "order": 4,
+          "premium": false,
+          "showRate": true
+        },
+        {
+          "compactLabel": "Premium Crystals",
+          "economyId": "ECON-PREMIUM-CRYSTALS",
+          "formatting": {
+            "decimals": 0,
+            "prefix": "",
+            "style": "compact",
+            "suffix": ""
+          },
+          "iconKey": "economy_premium_crystals",
+          "id": "hud_slot_5_econ_premium_crystals",
+          "order": 5,
+          "premium": true,
+          "showRate": false
+        }
+      ],
+      "purchaseProfile": {
+        "acknowledgePurchases": false,
+        "premiumEconomyId": "ECON-PREMIUM-CRYSTALS",
+        "provider": "StoreKit",
+        "purchaseVerificationRequired": true,
+        "restorePurchases": true,
+        "secretsExported": false,
+        "serverAuthoritative": true
+      },
+      "safeAreaPolicy": {
+        "bottomDrawerSafeOffset": 28,
+        "criticalControlSafeZone": "Essential buttons, HUD values, and purchase/account controls must stay inside safe bounds.",
+        "decorativeOverflowAllowance": "Hero art, glows, particles, and background decoration may overflow when clipped safely.",
+        "minimumEdgePadding": 16,
+        "modalSafeBounds": "Insets plus 24 logical px on phones, 32 logical px on tablets.",
+        "notes": "No essential control may sit beneath a notch, camera island, rounded corner, or home indicator.",
+        "supportsAndroidDisplayCutouts": true,
+        "supportsBottomInset": true,
+        "supportsCameraCutout": true,
+        "supportsHomeIndicator": true,
+        "supportsLeftInset": true,
+        "supportsRightInset": true,
+        "supportsRoundedCorners": true,
+        "supportsTopInset": true,
+        "topHudSafeOffset": 20
+      },
+      "scalingMode": "responsive_safe_area_fit",
+      "showUnknownUpgradeSlots": true,
+      "supportedDeviceClasses": [
+        {
+          "compactLayoutRules": [
+            "Collapse left navigation into menu button.",
+            "Move right-column panels into drawers.",
+            "Show current and next era only in compact journey."
+          ],
+          "hudScale": 0.82,
+          "id": "phone_compact",
+          "minimumLogicalHeight": 320,
+          "minimumLogicalWidth": 667,
+          "safeAreaPadding": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "targetAspectRange": "1.78-2.25",
+          "touchScale": 1,
+          "typographyScale": 0.9
+        },
+        {
+          "compactLayoutRules": [
+            "Use compact HUD labels.",
+            "Keep upgrades in touch-friendly rows.",
+            "Use bottom drawer for boosts and settings."
+          ],
+          "hudScale": 0.88,
+          "id": "phone_standard",
+          "minimumLogicalHeight": 360,
+          "minimumLogicalWidth": 736,
+          "safeAreaPadding": {
+            "bottom": 24,
+            "left": 22,
+            "right": 22,
+            "top": 22
+          },
+          "targetAspectRange": "1.78-2.35",
+          "touchScale": 1,
+          "typographyScale": 0.95
+        },
+        {
+          "compactLayoutRules": [
+            "Allow slim side navigation.",
+            "Keep critical stats visible when space permits.",
+            "Use drawers for dense right-column content."
+          ],
+          "hudScale": 0.94,
+          "id": "phone_large",
+          "minimumLogicalHeight": 375,
+          "minimumLogicalWidth": 812,
+          "safeAreaPadding": {
+            "bottom": 26,
+            "left": 24,
+            "right": 24,
+            "top": 24
+          },
+          "targetAspectRange": "1.78-2.4",
+          "touchScale": 1.05,
+          "typographyScale": 1
+        },
+        {
+          "compactLayoutRules": [
+            "Use tablet split panels.",
+            "Keep fixed HUD order visible.",
+            "Allow compact right column."
+          ],
+          "hudScale": 1,
+          "id": "tablet_standard",
+          "minimumLogicalHeight": 640,
+          "minimumLogicalWidth": 1024,
+          "safeAreaPadding": {
+            "bottom": 24,
+            "left": 24,
+            "right": 24,
+            "top": 24
+          },
+          "targetAspectRange": "1.33-1.78",
+          "touchScale": 1.05,
+          "typographyScale": 1.05
+        },
+        {
+          "compactLayoutRules": [
+            "Use near-desktop density with touch sizing.",
+            "Keep hero and current journey visible.",
+            "Avoid unreadable compressed labels."
+          ],
+          "hudScale": 1.08,
+          "id": "tablet_large",
+          "minimumLogicalHeight": 740,
+          "minimumLogicalWidth": 1180,
+          "safeAreaPadding": {
+            "bottom": 28,
+            "left": 28,
+            "right": 28,
+            "top": 28
+          },
+          "targetAspectRange": "1.33-1.78",
+          "touchScale": 1.08,
+          "typographyScale": 1.08
+        }
+      ],
+      "touchProfile": {
+        "doubleTapPolicy": "Reserved for explicit zoom/inspect surfaces only.",
+        "dragThreshold": 8,
+        "gestureConflictRules": [
+          "Click Power tap wins over panel swipe.",
+          "Drawers consume vertical swipes only from drag handles.",
+          "Era rail horizontal gestures must not block core tap actions."
+        ],
+        "hoverFallback": "All hover-only detail must also open on tap/focus.",
+        "longPressBehavior": "Secondary details or tooltip; never required for essential actions.",
+        "minimumTouchTarget": 48,
+        "swipeThreshold": 36,
+        "tapFeedback": "Immediate pressed state with audio/haptic hooks optional per client settings.",
+        "tooltipActivation": "Tap info icon, focus, or long-press on nonessential metadata.",
+        "touchPadding": 8
+      },
+      "typographyProfile": {
+        "buttonSize": 15,
+        "compactNumberFormatting": true,
+        "descriptionSize": 13,
+        "dynamicTypePolicy": "Respect accessibility scaling; allow modal/detail screens to scroll.",
+        "hudValueSize": 15,
+        "legalAccountSize": 14,
+        "minimumReadableSize": 12,
+        "modalTitleSize": 20,
+        "multilineRules": "Allow descriptions and legal/account copy to wrap.",
+        "panelTitleSize": 18,
+        "rateSize": 11,
+        "tooltipSize": 12,
+        "truncationRules": "Truncate optional metadata only; never truncate essential economy values without compact formatting."
+      }
     },
     "roblox": {
       "availableGlowEnabled": true,
@@ -3850,8 +5032,8 @@
   ],
   "metadata": {
     "accessLevel": "public-published",
-    "checksum": "869b72f7e627beedffb856c55191ee695d7068e8d9b13b110396c660bf097b8d",
-    "contentVersion": 10,
+    "checksum": "9a910ba0e5df5d08c09e028a2db6a7ec609b91998d4589241ac08f69a3a1fedd",
+    "contentVersion": 11,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

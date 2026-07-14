@@ -40,10 +40,10 @@ function runtimeState(runtime: GameRuntimeData, configuredMode: RuntimeContentSt
 }
 
 describe("dashboard canonical model", () => {
-  it("loads contentVersion 10 and resolves the canonical nine-era journey", async () => {
+  it("loads contentVersion 11 and resolves the canonical nine-era journey", async () => {
     const runtime = await bundledRuntime();
 
-    expect(runtime.metadata.contentVersion).toBe(10);
+    expect(runtime.metadata.contentVersion).toBe(11);
     expect(runtime.eras).toHaveLength(9);
 
     expect(getCurrentJourney(runtime.eras, "survival")).toMatchObject({

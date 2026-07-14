@@ -43,6 +43,7 @@ import {
   type CloudSyncMetadata
 } from "@/lib/supabase";
 import { classifySave, compareSaves, shouldShowConflict, useGameStartup } from "@/lib/startup";
+import { lifecycleService } from "@/platform";
 import {
   AccountRoute,
   ForgotPasswordRoute,
@@ -568,18 +569,38 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
     function retryOnline() {
       void syncCloudNow(playerRuntime, "online-retry");
     }
-    function flushOnHidden() {
-      if (document.visibilityState === "hidden" && cloudSync.dirty) {
-        void syncCloudNow(playerRuntime, "visibility-hidden");
-      }
+    function backgroundSave() {
+      let savedRuntime = playerRuntime;
+      setPlayerRuntime((current) => {
+        savedRuntime = service.autosave({
+          ...current,
+          lastSimulationAt: new Date().toISOString()
+        });
+        return savedRuntime;
+      });
+      setRuntimeStatus((current) => ({ ...current, isSimulationRunning: false }));
+      updateCloudSync({ dirty: true, pendingRetry: true, pendingRetryReason: "background-save" });
+      if (cloudSync.dirty) void syncCloudNow(savedRuntime, "lifecycle-background");
     }
-    window.addEventListener("online", retryOnline);
-    document.addEventListener("visibilitychange", flushOnHidden);
+    function foregroundResume() {
+      setPlayerRuntime((current) => service.save(advanceSimulation(data, current), false));
+      setRuntimeStatus((current) => ({
+        ...current,
+        isSimulationRunning: runtimeStatus.hydrationComplete && !startupConflict,
+        disabledReason: runtimeStatus.hydrationComplete ? undefined : current.disabledReason
+      }));
+      if (cloudSync.pendingRetry || cloudSync.dirty) void syncCloudNow(playerRuntime, "lifecycle-foreground");
+    }
+
+    const unsubscribeOnline = lifecycleService.on("network_restored", retryOnline);
+    const unsubscribeBackground = lifecycleService.on("background", backgroundSave);
+    const unsubscribeForeground = lifecycleService.on("foreground", foregroundResume);
     return () => {
-      window.removeEventListener("online", retryOnline);
-      document.removeEventListener("visibilitychange", flushOnHidden);
+      unsubscribeOnline();
+      unsubscribeBackground();
+      unsubscribeForeground();
     };
-  }, [cloudSync.dirty, playerRuntime, syncCloudNow]);
+  }, [cloudSync.dirty, cloudSync.pendingRetry, data, playerRuntime, runtimeStatus.hydrationComplete, service, startupConflict, syncCloudNow, updateCloudSync]);
 
   const actions = useMemo<PlayerRuntimeActions>(
     () => ({
