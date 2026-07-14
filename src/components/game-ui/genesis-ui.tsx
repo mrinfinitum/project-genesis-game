@@ -1564,15 +1564,15 @@ function SettingsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/72 p-4 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
+      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/82 p-4 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
       data-testid="settings-backdrop"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <style>{`@keyframes settingsFade{from{opacity:0}to{opacity:1}}@keyframes settingsScale{from{opacity:.6;transform:scale(.965)}to{opacity:1;transform:scale(1)}}`}</style>
-      <section ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="settings-title" data-testid="settings-modal" className="grid h-[min(700px,calc(100dvh-32px))] w-[min(1060px,calc(100dvw-32px))] grid-cols-[220px_1fr] overflow-hidden rounded-sm border border-cyan-200/30 bg-slate-950/96 text-cyan-50 shadow-[0_0_52px_rgba(34,211,238,0.18),inset_0_0_28px_rgba(8,145,178,0.12)] animate-[settingsScale_220ms_ease-out]">
-        <nav className="border-r border-cyan-200/18 bg-black/30 p-4">
+      <section ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="settings-title" data-testid="settings-modal" className="grid h-[min(700px,calc(100dvh-32px))] w-[min(1060px,calc(100dvw-32px))] grid-cols-[220px_1fr] overflow-hidden rounded-sm border border-cyan-200/34 bg-slate-950/98 text-cyan-50 shadow-[0_0_52px_rgba(34,211,238,0.2),inset_0_0_30px_rgba(8,145,178,0.14)] animate-[settingsScale_220ms_ease-out]">
+        <nav className="border-r border-cyan-200/20 bg-black/46 p-4">
           <div id="settings-title" className="mb-4 text-sm font-black uppercase tracking-[0.28em] text-cyan-100/75">Settings</div>
           <SettingsProfileButton
             account={account}
