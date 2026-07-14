@@ -323,6 +323,11 @@ describe("Roblox left column geometry", () => {
     expectInside("0,0,350,270", screen.getByTestId("auto-click-stat-block").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-button").getAttribute("data-rojo-rect") ?? "");
     expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "51,72,122,122");
+    expect(screen.getByTestId("auto-click-ring").querySelector(".genesis-auto-robot")).toHaveStyle({
+      width: "58%",
+      height: "58%"
+    });
+    expect(screen.getByTestId("auto-click-robot-blink")).toBeInTheDocument();
     expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "198,72,122,120");
     expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "33,209,286,47");
   });

@@ -876,6 +876,10 @@ export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, 
   const glow = variant === "auto" ? "rgba(52,245,106,0.42)" : "rgba(45,212,255,0.48)";
   const FallbackIcon = variant === "auto" ? Bot : MousePointerClick;
   const centerSize = `${centerScale}%`;
+  const blinkStyle = {
+    "--genesis-robot-blink-duration": "6.73s",
+    "--genesis-robot-blink-delay": "1.37s"
+  } as CSSProperties;
 
   return (
     <button
@@ -915,12 +919,19 @@ export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, 
         />
       ) : null}
       {centerPath ? (
-        <img
-          src={centerPath}
-          alt=""
-          className="relative object-contain transition-transform group-active:scale-90"
-          style={{ width: centerSize, height: centerSize }}
-        />
+        variant === "auto" ? (
+          <span className="genesis-auto-robot relative block transition-transform group-active:scale-90" style={{ width: centerSize, height: centerSize, ...blinkStyle }}>
+            <img src={centerPath} alt="" className="h-full w-full object-contain" />
+            <span className="genesis-auto-robot-blink" data-testid="auto-click-robot-blink" aria-hidden="true" />
+          </span>
+        ) : (
+          <img
+            src={centerPath}
+            alt=""
+            className="relative object-contain transition-transform group-active:scale-90"
+            style={{ width: centerSize, height: centerSize }}
+          />
+        )
       ) : (
         <FallbackIcon className={`relative ${variant === "auto" ? "text-emerald-100" : "text-cyan-100"}`} style={{ width: centerSize, height: centerSize }} />
       )}
@@ -1023,7 +1034,7 @@ export function AutoClickPanel({
         outerArt={art.dashboard_auto_ring}
         centerArt={art.dashboard_auto_robot}
         variant="auto"
-        centerScale={43}
+        centerScale={58}
         active={autoEnabled}
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
