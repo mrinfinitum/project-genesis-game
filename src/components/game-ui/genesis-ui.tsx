@@ -1248,10 +1248,10 @@ const settingsTabs: Array<{ id: SettingsTabId; label: string }> = [
 ];
 
 function topHudTitleFontSize(title: string) {
-  if (title.length > 28) return 22;
-  if (title.length > 22) return 25;
-  if (title.length > 16) return 29;
-  return 34;
+  if (title.length > 28) return 21;
+  if (title.length > 22) return 23;
+  if (title.length > 16) return 25;
+  return 28;
 }
 
 function SettingsButton({ children, tone = "default", disabled = false, onClick }: { children: ReactNode; tone?: "default" | "danger" | "muted"; disabled?: boolean; onClick?: () => void }) {
@@ -1628,11 +1628,11 @@ function SettingsModal({
 
 function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsClick, settingsButtonRef }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean; onSettingsClick?: () => void; settingsButtonRef?: RefObject<HTMLButtonElement | null> }) {
   const resourceSlots = [
-    { x: 438, w: 270, iconX: 28, valueX: 104, textW: 150 },
-    { x: 725, w: 270, iconX: 30, valueX: 106, textW: 150 },
-    { x: 1013, w: 270, iconX: 22, valueX: 98, textW: 150 },
-    { x: 1290, w: 245, iconX: 18, valueX: 94, textW: 134 },
-    { x: 1548, w: 185, iconX: 4, valueX: 82, textW: 90 }
+    { x: 420, w: 290, iconX: 26, valueX: 102, textW: 150 },
+    { x: 720, w: 290, iconX: 28, valueX: 104, textW: 150 },
+    { x: 1022, w: 285, iconX: 26, valueX: 98, textW: 150 },
+    { x: 1315, w: 270, iconX: 22, valueX: 90, textW: 132 },
+    { x: 1582, w: 185, iconX: 20, valueX: 86, textW: 76 }
   ];
   const hudResources = model.hudResources.slice(0, resourceSlots.length);
   const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
@@ -1651,16 +1651,16 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
         ))}
       </div>
 
-      <div className="absolute top-0 min-w-0" style={{ left: 92, width: 345, height: "100%" }} data-testid="top-hud-civilization-identity">
+      <div className="absolute top-0 min-w-0" style={{ left: 58, width: 390, height: "100%" }} data-testid="top-hud-civilization-identity">
         <div
-          className="absolute left-[10px] top-[13px] w-[320px] truncate font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
+          className="absolute left-[10px] top-[18px] w-[360px] truncate font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
           data-testid="top-hud-civilization-title"
           style={{ fontSize: civilizationTitleFontSize }}
           title={civilizationTitle}
         >
           {civilizationTitle}
         </div>
-        <div data-testid="top-hud-civilization-era" className="absolute left-[10px] top-[57px] w-[320px] truncate text-[22px] font-medium leading-none text-cyan-50/84">Era 1 - {shortEraName(model.currentEra)}</div>
+        <div data-testid="top-hud-civilization-era" className="absolute left-[10px] top-[64px] w-[360px] truncate text-[21px] font-medium leading-none text-cyan-50/84">Era 1 - {shortEraName(model.currentEra)}</div>
       </div>
 
       {showDevWarnings && model.economyWarnings.length ? (
@@ -1675,9 +1675,9 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
           const icon = resolveTopHudIcon(resource, assets, art);
           return (
           <div key={resource.resourceId} className="absolute top-0 h-full min-w-0" style={{ left: `${(slot.x / 1920) * 100}%`, width: `${(slot.w / 1920) * 100}%` }}>
-            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="h-[60px] w-[60px]" style={{ left: slot.iconX, top: 24 }} />
-            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate text-[36px] font-semibold leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={{ left: slot.valueX, top: 18, width: slot.textW }}>{compactNumber(resource.amount)}</div>
-            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate text-[20px] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 63, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
+            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="h-[48px] w-[48px]" style={{ left: slot.iconX, top: 32 }} />
+            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate text-[31px] font-semibold leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={{ left: slot.valueX, top: 24, width: slot.textW }}>{compactNumber(resource.amount)}</div>
+            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate text-[17px] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 64, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
           </div>
           );
       })}

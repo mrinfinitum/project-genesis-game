@@ -354,12 +354,12 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toBe(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS").getAttribute("src"));
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toContain("leaf");
     expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle({
-      left: "92px",
-      width: "345px"
+      left: "58px",
+      width: "390px"
     });
     expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("left-[10px]");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("top-[13px]");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[320px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("top-[18px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[360px]");
     expect(screen.getByTestId("top-hud-left-utility-1")).toHaveStyle({
       left: "50px",
       top: "8px"
@@ -416,12 +416,12 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveTextContent("5.39K");
     expect(screen.getByTestId("top-hud-economy-value-ECON-RESEARCH")).toHaveTextContent("1.84M");
     expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveTextContent("+1/s");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("h-[60px]");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[60px]");
-    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[36px]");
-    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[20px]");
-    expect(screen.getByTestId("top-hud-civilization-title").style.fontSize).toBe("22px");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[320px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("h-[48px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[48px]");
+    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[31px]");
+    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[17px]");
+    expect(screen.getByTestId("top-hud-civilization-title").style.fontSize).toBe("21px");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[360px]");
     expect(screen.getByTestId("top-hud-civilization-title")).toHaveAttribute("title", "The Really Long Civilization Name");
   });
 
