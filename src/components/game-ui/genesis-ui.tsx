@@ -84,6 +84,7 @@ type PlayerRuntimeDashboardActions = {
   grantTestResearch: () => void;
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
+  selectAiAgent?: (agentId: string) => void;
   activateBoost?: (definitionId: string) => void;
 };
 
@@ -726,6 +727,14 @@ function dashboardImagePath(art: DashboardArtResolution) {
   return art.path;
 }
 
+function dashboardArtByArtKey(art: DashboardArtMap, artKey: string | undefined, fallbackKey: DashboardArtKey) {
+  if (artKey) {
+    const match = Object.values(art).find((item) => item.artKey === artKey || item.key === artKey);
+    if (match) return match;
+  }
+  return art[fallbackKey];
+}
+
 const reportedDashboardAssetFailures = new Set<string>();
 
 function useDashboardAssetDiagnostics(artAudit: DashboardArtResolution[]) {
@@ -852,11 +861,17 @@ export function BeveledActionButton({ art, label, tone, disabled = false, active
 type RotatingControlRingProps = {
   outerArt: DashboardArtResolution;
   centerArt: DashboardArtResolution;
+  centerBlinkArt?: DashboardArtResolution;
   middleArt?: DashboardArtResolution;
   innerArt?: DashboardArtResolution;
   variant: "click" | "auto";
   centerScale?: number;
   active?: boolean;
+  blinkEnabled?: boolean;
+  blinkMinSeconds?: number;
+  blinkMaxSeconds?: number;
+  blinkDurationMs?: number;
+  doubleBlinkChance?: number;
   disabled?: boolean;
   pulseKey?: number;
   onActivate?: () => void;
@@ -869,18 +884,79 @@ function ringDurationStyle(seconds: number): CSSProperties {
   return { "--genesis-ring-duration": `${seconds}s` } as CSSProperties;
 }
 
-export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, variant, centerScale = 31, active = true, disabled = false, pulseKey = 0, onActivate, className = "", "data-testid": dataTestId, "data-rojo-rect": dataRojoRect }: RotatingControlRingProps) {
+function useAiAgentBlink({
+  active,
+  enabled,
+  minSeconds,
+  maxSeconds,
+  durationMs,
+  doubleBlinkChance
+}: {
+  active: boolean;
+  enabled: boolean;
+  minSeconds: number;
+  maxSeconds: number;
+  durationMs: number;
+  doubleBlinkChance: number;
+}) {
+  const [blinking, setBlinking] = useState(false);
+
+  useEffect(() => {
+    if (!active || !enabled || typeof window === "undefined") {
+      return undefined;
+    }
+
+    let timeoutId: number | undefined;
+    let cancelled = false;
+    const min = Math.max(1, Math.min(minSeconds, maxSeconds));
+    const max = Math.max(min, maxSeconds);
+
+    const schedule = () => {
+      const delay = (min + Math.random() * (max - min)) * 1000;
+      timeoutId = window.setTimeout(() => {
+        if (cancelled || document.hidden) {
+          schedule();
+          return;
+        }
+        setBlinking(true);
+        const doubleBlink = Math.random() < Math.max(0, Math.min(1, doubleBlinkChance));
+        window.setTimeout(() => {
+          if (!cancelled) setBlinking(false);
+          if (doubleBlink && !cancelled) {
+            window.setTimeout(() => {
+              if (!cancelled) setBlinking(true);
+              window.setTimeout(() => {
+                if (!cancelled) setBlinking(false);
+                if (!cancelled) schedule();
+              }, durationMs);
+            }, durationMs * 2);
+          } else if (!cancelled) {
+            schedule();
+          }
+        }, durationMs);
+      }, delay);
+    };
+
+    schedule();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [active, doubleBlinkChance, durationMs, enabled, maxSeconds, minSeconds]);
+
+  return active && enabled && blinking;
+}
+
+export function RotatingControlRing({ outerArt, centerArt, centerBlinkArt, middleArt, innerArt, variant, centerScale = 31, active = true, blinkEnabled = true, blinkMinSeconds = 4.8, blinkMaxSeconds = 8.4, blinkDurationMs = 120, doubleBlinkChance = 0.18, disabled = false, pulseKey = 0, onActivate, className = "", "data-testid": dataTestId, "data-rojo-rect": dataRojoRect }: RotatingControlRingProps) {
   const outerPath = dashboardImagePath(outerArt);
   const middlePath = middleArt ? dashboardImagePath(middleArt) : undefined;
   const innerPath = innerArt ? dashboardImagePath(innerArt) : undefined;
   const centerPath = dashboardImagePath(centerArt);
+  const blinkPath = centerBlinkArt ? dashboardImagePath(centerBlinkArt) : undefined;
   const glow = variant === "auto" ? "rgba(52,245,106,0.42)" : "rgba(45,212,255,0.48)";
   const FallbackIcon = variant === "auto" ? Bot : MousePointerClick;
   const centerSize = `${centerScale}%`;
-  const blinkStyle = {
-    "--genesis-robot-blink-duration": "6.73s",
-    "--genesis-robot-blink-delay": "1.37s"
-  } as CSSProperties;
+  const shouldBlink = useAiAgentBlink({ active: variant === "auto" && active, enabled: blinkEnabled && Boolean(blinkPath), minSeconds: blinkMinSeconds, maxSeconds: blinkMaxSeconds, durationMs: blinkDurationMs, doubleBlinkChance });
 
   return (
     <button
@@ -921,9 +997,9 @@ export function RotatingControlRing({ outerArt, centerArt, middleArt, innerArt, 
       ) : null}
       {centerPath ? (
         variant === "auto" ? (
-          <span className="genesis-auto-robot relative block transition-transform group-active:scale-90" style={{ width: centerSize, height: centerSize, ...blinkStyle }}>
-            <img src={centerPath} alt="" className="h-full w-full object-contain" />
-            <span className="genesis-auto-robot-blink" data-testid="auto-click-robot-blink" aria-hidden="true" />
+          <span className="genesis-auto-robot relative block transition-transform group-active:scale-90" style={{ width: centerSize, height: centerSize }}>
+            <img src={shouldBlink && blinkPath ? blinkPath : centerPath} alt="" data-testid="auto-click-robot-portrait" data-agent-expression={shouldBlink ? "blink" : "open"} className="h-full w-full object-contain" />
+            <span className="sr-only" data-testid="auto-click-robot-blink">{shouldBlink ? "Blinking" : "Open eyes"}</span>
           </span>
         ) : (
           <img
@@ -1017,40 +1093,68 @@ export function ClickPowerPanel({
 export function AutoClickPanel({
   model,
   art,
-  onToggle
+  onToggle,
+  onSelectAgent
 }: {
   model: DashboardModel;
   art: DashboardArtMap;
   onToggle?: () => void;
+  onSelectAgent?: (agentId: string) => void;
 }) {
+  const [profileOpen, setProfileOpen] = useState(false);
   const hasAutomation = Boolean(model.playerState.automation);
   const autoEnabled = model.playerState.automation?.enabled === true;
+  const aiAgent = model.playerState.aiAgent;
+  const presentation = aiAgent?.presentation ?? {
+    title: "AI Agent",
+    assistanceLabel: "Labor Assistance",
+    onlineLabel: "Agent: Online",
+    offlineLabel: "Agent: Offline",
+    statusOnlineLabel: "Online",
+    statusOfflineLabel: "Offline",
+    profileTitle: "AI Agent Profile"
+  };
+  const agentAsset = aiAgent?.asset;
+  const ringArt = dashboardArtByArtKey(art, agentAsset?.ringArtKey, "dashboard_auto_ring");
+  const openArt = dashboardArtByArtKey(art, autoEnabled ? agentAsset?.openArtKey : agentAsset?.offlineArtKey, "dashboard_auto_robot");
+  const blinkArt = dashboardArtByArtKey(art, agentAsset?.blinkArtKey, "auto_robot_blink_icon");
   const autoArt = autoEnabled ? art.dashboard_auto_button_on : art.dashboard_auto_button_off;
+  const selectedAgentName = aiAgent?.name ?? "Noveris Assistant";
+  const canSelectAgent = aiAgent?.availability.available !== false;
 
   return (
     <section data-testid="auto-click-panel" className="absolute left-0 top-[344px] h-[270px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.auto.x},${LEFT_COLUMN_GEOMETRY.auto.y},${LEFT_COLUMN_GEOMETRY.auto.width},${LEFT_COLUMN_GEOMETRY.auto.height}`}>
-      <h2 className="absolute left-[38px] top-[31px] h-[31px] w-[250px] text-[20px] font-black uppercase leading-[1.85rem] text-cyan-100/90">Auto Click</h2>
+      <button type="button" className="absolute left-[38px] top-[31px] h-[31px] w-[250px] text-left text-[20px] font-black uppercase leading-[1.85rem] text-cyan-100/90 transition hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-cyan-100/70" onClick={() => setProfileOpen(true)} data-testid="ai-agent-title-button">
+        {presentation.title}
+      </button>
       <HelpIconButton art={art.dashboard_help_icon} className="absolute right-[22px] top-[33px] h-[18px] w-[18px]" />
       <RotatingControlRing
-        outerArt={art.dashboard_auto_ring}
-        centerArt={art.dashboard_auto_robot}
+        outerArt={ringArt}
+        centerArt={openArt}
+        centerBlinkArt={blinkArt}
         variant="auto"
         centerScale={58}
         active={autoEnabled}
+        blinkEnabled={Boolean(aiAgent?.animation.blinkEnabled && !aiAgent.animation.reducedAnimation && (autoEnabled || aiAgent.animation.blinkWhenOffline))}
+        blinkMinSeconds={aiAgent?.animation.blinkMinSeconds}
+        blinkMaxSeconds={aiAgent?.animation.blinkMaxSeconds}
+        blinkDurationMs={aiAgent?.animation.blinkDurationMs}
+        doubleBlinkChance={aiAgent?.animation.doubleBlinkChance}
         disabled={!hasAutomation}
-        onActivate={hasAutomation ? onToggle : undefined}
+        onActivate={hasAutomation ? () => setProfileOpen(true) : undefined}
         data-testid="auto-click-ring"
         data-rojo-rect="51,72,122,122"
         className="left-[51px] top-[72px] h-[122px] w-[122px]"
       />
       <div data-testid="auto-click-stat-block" data-rojo-rect="198,72,122,120" className="absolute left-[198px] top-[72px] h-[120px] w-[122px] text-center">
-        <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
+        <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">{presentation.assistanceLabel}</div>
         <div className="mt-[14px] text-[32px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
         <div className="mt-[14px] text-[18px] font-black uppercase leading-none text-cyan-200">Per/S</div>
+        <div className="mt-[8px] truncate text-[10px] font-black uppercase leading-none text-cyan-100/48">{selectedAgentName}</div>
       </div>
       <BeveledActionButton
         art={autoArt}
-        label={autoEnabled ? "AUTO: ON" : "AUTO: OFF"}
+        label={autoEnabled ? presentation.onlineLabel : presentation.offlineLabel}
         tone={hasAutomation ? (autoEnabled ? "green" : "muted") : "muted"}
         active={autoEnabled}
         disabled={!hasAutomation}
@@ -1059,6 +1163,35 @@ export function AutoClickPanel({
         data-rojo-rect="33,209,286,47"
         className="absolute left-[33px] top-[209px] h-[47px] w-[286px]"
       />
+      {profileOpen ? (
+        <div className="absolute left-[10px] top-[10px] z-40 h-[248px] w-[330px] rounded-sm border border-cyan-100/45 bg-[rgba(3,13,28,0.98)] p-4 shadow-[0_0_36px_rgba(34,211,238,0.18)]" data-testid="ai-agent-profile-modal" role="dialog" aria-modal="true" aria-label={presentation.profileTitle}>
+          <button type="button" aria-label="Close AI Agent profile" className="absolute right-3 top-3 rounded-sm border border-cyan-100/25 bg-black/30 p-1 text-cyan-50" onClick={() => setProfileOpen(false)}>
+            <X className="h-4 w-4" />
+          </button>
+          <div className="text-[18px] font-black uppercase leading-none text-cyan-50">{presentation.profileTitle}</div>
+          <div className="mt-4 grid grid-cols-[88px_1fr] gap-4">
+            <div className="relative h-[88px] w-[88px] rounded-full border border-cyan-100/25 bg-black/45">
+              {dashboardImagePath(openArt) ? <img src={dashboardImagePath(openArt)} alt="" className="h-full w-full object-contain p-4" /> : <Bot className="m-6 h-10 w-10 text-cyan-100" />}
+            </div>
+            <div>
+              <div className="truncate text-[16px] font-black uppercase text-white">{selectedAgentName}</div>
+              <div className="mt-1 text-[11px] font-black uppercase text-cyan-100/55">{aiAgent?.rarity ?? "Common"} · {aiAgent?.personality ?? "Supportive"}</div>
+              <div className={`mt-3 inline-flex items-center gap-2 rounded-sm border px-2 py-1 text-[10px] font-black uppercase ${autoEnabled ? "border-emerald-200/35 bg-emerald-400/10 text-emerald-100" : "border-white/20 bg-white/5 text-cyan-100/60"}`}>
+                <span className={`h-2 w-2 rounded-full ${autoEnabled ? "bg-emerald-300" : "bg-cyan-100/35"}`} />
+                {autoEnabled ? presentation.statusOnlineLabel : presentation.statusOfflineLabel}
+              </div>
+            </div>
+          </div>
+          <p className="mt-4 line-clamp-2 text-[11px] font-semibold leading-5 text-cyan-50/62">{aiAgent?.description ?? "Automation remains unchanged. This companion represents the existing Labor assistance system."}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <SettingsButton disabled={!canSelectAgent || !onSelectAgent} onClick={() => {
+              if (canSelectAgent && aiAgent) onSelectAgent?.(aiAgent.selectedAiAgentId);
+              setProfileOpen(false);
+            }}>Select Agent</SettingsButton>
+            <SettingsButton onClick={() => setProfileOpen(false)}>Return</SettingsButton>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1247,12 +1380,13 @@ function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, classN
   );
 }
 
-type SettingsTabId = "general" | "account" | "cloud" | "graphics" | "audio" | "gameplay" | "controls" | "about";
+type SettingsTabId = "general" | "account" | "cloud" | "ai-agent" | "graphics" | "audio" | "gameplay" | "controls" | "about";
 
 const settingsTabs: Array<{ id: SettingsTabId; label: string }> = [
   { id: "general", label: "General" },
   { id: "account", label: "Account" },
   { id: "cloud", label: "Cloud Saves" },
+  { id: "ai-agent", label: "AI Agent" },
   { id: "graphics", label: "Graphics" },
   { id: "audio", label: "Audio" },
   { id: "gameplay", label: "Gameplay" },
@@ -1402,6 +1536,8 @@ function SettingsModal({
   const saveSource = cloudSync?.activeSaveSource ?? playerRuntime?.runtimeLoadReport.loadedFrom ?? "new_game";
   const profileDisplayName = resolveProfileDisplayName(account);
   const profileCivilizationName = resolveProfileCivilizationName(model, playerRuntime);
+  const aiAgent = model.playerState.aiAgent;
+  const aiAgentPresentation = aiAgent?.presentation;
 
   useEffect(() => {
     if (!open) return;
@@ -1532,6 +1668,24 @@ function SettingsModal({
             <SettingsButton tone="danger" disabled={!authenticated || !playerRuntimeActions?.deleteCloudSave} onClick={() => setPendingDanger("delete-cloud")}>Delete Cloud Save</SettingsButton>
             <SettingsButton tone="danger" onClick={() => setPendingDanger("reset")}>Reset to Canonical New Game</SettingsButton>
           </div>
+        </div>
+      </>
+    ),
+    "ai-agent": (
+      <>
+        <SettingsRow label="Selected Agent" value={aiAgent?.name ?? "Noveris Assistant"} />
+        <SettingsRow label="Agent Online/Offline" value={model.playerState.automation?.enabled ? aiAgentPresentation?.statusOnlineLabel ?? "Online" : aiAgentPresentation?.statusOfflineLabel ?? "Offline"} />
+        <SettingsRow label="Labor Assistance" value={model.playerState.automation ? `${compactNumber(model.playerState.automation.amountPerSecond)}/s` : "Unavailable"} />
+        <SettingsRow label="Personality" value={aiAgent?.personality ?? "Supportive"} />
+        <SettingsRow label="Rarity" value={aiAgent?.rarity ?? "Common"} />
+        <SettingsRow label="Blink Enabled" value={playerRuntime?.aiAgent.blinkEnabled === false ? "Off" : "On"} />
+        <SettingsRow label="Reduced Animation" value={playerRuntime?.aiAgent.reducedAnimation ? "On" : "Off"} />
+        <SettingsRow label="Unlock Condition" value={aiAgent?.availability.locked ? aiAgent.availability.reason ?? "Locked" : "Available"} />
+        <SettingsRow label="Eye Color" value="Coming Soon" />
+        <SettingsRow label="Personality Tuning" value="Coming Soon" />
+        <div className="mt-5 grid max-w-[24rem] gap-2">
+          <SettingsButton onClick={playerRuntimeActions?.toggleAutomation}>{model.playerState.automation?.enabled ? aiAgentPresentation?.offlineLabel ?? "Agent: Offline" : aiAgentPresentation?.onlineLabel ?? "Agent: Online"}</SettingsButton>
+          <SettingsButton tone="muted" disabled>Customize Agent</SettingsButton>
         </div>
       </>
     ),
@@ -1938,7 +2092,7 @@ function RobloxLeftColumn({
         />
       ) : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
       <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} controlsEnabled={runtimeStatus?.controlsEnabled ?? true} pressed={clickPressed} pulseKey={clickPulseKey} />
-      <AutoClickPanel model={model} art={art} onToggle={runtimeStatus?.controlsEnabled === false ? undefined : handleAutoToggle} />
+      <AutoClickPanel model={model} art={art} onToggle={runtimeStatus?.controlsEnabled === false ? undefined : handleAutoToggle} onSelectAgent={playerRuntimeActions?.selectAiAgent} />
 
       <section data-testid="critical-stats-panel" className="absolute left-0 top-[638px] h-[185px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.critical.x},${LEFT_COLUMN_GEOMETRY.critical.y},${LEFT_COLUMN_GEOMETRY.critical.width},${LEFT_COLUMN_GEOMETRY.critical.height}`}>
         {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] text-amber-100" />}
@@ -2700,7 +2854,7 @@ function dashboardDataAudit(model: DashboardModel) {
     { label: "economy warnings", source: model.economyWarnings.length ? "canonical runtime validation" : "canonical runtime", value: model.economyWarnings.length ? model.economyWarnings.join("; ") : "none" },
     { label: "economy amounts/rates", source: model.hudResources.length ? model.playerState.source : "missing source/default zero", value: model.hudResources.length ? model.playerState.sourceLabel : "default zero" },
     { label: "click power", source: model.playerState.clickOutput ? model.playerState.source : "missing source", value: model.playerState.clickOutput ? compactNumber(model.playerState.clickOutput.amount) : "missing" },
-    { label: "auto-click power", source: model.playerState.automation ? model.playerState.source : "missing source", value: model.playerState.automation ? compactNumber(model.playerState.automation.amountPerSecond) : "missing" },
+    { label: "AI Agent assistance", source: model.playerState.automation ? model.playerState.source : "missing source", value: model.playerState.automation ? compactNumber(model.playerState.automation.amountPerSecond) : "missing" },
     { label: "critical stats", source: model.playerState.criticalStats ? model.playerState.source : "missing source", value: model.playerState.criticalStats ? `${model.playerState.criticalStats.chancePercent}% / x${model.playerState.criticalStats.multiplier}` : "missing" },
     { label: "objective", source: model.playerState.objective ? model.playerState.source : "missing source", value: model.playerState.objective?.title ?? "missing" },
     { label: "era journey", source: "canonical Studio definitions", value: model.journey.current.displayName },
@@ -2720,7 +2874,7 @@ const dashboardScaleAssetAudit = [
   { key: "dashboard_top_hud", label: "Top HUD", designWidth: 1920, designHeight: 108, nativeWidth: 1920, nativeHeight: 104 },
   { key: "clicker_hud_background", label: "Clicker panel", designWidth: 350, designHeight: 823, nativeWidth: 350, nativeHeight: 780 },
   { key: "dashboard_click_button", label: "Click button", designWidth: 312, designHeight: 66, nativeWidth: 329, nativeHeight: 81 },
-  { key: "dashboard_auto_button_on", label: "Auto button on", designWidth: 312, designHeight: 55, nativeWidth: 329, nativeHeight: 62 },
+  { key: "dashboard_auto_button_on", label: "Agent online button", designWidth: 312, designHeight: 55, nativeWidth: 329, nativeHeight: 62 },
   { key: "upgrade_panel_structure", label: "Upgrade panel", designWidth: ROBLOX_DASHBOARD_LAYOUT.upgrades.width, designHeight: ROBLOX_DASHBOARD_LAYOUT.upgrades.height, nativeWidth: 920, nativeHeight: 420 },
   { key: "leaderboard_panel", label: "Leaderboard panel", designWidth: 425, designHeight: 422, nativeWidth: 852, nativeHeight: 606 },
   { key: "active_event_panel", label: "Event panel", designWidth: 425, designHeight: 201, nativeWidth: 1005, nativeHeight: 510 },
@@ -3140,7 +3294,7 @@ function DashboardDataArtInspector({
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResearch}>Grant Research</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.grantTestResources}>Grant All</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.performManualLaborClick}>Manual Labor</button>
-              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.toggleAutomation}>Toggle Auto</button>
+              <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={playerRuntimeActions.toggleAutomation}>Toggle Agent</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={exportSave}>Export</button>
               <button className="rounded-sm border border-cyan-200/25 bg-cyan-300/10 px-2 py-1 font-black uppercase" onClick={() => importInputRef.current?.click()}>Import</button>
               <button className="col-span-3 rounded-sm border border-rose-200/30 bg-rose-300/10 px-2 py-1 font-black uppercase text-rose-100" onClick={playerRuntimeActions.resetSave}>Reset to Canonical New Game</button>
@@ -3514,7 +3668,7 @@ export function RobloxParityReview({
   const backgroundAudit = [
     ["Navigation", "dashboard_nav_background", "Roblox background image"],
     ["Click Power", "dashboard_click_panel_background", "Roblox integrated clicker HUD"],
-    ["Auto Click", "dashboard_auto_panel_background", "Roblox integrated clicker HUD"],
+    ["AI Agent", "dashboard_auto_panel_background", "Roblox integrated clicker HUD"],
     ["Critical Chance", "dashboard_critical_panel_background", "Roblox integrated clicker HUD"],
     ["Hero Frame", "dashboard_city_hero", "Roblox background image"],
     ["Top HUD", "dashboard_top_hud", "Roblox background image"],

@@ -15,6 +15,10 @@ import {
   PlayerRuntimeLocalSaveService,
   playerRuntimeToDashboardPlayerState,
   PLAYER_RUNTIME_SAVE_VERSION,
+  FALLBACK_AI_AGENT_ID,
+  resolveAiAgentAvailability,
+  resolveAiAgentAnimationProfile,
+  resolveSelectedAiAgent,
   resolvePrimaryEconomyIdForCurrentEra,
   resolveAlignmentIdentity,
   selectClickPower,
@@ -28,6 +32,7 @@ import {
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID, RESEARCH_ECONOMY_ID } from "@/lib/player-runtime/economy";
 import { PLAYER_RUNTIME_SAVE_KEY } from "@/lib/player-runtime/local-save";
 import { BrowserKeyValueStore, MemoryKeyValueStore, readJson } from "@/lib/connected-single-player/storage";
+import { serializePlayerRuntimeForCloud } from "@/lib/supabase/save-adapter";
 
 async function bundledRuntime() {
   const runtime = await getBundledStudioRuntimeSnapshot();
@@ -81,6 +86,8 @@ describe("canonical player runtime", () => {
     expect(state.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
     expect(state.economy.balances[RESEARCH_ECONOMY_ID]).toBe(0);
     expect(state.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
+    expect(state.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(state.aiAgent.blinkEnabled).toBe(true);
     expect(Object.keys(state.resources.inventory)).toEqual(getInventoryResources(runtime).map((resource) => resource.id));
     expect(Object.keys(state.resources.inventory)).not.toContain(LABOR_ECONOMY_ID);
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
@@ -134,6 +141,7 @@ describe("canonical player runtime", () => {
     expect(autosaved.revision).toBeGreaterThan(reloaded.revision);
     expect(imported.ok).toBe(true);
     expect(imported.state?.economy.balances[LABOR_ECONOMY_ID]).toBe(321);
+    expect(imported.state?.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
     expect(imported.state?.runtimeLoadReport.loadedFrom).toBe("Imported Save");
     expect(reset.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
     expect(reset.economy.balances[CREDITS_ECONOMY_ID]).toBe(0);
@@ -146,6 +154,77 @@ describe("canonical player runtime", () => {
     expect(deleted.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
     expect(deleted.runtimeLoadReport.loadedFrom).toBe("Deleted Local Save");
     expect(store.getItem(PLAYER_RUNTIME_SAVE_KEY)).toBeNull();
+  });
+
+  it("migrates missing, valid, and unknown selected AI Agent IDs safely", async () => {
+    const runtime = await bundledRuntime();
+    const oldSave = {
+      ...createNewPlayerRuntimeState(runtime, { now: fixedDate() }),
+      saveVersion: 9
+    };
+    delete (oldSave as Partial<PlayerRuntimeState>).aiAgent;
+
+    const migratedDefault = migratePlayerRuntimeState(oldSave, runtime);
+    expect(migratedDefault.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(migratedDefault.unresolved.migrationNotes.some((note) => note.includes("default AI Agent"))).toBe(true);
+
+    const selected = migratePlayerRuntimeState({
+      ...oldSave,
+      aiAgent: {
+        selectedAiAgentId: FALLBACK_AI_AGENT_ID,
+        blinkEnabled: false,
+        reducedAnimation: true
+      }
+    }, runtime);
+    expect(selected.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(selected.aiAgent.blinkEnabled).toBe(false);
+    expect(selected.aiAgent.reducedAnimation).toBe(true);
+
+    const unknown = migratePlayerRuntimeState({
+      ...oldSave,
+      aiAgent: {
+        selectedAiAgentId: "studio-agent-not-yet-in-web",
+        blinkEnabled: true,
+        reducedAnimation: false
+      }
+    }, runtime);
+    expect(unknown.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(unknown.unresolved.selectedAiAgentId).toBe("studio-agent-not-yet-in-web");
+  });
+
+  it("persists selected AI Agent metadata through local and cloud serialization", async () => {
+    const runtime = await bundledRuntime();
+    const store = new MemoryKeyValueStore();
+    const service = new PlayerRuntimeLocalSaveService(runtime, store);
+    const state = {
+      ...createNewPlayerRuntimeState(runtime, { now: fixedDate() }),
+      aiAgent: {
+        selectedAiAgentId: FALLBACK_AI_AGENT_ID,
+        blinkEnabled: false,
+        reducedAnimation: true
+      }
+    };
+
+    const saved = service.save(state);
+    const cloud = serializePlayerRuntimeForCloud(saved);
+    const reloaded = new PlayerRuntimeLocalSaveService(runtime, store).loadOrCreate();
+
+    expect(reloaded.aiAgent).toEqual(saved.aiAgent);
+    expect(cloud.player_state.aiAgent).toEqual(saved.aiAgent);
+  });
+
+  it("resolves AI Agent selectors with fallback art and canonical animation defaults", async () => {
+    const runtime = await bundledRuntime();
+    const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
+    const selected = resolveSelectedAiAgent(runtime, state);
+    const animation = resolveAiAgentAnimationProfile(runtime, state);
+    const locked = resolveAiAgentAvailability(runtime, "locked-agent", state);
+
+    expect(selected.agent.id).toBe(FALLBACK_AI_AGENT_ID);
+    expect(selected.source).toBe("fallback");
+    expect(animation.blinkMinSeconds).toBeGreaterThan(0);
+    expect(locked.available).toBe(false);
+    expect(locked.locked).toBe(true);
   });
 
   it("does not throw when browser storage is unavailable", () => {
@@ -544,6 +623,11 @@ describe("canonical player runtime", () => {
     expect(playerState.leaderboard).toBeUndefined();
     expect(playerState.boosts).toEqual([]);
     expect(playerState.civilizationPrediction).toBe("Unaligned");
+    expect(playerState.automation?.label).toBe("AI Agent");
+    expect(playerState.automation?.assistanceLabel).toBe("Labor Assistance");
+    expect(playerState.automation?.onlineLabel).toBe("Agent: Online");
+    expect(playerState.aiAgent?.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(playerState.aiAgent?.asset.openArtKey).toBe("auto_robot_icon");
   });
 
   it("resolves canonical alignment identities only when client profile definitions exist", async () => {

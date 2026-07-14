@@ -97,6 +97,7 @@ type PlayerRuntimeActions = {
   grantTestResearch: () => void;
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
+  selectAiAgent: (agentId: string) => void;
 };
 
 type PlayerRuntimeStatus = {
@@ -722,6 +723,16 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
           production: {
             ...current.production,
             automationEnabled: !current.production.automationEnabled
+          }
+        }));
+      },
+      selectAiAgent(agentId: string) {
+        updateCloudSync({ dirty: true });
+        setPlayerRuntime((current) => service.save({
+          ...current,
+          aiAgent: {
+            ...current.aiAgent,
+            selectedAiAgentId: agentId
           }
         }));
       }

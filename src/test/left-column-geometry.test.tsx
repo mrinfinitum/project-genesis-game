@@ -182,7 +182,8 @@ describe("Roblox left column geometry", () => {
 
     expect(screen.getByTestId("roblox-nav-label-dashboard")).toHaveClass("text-[15px]");
     expect(screen.getByText("Click Power")).toHaveClass("text-[20px]");
-    expect(screen.getByText("Auto Click")).toHaveClass("text-[20px]");
+    expect(screen.getByText("AI Agent")).toHaveClass("text-[20px]");
+    expect(screen.queryByText("Auto Click")).not.toBeInTheDocument();
     expect(screen.getByText("Critical Chance")).toHaveClass("text-[15px]");
   });
 
@@ -223,7 +224,7 @@ describe("Roblox left column geometry", () => {
             perClickLabel: "Per Click"
           },
           automation: {
-            label: "Auto Click",
+            label: "AI Agent",
             amountPerSecond: 0,
             enabled: true
           }
@@ -309,7 +310,7 @@ describe("Roblox left column geometry", () => {
     expect(performManualLaborClick).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps Auto Click controls inside the canonical panel bounds", async () => {
+  it("keeps AI Agent controls inside the canonical panel bounds", async () => {
     const data = await bundledRuntime();
     const model = createDashboardModel(data, {
       activeEraId: data.eras[0]?.id ?? "survival",

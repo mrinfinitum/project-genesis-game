@@ -1,4 +1,4 @@
-export const PLAYER_RUNTIME_SAVE_VERSION = 9;
+export const PLAYER_RUNTIME_SAVE_VERSION = 10;
 
 export type AlignmentKey = "industry" | "technology" | "cyber" | "nature" | "corporate";
 
@@ -23,6 +23,7 @@ export type UnresolvedPlayerRuntimeIds = {
   currentEraId?: string;
   activeObjectiveId?: string;
   activeEventId?: string;
+  selectedAiAgentId?: string;
   boostDefinitionIds: string[];
   migrationNotes: string[];
 };
@@ -92,6 +93,11 @@ export type PlayerRuntimeState = {
     totalAutoClicks: number;
     lifetimeLaborGenerated: number;
     totalAutoLaborGenerated: number;
+  };
+  aiAgent: {
+    selectedAiAgentId: string;
+    blinkEnabled: boolean;
+    reducedAnimation: boolean;
   };
   upgrades: {
     levels: Record<string, number>;

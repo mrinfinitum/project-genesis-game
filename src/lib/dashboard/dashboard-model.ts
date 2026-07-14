@@ -1,6 +1,7 @@
 import type { GameRuntimeData, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { dashboardDemoPlayerState } from "@/content/mock/dashboard-demo-state";
 import { getEconomyWarnings, getPrimaryHudResources } from "@/lib/player-runtime/economy";
+import type { AiAgentAvailability, ResolvedAiAgentAsset } from "@/lib/player-runtime/ai-agent";
 
 export type DashboardPlayerStateSource = "player-runtime" | "default-player-state" | "demo-fixture";
 export type DashboardMode = "canonical" | "demo";
@@ -29,6 +30,36 @@ export type DashboardPlayerState = {
     label: string;
     amountPerSecond: number;
     enabled: boolean;
+    assistanceLabel?: string;
+    onlineLabel?: string;
+    offlineLabel?: string;
+  };
+  aiAgent?: {
+    selectedAiAgentId: string;
+    name: string;
+    personality?: string;
+    rarity?: string;
+    description?: string;
+    presentation: {
+      title: string;
+      assistanceLabel: string;
+      onlineLabel: string;
+      offlineLabel: string;
+      statusOnlineLabel: string;
+      statusOfflineLabel: string;
+      profileTitle: string;
+    };
+    asset: ResolvedAiAgentAsset;
+    animation: {
+      blinkMinSeconds: number;
+      blinkMaxSeconds: number;
+      blinkDurationMs: number;
+      doubleBlinkChance: number;
+      blinkWhenOffline: boolean;
+      blinkEnabled: boolean;
+      reducedAnimation: boolean;
+    };
+    availability: AiAgentAvailability;
   };
   criticalStats?: {
     chancePercent: number;

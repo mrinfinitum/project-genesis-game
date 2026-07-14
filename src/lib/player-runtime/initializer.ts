@@ -1,5 +1,6 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
+import { resolveDefaultAiAgentId } from "./ai-agent";
 import { getEconomyResourceIds, getInventoryResources, getStartingEconomyBalances, getStartingEconomyRates, POPULATION_ECONOMY_ID } from "./economy";
 
 export { getEconomyDefinitions, getEconomyResourceIds, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
@@ -82,6 +83,11 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       lifetimeLaborGenerated: 0,
       totalAutoLaborGenerated: 0
     },
+    aiAgent: {
+      selectedAiAgentId: resolveDefaultAiAgentId(content),
+      blinkEnabled: true,
+      reducedAnimation: false
+    },
     upgrades: {
       levels: Object.fromEntries(content.upgrades.filter((upgrade) => upgrade.defaultLevel > 0).map((upgrade) => [upgrade.id, upgrade.defaultLevel])),
       unlockedIds: content.upgrades.filter((upgrade) => upgrade.defaultLevel > 0 || upgrade.visibilityRules?.defaultState === "available").map((upgrade) => upgrade.id),
@@ -108,6 +114,7 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       upgradeLevels: {},
       unlockedUpgradeIds: [],
       discoveredUpgradeIds: [],
+      selectedAiAgentId: undefined,
       boostDefinitionIds: [],
       migrationNotes: []
     },

@@ -1,6 +1,7 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { CREDITS_ECONOMY_ID, getEconomyResourceIds, getPrimaryHudResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { createNewPlayerRuntimeState } from "./initializer";
+import { resolveSelectedAiAgent } from "./ai-agent";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
 function clone<T>(value: T): T {
@@ -129,6 +130,13 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       ...seed.production,
       ...(record.production ?? {})
     },
+    aiAgent: {
+      ...seed.aiAgent,
+      ...(record.aiAgent && typeof record.aiAgent === "object" ? record.aiAgent : {}),
+      selectedAiAgentId: typeof record.aiAgent?.selectedAiAgentId === "string" ? record.aiAgent.selectedAiAgentId : seed.aiAgent.selectedAiAgentId,
+      blinkEnabled: typeof record.aiAgent?.blinkEnabled === "boolean" ? record.aiAgent.blinkEnabled : seed.aiAgent.blinkEnabled,
+      reducedAnimation: typeof record.aiAgent?.reducedAnimation === "boolean" ? record.aiAgent.reducedAnimation : seed.aiAgent.reducedAnimation
+    },
     upgrades: {
       levels: { ...seed.upgrades.levels, ...normalizeNumberMap(record.upgrades?.levels) },
       unlockedIds: normalizeStringArray(record.upgrades?.unlockedIds).length ? normalizeStringArray(record.upgrades?.unlockedIds) : seed.upgrades.unlockedIds,
@@ -165,6 +173,7 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       currentEraId: typeof record.unresolved?.currentEraId === "string" ? record.unresolved.currentEraId : undefined,
       activeObjectiveId: typeof record.unresolved?.activeObjectiveId === "string" ? record.unresolved.activeObjectiveId : undefined,
       activeEventId: typeof record.unresolved?.activeEventId === "string" ? record.unresolved.activeEventId : undefined,
+      selectedAiAgentId: typeof record.unresolved?.selectedAiAgentId === "string" ? record.unresolved.selectedAiAgentId : undefined,
       boostDefinitionIds: normalizeStringArray(record.unresolved?.boostDefinitionIds),
       migrationNotes: normalizeStringArray(record.unresolved?.migrationNotes)
     },
@@ -267,6 +276,23 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.economy.balances[POPULATION_ECONOMY_ID] = seedPopulation;
       next.civilization.population = seedPopulation;
       next.unresolved.migrationNotes.push(`Repaired stale untouched ${POPULATION_ECONOMY_ID} from 125 to ${seedPopulation}.`);
+    }
+  }
+  if (previousSaveVersion < 10) {
+    const resolved = resolveSelectedAiAgent(content, next);
+    if (resolved.agent.id !== next.aiAgent.selectedAiAgentId) {
+      next.unresolved.selectedAiAgentId = resolved.unresolvedSelectedAiAgentId ?? next.aiAgent.selectedAiAgentId;
+      next.aiAgent.selectedAiAgentId = resolved.agent.id;
+      next.unresolved.migrationNotes.push(`Resolved AI Agent selection to ${resolved.agent.id}.`);
+    } else if (!record.aiAgent || typeof record.aiAgent !== "object") {
+      next.unresolved.migrationNotes.push(`Added default AI Agent selection ${next.aiAgent.selectedAiAgentId}.`);
+    }
+  } else {
+    const resolved = resolveSelectedAiAgent(content, next);
+    if (resolved.agent.id !== next.aiAgent.selectedAiAgentId) {
+      next.unresolved.selectedAiAgentId = resolved.unresolvedSelectedAiAgentId ?? next.aiAgent.selectedAiAgentId;
+      next.aiAgent.selectedAiAgentId = resolved.agent.id;
+      next.unresolved.migrationNotes.push(`Preserved unresolved AI Agent selection ${next.unresolved.selectedAiAgentId}.`);
     }
   }
 

@@ -1,5 +1,6 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import { aiAgentName, aiAgentPersonality, resolveAiAgentAnimationProfile, resolveAiAgentAsset, resolveAiAgentAvailability, resolveAutomationPresentation, resolveSelectedAiAgent } from "./ai-agent";
 import { POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { getPrimaryHudResources } from "./initializer";
 import { resolveUpgradeCost, resolveUpgradeEffect } from "./simulation";
@@ -93,6 +94,10 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
   const now = Date.now();
   const activeBoosts = state.boosts.active.filter((boost) => Date.parse(boost.endsAt) > now);
   const economyBalances = { ...state.economy.balances, [POPULATION_ECONOMY_ID]: selectPopulation(state) };
+  const aiAgent = resolveSelectedAiAgent(content, state).agent;
+  const aiAgentPersonalityDefinition = aiAgentPersonality(content, aiAgent);
+  const automationPresentation = resolveAutomationPresentation(content);
+  const aiAgentAnimation = resolveAiAgentAnimationProfile(content, state);
 
   return {
     source: "player-runtime",
@@ -116,9 +121,39 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
         }
       : undefined,
     automation: {
-      label: "Auto Click",
+      label: automationPresentation.title,
       amountPerSecond: selectAutoClickPower(state),
-      enabled: state.production.automationEnabled
+      enabled: state.production.automationEnabled,
+      assistanceLabel: automationPresentation.assistanceLabel,
+      onlineLabel: automationPresentation.onlineLabel,
+      offlineLabel: automationPresentation.offlineLabel
+    },
+    aiAgent: {
+      selectedAiAgentId: aiAgent.id,
+      name: aiAgentName(aiAgent),
+      personality: aiAgentPersonalityDefinition.displayName ?? aiAgentPersonalityDefinition.name,
+      rarity: aiAgent.rarity,
+      description: aiAgent.description,
+      presentation: {
+        title: automationPresentation.title,
+        assistanceLabel: automationPresentation.assistanceLabel,
+        onlineLabel: automationPresentation.onlineLabel,
+        offlineLabel: automationPresentation.offlineLabel,
+        statusOnlineLabel: automationPresentation.statusOnlineLabel,
+        statusOfflineLabel: automationPresentation.statusOfflineLabel,
+        profileTitle: automationPresentation.profileTitle
+      },
+      asset: resolveAiAgentAsset(content, state),
+      animation: {
+        blinkMinSeconds: aiAgentAnimation.blinkMinSeconds ?? 4.8,
+        blinkMaxSeconds: aiAgentAnimation.blinkMaxSeconds ?? 8.4,
+        blinkDurationMs: aiAgentAnimation.blinkDurationMs ?? 120,
+        doubleBlinkChance: aiAgentAnimation.doubleBlinkChance ?? 0.18,
+        blinkWhenOffline: aiAgentAnimation.blinkWhenOffline === true,
+        blinkEnabled: state.aiAgent.blinkEnabled,
+        reducedAnimation: state.aiAgent.reducedAnimation || aiAgentAnimation.reducedMotion === true
+      },
+      availability: resolveAiAgentAvailability(content, aiAgent.id, state)
     },
     criticalStats: {
       chancePercent: selectCriticalChance(state),

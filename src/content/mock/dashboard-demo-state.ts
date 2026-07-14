@@ -27,7 +27,7 @@ export const dashboardDemoPlayerState: DashboardPlayerState = {
     perClickLabel: "per click"
   },
   automation: {
-    label: "Auto Click",
+    label: "AI Agent",
     amountPerSecond: 42,
     enabled: true
   },

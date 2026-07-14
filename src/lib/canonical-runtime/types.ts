@@ -189,6 +189,61 @@ export interface ClientProfile {
   [key: string]: unknown;
 }
 
+export interface AiAgentAssetKeys {
+  portraitOpen?: string;
+  portraitBlink?: string;
+  portraitClosed?: string;
+  portraitOffline?: string;
+  portraitWorking?: string;
+  ring?: string;
+  [key: string]: unknown;
+}
+
+export interface AiAgentDefinition {
+  id: string;
+  name?: string;
+  displayName?: string;
+  personalityId?: string;
+  animationProfileId?: string;
+  rarity?: string;
+  description?: string;
+  unlockRequirements?: UnlockRequirement;
+  assetKeys?: AiAgentAssetKeys;
+  capabilities?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface AiAgentPersonalityDefinition {
+  id: string;
+  name?: string;
+  displayName?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+export interface AiAgentAnimationProfile {
+  id: string;
+  blinkMinSeconds?: number;
+  blinkMaxSeconds?: number;
+  blinkDurationMs?: number;
+  doubleBlinkChance?: number;
+  blinkWhenOffline?: boolean;
+  reducedMotion?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AutomationPresentation {
+  title?: string;
+  assistanceLabel?: string;
+  onlineLabel?: string;
+  offlineLabel?: string;
+  statusOnlineLabel?: string;
+  statusOfflineLabel?: string;
+  profileTitle?: string;
+  defaultAiAgentId?: string;
+  [key: string]: unknown;
+}
+
 export interface ClientProfiles {
   default: ClientProfile;
   web?: ClientProfile;
@@ -215,6 +270,10 @@ export interface GameRuntimeData {
     [key: string]: unknown;
   };
   economyDefinitions?: PrimaryHudResourceDefinition[];
+  aiAgents?: AiAgentDefinition[];
+  aiAgentPersonalities?: AiAgentPersonalityDefinition[];
+  aiAgentAnimationProfiles?: AiAgentAnimationProfile[];
+  automationPresentation?: AutomationPresentation;
 }
 
 export interface RuntimeValidationResult {

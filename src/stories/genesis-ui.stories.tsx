@@ -84,7 +84,7 @@ function usePanelStoryModel(overrides: Partial<DashboardPlayerState> = {}) {
       perClickLabel: "Per Click"
     },
     automation: {
-      label: "Auto Click",
+      label: "AI Agent",
       amountPerSecond: 25600000,
       enabled: false
     },
@@ -163,7 +163,7 @@ const focusedParityRects = {
   topHud: { label: "Top HUD", rect: { x: 0, y: 0, width: 1920, height: 116 } },
   nav: { label: "Left Navigation", rect: { x: 12, y: 126, width: 160, height: 944 } },
   click: { label: "Click Power", rect: { x: 184, y: 126, width: 350, height: 320 } },
-  auto: { label: "Auto Click", rect: { x: 184, y: 470, width: 350, height: 270 } },
+  auto: { label: "AI Agent", rect: { x: 184, y: 470, width: 350, height: 270 } },
   critical: { label: "Critical Stats", rect: { x: 184, y: 764, width: 350, height: 185 } },
   leftColumn: { label: "Complete Left Column", rect: { x: 12, y: 126, width: 522, height: 944 } },
   heroObjective: { label: "Hero + Objective", rect: { x: 572, y: 139, width: 910, height: 510 } },
@@ -913,18 +913,18 @@ export const ClickPowerMissingPlayerState: Story = {
   }
 };
 
-export const AutoClickDefaultOff: Story = {
+export const AiAgentPanelOffline: Story = {
   render: () => {
     const { model, art } = usePanelStoryModel();
     return <AutoPanelStoryFrame><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
   }
 };
 
-export const AutoClickActiveOn: Story = {
+export const AiAgentPanelOnline: Story = {
   render: () => {
     const { model, art } = usePanelStoryModel({
       automation: {
-        label: "Auto Click",
+        label: "AI Agent",
         amountPerSecond: 25600000,
         enabled: true
       }
@@ -933,11 +933,11 @@ export const AutoClickActiveOn: Story = {
   }
 };
 
-export const AutoClickHighProduction: Story = {
+export const AiAgentPanelHighAssistance: Story = {
   render: () => {
     const { model, art } = usePanelStoryModel({
       automation: {
-        label: "Auto Click",
+        label: "AI Agent",
         amountPerSecond: 785000000000,
         enabled: true
       }
@@ -946,11 +946,11 @@ export const AutoClickHighProduction: Story = {
   }
 };
 
-export const AutoClickMissingArt: Story = {
+export const AiAgentPanelMissingArt: Story = {
   render: () => {
     const { model, art } = usePanelStoryModel({
       automation: {
-        label: "Auto Click",
+        label: "AI Agent",
         amountPerSecond: 25600000,
         enabled: true
       }
@@ -959,18 +959,18 @@ export const AutoClickMissingArt: Story = {
   }
 };
 
-export const AutoClickMissingPlayerState: Story = {
+export const AiAgentPanelMissingPlayerState: Story = {
   render: () => {
     const { model, art } = usePanelStoryModel({ automation: undefined });
     return <AutoPanelStoryFrame><AutoClickPanel model={model} art={art} /></AutoPanelStoryFrame>;
   }
 };
 
-export const AutoClickReducedMotion: Story = {
+export const AiAgentPanelReducedMotion: Story = {
   render: () => {
     const { model, art } = usePanelStoryModel({
       automation: {
-        label: "Auto Click",
+        label: "AI Agent",
         amountPerSecond: 25600000,
         enabled: true
       }
@@ -987,7 +987,7 @@ export const FocusedParityClickPowerPanel: Story = {
   render: () => <FocusedParityReview focus={focusedParityRects.click} />
 };
 
-export const FocusedParityAutoClickPanel: Story = {
+export const FocusedParityAiAgentPanel: Story = {
   render: () => <FocusedParityReview focus={focusedParityRects.auto} />
 };
 
@@ -1085,52 +1085,52 @@ export const ClickButtonImageDisabled: Story = {
   }
 };
 
-export const AutoButtonImageOn: Story = {
+export const AgentButtonImageOnline: Story = {
   render: () => {
     const { art } = usePanelStoryModel();
-    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_on} label="AUTO: ON" tone="green" active className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_on} label="AGENT: ONLINE" tone="green" active className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
   }
 };
 
-export const AutoButtonImageOff: Story = {
+export const AgentButtonImageOffline: Story = {
   render: () => {
     const { art } = usePanelStoryModel();
-    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_off} label="AUTO: OFF" tone="muted" className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_off} label="AGENT: OFFLINE" tone="muted" className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
   }
 };
 
-export const AutoButtonImageHover: Story = {
+export const AgentButtonImageHover: Story = {
   render: () => {
     const { art } = usePanelStoryModel();
     return (
       <ActionButtonStoryFrame>
         <div className="brightness-110">
-          <BeveledActionButton art={art.dashboard_auto_button_on} label="AUTO: ON" tone="green" active className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" />
+          <BeveledActionButton art={art.dashboard_auto_button_on} label="AGENT: ONLINE" tone="green" active className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" />
         </div>
       </ActionButtonStoryFrame>
     );
   }
 };
 
-export const AutoButtonImagePressed: Story = {
+export const AgentButtonImagePressed: Story = {
   render: () => {
     const { art } = usePanelStoryModel();
-    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_on} label="AUTO: ON" tone="green" pressed className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_on} label="AGENT: ONLINE" tone="green" pressed className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
   }
 };
 
-export const AutoButtonImageDisabled: Story = {
+export const AgentButtonImageDisabled: Story = {
   render: () => {
     const { art } = usePanelStoryModel();
-    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_off} label="AUTO: OFF" tone="muted" disabled className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
+    return <ActionButtonStoryFrame><BeveledActionButton art={art.dashboard_auto_button_off} label="AGENT: OFFLINE" tone="muted" disabled className="absolute left-[9px] top-[7px] h-[55px] w-[312px]" /></ActionButtonStoryFrame>;
   }
 };
 
-export const ClickAndAutoStackedRobloxReference: Story = {
+export const ClickAndAiAgentStackedRobloxReference: Story = {
   render: () => {
     const { data, model, art } = usePanelStoryModel({
       automation: {
-        label: "Auto Click",
+        label: "AI Agent",
         amountPerSecond: 25600000,
         enabled: true
       }

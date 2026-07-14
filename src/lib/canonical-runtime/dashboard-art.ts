@@ -424,6 +424,15 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/UI/click-robot-eyes-open.png",
     sourceStatus: "mapped"
   },
+  auto_robot_blink_icon: {
+    key: "auto_robot_blink_icon",
+    label: "Auto robot blink icon",
+    viteUsage: "AI Agent portrait blink state",
+    artKey: "auto_robot_blink_icon",
+    robloxAssetId: "0",
+    localPath: "/roblox-assets/UI/click-robot-eyes-blink.png",
+    sourceStatus: "mapped"
+  },
   auto_button_on: {
     key: "auto_button_on",
     label: "Auto on button",
