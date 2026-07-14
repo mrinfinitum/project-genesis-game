@@ -1631,11 +1631,11 @@ function SettingsModal({
 
 function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsClick, settingsButtonRef }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean; onSettingsClick?: () => void; settingsButtonRef?: RefObject<HTMLButtonElement | null> }) {
   const resourceSlots = [
-    { x: 460, w: 292, iconX: 34, valueX: 110, textW: 150 },
-    { x: 760, w: 292, iconX: 48, valueX: 126, textW: 146 },
-    { x: 1048, w: 285, iconX: 8, valueX: 78, textW: 150 },
-    { x: 1310, w: 270, iconX: 0, valueX: 68, textW: 132 },
-    { x: 1548, w: 220, iconX: 8, valueX: 74, textW: 110 }
+    { x: 500, w: 292, iconX: 34, valueX: 110, textW: 150 },
+    { x: 810, w: 292, iconX: 48, valueX: 126, textW: 146 },
+    { x: 1010, w: 285, iconX: 0, valueX: 66, textW: 150 },
+    { x: 1260, w: 270, iconX: 0, valueX: 64, textW: 132 },
+    { x: 1500, w: 240, iconX: 0, valueX: 66, textW: 118 }
   ];
   const hudResources = model.hudResources.slice(0, resourceSlots.length);
   const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
@@ -1656,14 +1656,14 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
 
       <div className="absolute top-0 min-w-0" style={{ left: 58, width: 390, height: "100%" }} data-testid="top-hud-civilization-identity">
         <div
-          className="absolute left-[42px] top-[18px] w-[326px] truncate font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
+          className="absolute left-[82px] top-[18px] w-[286px] truncate font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
           data-testid="top-hud-civilization-title"
           style={{ fontSize: civilizationTitleFontSize }}
           title={civilizationTitle}
         >
           {civilizationTitle}
         </div>
-        <div data-testid="top-hud-civilization-era" className="absolute left-[42px] top-[64px] w-[326px] truncate text-[21px] font-medium leading-none text-cyan-50/84">Era 1 - {shortEraName(model.currentEra)}</div>
+        <div data-testid="top-hud-civilization-era" className="absolute left-[82px] top-[64px] w-[286px] truncate text-[21px] font-medium leading-none text-cyan-50/84">Era 1 - {shortEraName(model.currentEra)}</div>
       </div>
 
       {showDevWarnings && model.economyWarnings.length ? (
