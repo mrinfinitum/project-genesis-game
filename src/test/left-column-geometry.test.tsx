@@ -196,7 +196,7 @@ describe("Roblox left column geometry", () => {
 
     expectInside("0,0,350,344", screen.getByTestId("click-power-ring").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,344", screen.getByTestId("click-power-button").getAttribute("data-rojo-rect") ?? "");
-    expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "31,80,162,162");
+    expect(screen.getByTestId("click-power-ring")).toHaveAttribute("data-rojo-rect", "41,84,154,154");
     expect(screen.getByTestId("click-power-stat-block")).toHaveAttribute("data-rojo-rect", "196,82,126,145");
     expect(screen.getByTestId("click-power-button")).toHaveAttribute("data-rojo-rect", "32,250,294,66");
   });
@@ -322,7 +322,7 @@ describe("Roblox left column geometry", () => {
     expectInside("0,0,350,270", screen.getByTestId("auto-click-ring").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-stat-block").getAttribute("data-rojo-rect") ?? "");
     expectInside("0,0,350,270", screen.getByTestId("auto-click-button").getAttribute("data-rojo-rect") ?? "");
-    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "48,82,128,128");
+    expect(screen.getByTestId("auto-click-ring")).toHaveAttribute("data-rojo-rect", "51,72,122,122");
     expect(screen.getByTestId("auto-click-stat-block")).toHaveAttribute("data-rojo-rect", "198,72,122,120");
     expect(screen.getByTestId("auto-click-button")).toHaveAttribute("data-rojo-rect", "33,209,286,47");
   });

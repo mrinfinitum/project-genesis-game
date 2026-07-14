@@ -977,8 +977,8 @@ export function ClickPowerPanel({
         pulseKey={pulseKey}
         onActivate={clickEnabled ? onClick : undefined}
         data-testid="click-power-ring"
-        data-rojo-rect="31,80,162,162"
-        className="left-[31px] top-[80px] h-[162px] w-[162px]"
+        data-rojo-rect="41,84,154,154"
+        className="left-[41px] top-[84px] h-[154px] w-[154px]"
       />
       <div data-testid="click-power-stat-block" data-rojo-rect="196,82,126,145" className="absolute left-[196px] top-[82px] h-[145px] w-[126px] text-center">
         <div className="whitespace-pre-line text-[17px] font-black uppercase leading-[1.04] text-cyan-100/68">{formattedClickLabel(clickResourceLabel)}</div>
@@ -1027,8 +1027,8 @@ export function AutoClickPanel({
         disabled={!hasAutomation}
         onActivate={hasAutomation ? onToggle : undefined}
         data-testid="auto-click-ring"
-        data-rojo-rect="48,82,128,128"
-        className="left-[48px] top-[82px] h-[128px] w-[128px]"
+        data-rojo-rect="51,72,122,122"
+        className="left-[51px] top-[72px] h-[122px] w-[122px]"
       />
       <div data-testid="auto-click-stat-block" data-rojo-rect="198,72,122,120" className="absolute left-[198px] top-[72px] h-[120px] w-[122px] text-center">
         <div className="text-[14px] font-black uppercase leading-[1.04] text-cyan-100/68">Auto Click<br />Power</div>
