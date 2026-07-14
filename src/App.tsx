@@ -241,6 +241,24 @@ function runtimeIdentity(state: PlayerRuntimeState, runtimeKey: string) {
   return `${runtimeKey}:${state.playerId}:${state.revision}:${state.updatedAt}`;
 }
 
+const STARTUP_IO_TIMEOUT_MS = 5000;
+const STARTUP_WATCHDOG_TIMEOUT_MS = 8000;
+
+function startupErrorMessage(error: unknown, fallback = "Startup services are unavailable.") {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function withStartupTimeout<T>(promise: Promise<T>, label: string, ms = STARTUP_IO_TIMEOUT_MS) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} timed out.`)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
+}
+
 function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: ReturnType<typeof useNoverisAuth>["state"]) {
   const service = useMemo(() => new PlayerRuntimeLocalSaveService(data), [data]);
   const supabaseConfig = useMemo(() => readNoverisSupabaseConfig(), []);
@@ -272,44 +290,59 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
   const displayPlayerRuntime = runtimeReady ? playerRuntime : createNewPlayerRuntimeState(data);
 
   const updateCloudSync = useCallback((patch: Partial<CloudSyncMetadata>) => {
-    setCloudSync((current) => saveCloudSyncMetadata({ ...current, ...patch }));
+    setCloudSync((current) => {
+      const next = { ...current, ...patch };
+      try {
+        return saveCloudSyncMetadata(next);
+      } catch {
+        return next;
+      }
+    });
   }, []);
 
   const syncCloudNow = useCallback(async (state: PlayerRuntimeState, reason = "manual") => {
     if (authState.status !== "authenticated" || !authState.user || cloudSavingRef.current) return;
     cloudSavingRef.current = true;
-    updateCloudSync({ status: "Saving", dirty: true, lastCloudError: undefined });
-    const deviceId = getOrCreateLocalDeviceId();
-    const deviceName = getDefaultDeviceName();
-    const expectedRevision = cloudSync.lastSyncedRevision ?? cloudSave?.revision ?? Math.max(1, state.revision - 1);
-    const result = cloudSave
-      ? await cloudService.updatePrimarySave(authState.user, state, expectedRevision, deviceId, deviceName)
-      : await cloudService.createPrimarySave(authState.user, state, deviceId, deviceName);
+    try {
+      updateCloudSync({ status: "Saving", dirty: true, lastCloudError: undefined });
+      const deviceId = getOrCreateLocalDeviceId();
+      const deviceName = getDefaultDeviceName();
+      const expectedRevision = cloudSync.lastSyncedRevision ?? cloudSave?.revision ?? Math.max(1, state.revision - 1);
+      const result = cloudSave
+        ? await withStartupTimeout(cloudService.updatePrimarySave(authState.user, state, expectedRevision, deviceId, deviceName), "Cloud save")
+        : await withStartupTimeout(cloudService.createPrimarySave(authState.user, state, deviceId, deviceName), "Cloud save");
 
-    if (result.status === "saved") {
-      setCloudSave(result.save);
-      updateCloudSync({
-        status: "Synced",
-        dirty: false,
-        pendingRetry: false,
-        pendingRetryReason: undefined,
-        lastCloudError: undefined,
-        lastSuccessfulSyncAt: new Date().toISOString(),
-        lastSyncedRevision: result.save.revision,
-        cloudRevision: result.save.revision,
-        deviceId,
-        deviceName
-      });
-    } else if (result.status === "conflict") {
-      setCloudError("Cloud save changed on another device.");
-      setStartupConflict(true);
-      updateCloudSync({ status: "Conflict", pendingRetry: false, lastCloudError: "Revision conflict", dirty: true });
-    } else {
-      cloudService.queueRetry(state, `${reason}: ${result.reason}`);
-      setCloudError(result.reason);
-      updateCloudSync({ status: result.status === "offline_queued" ? "Pending Sync" : "Error", pendingRetry: true, pendingRetryReason: result.reason, lastCloudError: result.reason, dirty: true });
+      if (result.status === "saved") {
+        setCloudSave(result.save);
+        updateCloudSync({
+          status: "Synced",
+          dirty: false,
+          pendingRetry: false,
+          pendingRetryReason: undefined,
+          lastCloudError: undefined,
+          lastSuccessfulSyncAt: new Date().toISOString(),
+          lastSyncedRevision: result.save.revision,
+          cloudRevision: result.save.revision,
+          deviceId,
+          deviceName
+        });
+      } else if (result.status === "conflict") {
+        setCloudError("Cloud save changed on another device.");
+        setStartupConflict(true);
+        updateCloudSync({ status: "Conflict", pendingRetry: false, lastCloudError: "Revision conflict", dirty: true });
+      } else {
+        cloudService.queueRetry(state, `${reason}: ${result.reason}`);
+        setCloudError(result.reason);
+        updateCloudSync({ status: result.status === "offline_queued" ? "Pending Sync" : "Error", pendingRetry: true, pendingRetryReason: result.reason, lastCloudError: result.reason, dirty: true });
+      }
+    } catch (error) {
+      const reasonText = startupErrorMessage(error, "Cloud save unavailable.");
+      cloudService.queueRetry(state, `${reason}: ${reasonText}`);
+      setCloudError(reasonText);
+      updateCloudSync({ status: "Pending Sync", pendingRetry: true, pendingRetryReason: reasonText, lastCloudError: reasonText, dirty: true });
+    } finally {
+      cloudSavingRef.current = false;
     }
-    cloudSavingRef.current = false;
   }, [authState, cloudSave, cloudService, cloudSync.lastSyncedRevision, updateCloudSync]);
 
   useEffect(() => {
@@ -317,9 +350,37 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
 
     let cancelled = false;
 
+    function hydrateFallbackRuntime(startupToken: string, error: unknown) {
+      if (cancelled) return;
+      const reasonText = startupErrorMessage(error);
+      const fallback = stampRuntimeSource(createNewPlayerRuntimeState(data), "Offline Local");
+      setCloudSave(null);
+      setStartupConflict(false);
+      setCloudError(reasonText);
+      setPlayerRuntime(fallback);
+      setLoadedRuntimeKey(runtimeKey);
+      setRuntimeStatus((current) => ({
+        ...current,
+        runtimeId: runtimeIdentity(fallback, runtimeKey),
+        hydrationComplete: true,
+        gameplayReady: true,
+        isSimulationRunning: false,
+        activeSimulationRuntimeId: undefined,
+        controlsEnabled: true,
+        disabledReason: undefined
+      }));
+      completedStartupTokenRef.current = startupToken;
+      updateCloudSync({ activeSaveSource: "offline_local", status: "Offline", dirty: false, pendingRetry: false, lastCloudError: reasonText });
+    }
+
+    const startupToken = `${runtimeKey}:${authState.user?.id ?? authState.status}`;
+    const watchdog = setTimeout(() => {
+      if (completedStartupTokenRef.current !== startupToken) {
+        hydrateFallbackRuntime(startupToken, new Error("Startup watchdog timed out."));
+      }
+    }, STARTUP_WATCHDOG_TIMEOUT_MS);
+
     async function start() {
-      const userId = authState.user?.id ?? authState.status;
-      const startupToken = `${runtimeKey}:${userId}`;
       if (completedStartupTokenRef.current === startupToken) return;
       setLoadedRuntimeKey("");
       setStartupConflict(false);
@@ -335,16 +396,23 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
         disabledReason: "startup resolving save"
       }));
 
-      const localLoaded = service.loadOrCreate();
+      let startupError: string | undefined;
+      let localLoaded: PlayerRuntimeState;
+      try {
+        localLoaded = service.loadOrCreate();
+      } catch (error) {
+        startupError = startupErrorMessage(error, "Local save could not be loaded.");
+        localLoaded = stampRuntimeSource(createNewPlayerRuntimeState(data), "Offline Local");
+      }
       let selected = localLoaded;
       let activeSaveSource: ActiveSaveSource = classifySave(localLoaded) === "canonical new game" ? "new_game" : "local";
       let loadedCloud: CloudSave | null = null;
 
       if (authState.status === "authenticated" && authState.user) {
         try {
-          await profileService.ensureProfile(authState.user);
-          const device = await deviceService.ensureDevice(authState.user, "0.0.0");
-          loadedCloud = await cloudService.loadPrimarySave(authState.user);
+          await withStartupTimeout(profileService.ensureProfile(authState.user), "Profile initialization");
+          const device = await withStartupTimeout(deviceService.ensureDevice(authState.user, "0.0.0"), "Device initialization");
+          loadedCloud = await withStartupTimeout(cloudService.loadPrimarySave(authState.user), "Cloud save load");
           setCloudSave(loadedCloud);
 
           const comparison = compareSaves(localLoaded, loadedCloud);
@@ -393,14 +461,28 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
           });
         } catch (error) {
           activeSaveSource = "offline_local";
-          setCloudError(error instanceof Error ? error.message : "Cloud save unavailable.");
-          updateCloudSync({ activeSaveSource, status: "Offline", dirty: false, pendingRetry: false, lastCloudError: "Cloud save unavailable." });
+          startupError = startupErrorMessage(error, "Cloud save unavailable.");
+          setCloudError(startupError);
+          updateCloudSync({ activeSaveSource, status: "Offline", dirty: false, pendingRetry: false, lastCloudError: startupError });
         }
       }
 
       if (cancelled) return;
-      const advanced = advanceSimulation(data, selected);
-      const saved = service.save(stampRuntimeSource(advanced, activeSaveSource === "cloud" ? "Cloud Save" : activeSaveSource === "offline_local" ? "Offline Local" : selected.runtimeLoadReport.loadedFrom), false);
+      let saved: PlayerRuntimeState;
+      try {
+        const advanced = advanceSimulation(data, selected);
+        const stamped = stampRuntimeSource(advanced, activeSaveSource === "cloud" ? "Cloud Save" : activeSaveSource === "offline_local" ? "Offline Local" : selected.runtimeLoadReport.loadedFrom);
+        try {
+          saved = service.save(stamped, false);
+        } catch (error) {
+          startupError = startupErrorMessage(error, "Local save could not be written.");
+          saved = stamped;
+        }
+      } catch (error) {
+        startupError = startupErrorMessage(error, "Runtime simulation could not be restored.");
+        activeSaveSource = "offline_local";
+        saved = stampRuntimeSource(createNewPlayerRuntimeState(data), "Offline Local");
+      }
       const nextRuntimeId = runtimeIdentity(saved, runtimeKey);
       setPlayerRuntime(saved);
       setLoadedRuntimeKey(runtimeKey);
@@ -413,17 +495,20 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
         disabledReason: undefined
       }));
       completedStartupTokenRef.current = startupToken;
-      updateCloudSync({ activeSaveSource, offlineProgressionApplyCount: cloudSync.offlineProgressionApplyCount + 1 });
+      updateCloudSync({ activeSaveSource, offlineProgressionApplyCount: cloudSync.offlineProgressionApplyCount + 1, ...(startupError ? { status: "Offline", lastCloudError: startupError } : {}) });
 
       if (authState.status === "authenticated" && authState.user && (!loadedCloud || activeSaveSource === "local")) {
         void syncCloudNow(saved, loadedCloud ? "local-newer-startup" : "first-cloud-save");
       }
     }
 
-    void start();
+    void start().catch((error) => {
+      hydrateFallbackRuntime(startupToken, error);
+    });
 
     return () => {
       cancelled = true;
+      clearTimeout(watchdog);
     };
   }, [authState, cloudService, cloudSync.offlineProgressionApplyCount, data, deviceService, enabled, profileService, runtimeKey, service, syncCloudNow, updateCloudSync]);
 

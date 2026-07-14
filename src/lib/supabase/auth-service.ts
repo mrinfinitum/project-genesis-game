@@ -3,6 +3,38 @@ import type { NoverisAuthState } from "./types";
 import { NoverisSupabaseUnavailableError, safeSupabaseErrorMessage } from "./errors";
 
 export const GUEST_MODE_KEY = "noveris-game:guest-mode";
+const AUTH_RESTORE_TIMEOUT_MS = 4500;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} timed out.`)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
+}
+
+function guestModeEnabled() {
+  try {
+    return localStorage.getItem(GUEST_MODE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function setGuestMode(enabled: boolean) {
+  try {
+    if (enabled) {
+      localStorage.setItem(GUEST_MODE_KEY, "true");
+    } else {
+      localStorage.removeItem(GUEST_MODE_KEY);
+    }
+  } catch {
+    // Browser storage is optional; auth state should still resolve.
+  }
+}
 
 export class NoverisAuthService {
   constructor(
@@ -17,7 +49,7 @@ export class NoverisAuthService {
   async restoreSession(): Promise<NoverisAuthState> {
     if (!this.client) {
       return {
-        status: localStorage.getItem(GUEST_MODE_KEY) === "true" ? "guest" : "signed_out",
+        status: guestModeEnabled() ? "guest" : "signed_out",
         session: null,
         user: null,
         cloudAvailable: false,
@@ -25,13 +57,20 @@ export class NoverisAuthService {
       };
     }
 
-    const { data, error } = await this.client.auth.getSession();
+    let restored: Awaited<ReturnType<SupabaseClient["auth"]["getSession"]>>;
+    try {
+      restored = await withTimeout(this.client.auth.getSession(), AUTH_RESTORE_TIMEOUT_MS, "Session restore");
+    } catch (error) {
+      return { status: "error", session: null, user: null, error: safeSupabaseErrorMessage(error, "Could not restore session."), cloudAvailable: true };
+    }
+
+    const { data, error } = restored;
     if (error) {
       return { status: "error", session: null, user: null, error: safeSupabaseErrorMessage(error, "Could not restore session."), cloudAvailable: true };
     }
 
     if (data.session) {
-      localStorage.removeItem(GUEST_MODE_KEY);
+      setGuestMode(false);
       return {
         status: "authenticated",
         session: data.session,
@@ -42,7 +81,7 @@ export class NoverisAuthService {
     }
 
     return {
-      status: localStorage.getItem(GUEST_MODE_KEY) === "true" ? "guest" : "signed_out",
+      status: guestModeEnabled() ? "guest" : "signed_out",
       session: null,
       user: null,
       cloudAvailable: true
@@ -54,7 +93,7 @@ export class NoverisAuthService {
 
     const { data } = this.client.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        localStorage.removeItem(GUEST_MODE_KEY);
+        setGuestMode(false);
         callback({ status: "authenticated", session, user: session.user, email: session.user.email, cloudAvailable: true });
       } else {
         callback({ status: "signed_out", session: null, user: null, cloudAvailable: true });
@@ -65,13 +104,13 @@ export class NoverisAuthService {
   }
 
   continueAsGuest(): NoverisAuthState {
-    localStorage.setItem(GUEST_MODE_KEY, "true");
+    setGuestMode(true);
     return { status: "guest", session: null, user: null, cloudAvailable: Boolean(this.client), unavailableReason: this.client ? undefined : this.unavailableReason };
   }
 
   async signIn(email: string, password: string) {
     if (!this.client) throw new NoverisSupabaseUnavailableError(this.unavailableReason);
-    localStorage.removeItem(GUEST_MODE_KEY);
+    setGuestMode(false);
     const { data, error } = await this.client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
@@ -79,7 +118,7 @@ export class NoverisAuthService {
 
   async signUp(email: string, password: string) {
     if (!this.client) throw new NoverisSupabaseUnavailableError(this.unavailableReason);
-    localStorage.removeItem(GUEST_MODE_KEY);
+    setGuestMode(false);
     const { data, error } = await this.client.auth.signUp({ email, password });
     if (error) throw error;
     return data;
@@ -111,6 +150,6 @@ export class NoverisAuthService {
       const { error } = await this.client.auth.signOut();
       if (error) throw error;
     }
-    localStorage.removeItem(GUEST_MODE_KEY);
+    setGuestMode(false);
   }
 }

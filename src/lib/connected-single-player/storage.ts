@@ -26,18 +26,30 @@ export class BrowserKeyValueStore implements KeyValueStore {
       return null;
     }
 
-    return window.localStorage.getItem(key);
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
   }
 
   setItem(key: string, value: string) {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(key, value);
+      try {
+        window.localStorage.setItem(key, value);
+      } catch {
+        // Storage can be unavailable in private browsing, quota pressure, or locked-down embeds.
+      }
     }
   }
 
   removeItem(key: string) {
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem(key);
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        // Best-effort cleanup; gameplay startup must not depend on storage availability.
+      }
     }
   }
 }

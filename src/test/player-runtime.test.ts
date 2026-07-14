@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/lib/player-runtime";
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID, RESEARCH_ECONOMY_ID } from "@/lib/player-runtime/economy";
 import { PLAYER_RUNTIME_SAVE_KEY } from "@/lib/player-runtime/local-save";
-import { MemoryKeyValueStore, readJson } from "@/lib/connected-single-player/storage";
+import { BrowserKeyValueStore, MemoryKeyValueStore, readJson } from "@/lib/connected-single-player/storage";
 
 async function bundledRuntime() {
   const runtime = await getBundledStudioRuntimeSnapshot();
@@ -146,6 +146,29 @@ describe("canonical player runtime", () => {
     expect(deleted.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
     expect(deleted.runtimeLoadReport.loadedFrom).toBe("Deleted Local Save");
     expect(store.getItem(PLAYER_RUNTIME_SAVE_KEY)).toBeNull();
+  });
+
+  it("does not throw when browser storage is unavailable", () => {
+    const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("storage blocked");
+    });
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage blocked");
+    });
+    const removeItem = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("storage blocked");
+    });
+
+    try {
+      const store = new BrowserKeyValueStore();
+      expect(store.getItem(PLAYER_RUNTIME_SAVE_KEY)).toBeNull();
+      expect(() => store.setItem(PLAYER_RUNTIME_SAVE_KEY, "{}")).not.toThrow();
+      expect(() => store.removeItem(PLAYER_RUNTIME_SAVE_KEY)).not.toThrow();
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+      removeItem.mockRestore();
+    }
   });
 
   it("migrates content versions and preserves unknown canonical ids in unresolved buckets", async () => {
