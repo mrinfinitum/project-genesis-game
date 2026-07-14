@@ -19,6 +19,8 @@ function runtimeState(runtime: GameRuntimeData, configuredMode: RuntimeContentSt
     activeSource: configuredMode === "mock" ? "mock" : "bundled-snapshot",
     status: "ready",
     schemaVersion: runtime.metadata.schemaVersion,
+    runtimeVersion: runtime.metadata.runtimeVersion,
+    architectureVersion: runtime.metadata.architectureVersion,
     contentVersion: runtime.metadata.contentVersion,
     releaseName: runtime.metadata.releaseName,
     checksum: runtime.metadata.checksum,
@@ -40,10 +42,10 @@ function runtimeState(runtime: GameRuntimeData, configuredMode: RuntimeContentSt
 }
 
 describe("dashboard canonical model", () => {
-  it("loads contentVersion 11 and resolves the canonical nine-era journey", async () => {
+  it("loads contentVersion 12 and resolves the canonical nine-era journey", async () => {
     const runtime = await bundledRuntime();
 
-    expect(runtime.metadata.contentVersion).toBe(11);
+    expect(runtime.metadata.contentVersion).toBe(12);
     expect(runtime.eras).toHaveLength(9);
 
     expect(getCurrentJourney(runtime.eras, "survival")).toMatchObject({

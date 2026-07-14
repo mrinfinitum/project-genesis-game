@@ -57,6 +57,8 @@ function stateFromPayload(
     activeSource: source,
     status: options?.status ?? "ready",
     schemaVersion: payload.metadata.schemaVersion,
+    runtimeVersion: payload.metadata.runtimeVersion,
+    architectureVersion: payload.metadata.architectureVersion,
     contentVersion: payload.metadata.contentVersion,
     releaseName: payload.metadata.releaseName,
     checksum: payload.metadata.checksum,

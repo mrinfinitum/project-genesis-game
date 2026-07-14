@@ -2858,7 +2858,40 @@
         "width": 1920
       },
       "dashboardLayoutProfile": {
-        "autoClick": "adjacent_touch_control",
+        "aiAgentPanel": {
+          "compactPortraitSize": 64,
+          "cropProfiles": [
+            "circular_hud",
+            "panel_portrait",
+            "compact_badge"
+          ],
+          "dataSource": "aiAgents",
+          "defaultState": "idle",
+          "densityScales": [
+            "1x",
+            "2x",
+            "3x"
+          ],
+          "notes": "Player-facing copy should use AI Agent, Labor Assistance, and Agent Online/Offline while preserving internal automation IDs.",
+          "offlineTreatment": "desaturate_and_show_agent_offline_label",
+          "portraitSize": 88,
+          "reducedMotionBehavior": "static_open_eyes",
+          "selectedIdField": "selectedAiAgentId",
+          "supportedStates": [
+            "idle",
+            "blink",
+            "working",
+            "thinking",
+            "researching",
+            "celebrating",
+            "warning",
+            "offline",
+            "sleeping",
+            "surprised"
+          ],
+          "touchTarget": 48
+        },
+        "autoClick": "ai_agent_online_toggle_adjacent_to_labor_action",
         "boostsDrawer": "bottom_safe_area_drawer",
         "clickPower": "large_touch_target",
         "criticalStats": "compact_or_drawer",
@@ -3643,7 +3676,40 @@
         "width": 1920
       },
       "dashboardLayoutProfile": {
-        "autoClick": "adjacent_touch_control",
+        "aiAgentPanel": {
+          "compactPortraitSize": 64,
+          "cropProfiles": [
+            "circular_hud",
+            "panel_portrait",
+            "compact_badge"
+          ],
+          "dataSource": "aiAgents",
+          "defaultState": "idle",
+          "densityScales": [
+            "1x",
+            "2x",
+            "3x"
+          ],
+          "notes": "Player-facing copy should use AI Agent, Labor Assistance, and Agent Online/Offline while preserving internal automation IDs.",
+          "offlineTreatment": "desaturate_and_show_agent_offline_label",
+          "portraitSize": 96,
+          "reducedMotionBehavior": "static_open_eyes",
+          "selectedIdField": "selectedAiAgentId",
+          "supportedStates": [
+            "idle",
+            "blink",
+            "working",
+            "thinking",
+            "researching",
+            "celebrating",
+            "warning",
+            "offline",
+            "sleeping",
+            "surprised"
+          ],
+          "touchTarget": 48
+        },
+        "autoClick": "ai_agent_online_toggle_adjacent_to_labor_action",
         "boostsDrawer": "bottom_safe_area_drawer",
         "clickPower": "large_touch_target",
         "criticalStats": "compact_or_drawer",
@@ -5032,8 +5098,8 @@
   ],
   "metadata": {
     "accessLevel": "public-published",
-    "checksum": "9a910ba0e5df5d08c09e028a2db6a7ec609b91998d4589241ac08f69a3a1fedd",
-    "contentVersion": 11,
+    "checksum": "a037eb2a4ddae234e5acdc48d66e377a0dd58af75981701ce829eb467f4aeea0",
+    "contentVersion": 12,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

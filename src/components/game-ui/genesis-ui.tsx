@@ -36,6 +36,7 @@ import {
 import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
 import type { AssetDefinition, ClientProfile, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import { formatArchitectureCompatibilityStatus, resolveArchitectureCompatibility } from "@/lib/architecture/compatibility";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
@@ -1538,6 +1539,7 @@ function SettingsModal({
   const profileCivilizationName = resolveProfileCivilizationName(model, playerRuntime);
   const aiAgent = model.playerState.aiAgent;
   const aiAgentPresentation = aiAgent?.presentation;
+  const architectureCompatibility = resolveArchitectureCompatibility(data);
 
   useEffect(() => {
     if (!open) return;
@@ -1728,9 +1730,11 @@ function SettingsModal({
         <div className="mt-5">
           <SettingsRow label="Version" value="0.0.0" />
           <SettingsRow label="Content Version" value={`v${data.metadata.contentVersion}`} />
+          <SettingsRow label="Runtime Version" value={data.metadata.runtimeVersion ?? data.metadata.schemaVersion} />
           <SettingsRow label="Build Number" value="Local Build" />
           <SettingsRow label="Git Commit" value="Runtime" />
           <SettingsRow label="Studio Runtime Version" value={`v${data.metadata.contentVersion}`} />
+          {dashboardDevToolsEnabled ? <SettingsRow label="Architecture Version" value={`${architectureCompatibility.exportedArchitectureVersion ?? "Unknown"} (${formatArchitectureCompatibilityStatus(architectureCompatibility.status)})`} /> : null}
           <SettingsRow label="Supabase Status" value={account?.supabaseStatus ?? cloudStatus} />
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -2835,11 +2839,13 @@ export function BoostsTray({
 function RuntimeSourceBadge({ model }: { model: DashboardModel }) {
   if (!model.runtimeState) return null;
   if (model.runtimeState.configuredMode !== "live" && !model.runtimeState.isUsingFallback) return null;
+  const architecture = resolveArchitectureCompatibility(model.runtimeState);
 
   return (
     <div className="absolute right-4 top-[6.55rem] z-30 rounded-sm border border-cyan-200/24 bg-slate-950/90 px-3 py-2 text-[0.62rem] font-black uppercase text-cyan-50 shadow-[0_14px_34px_rgba(0,0,0,0.35)]">
       <div>{model.runtimeState.configuredMode} / {model.runtimeState.activeSource}</div>
       <div className="mt-1 text-cyan-100/58">schema {model.runtimeState.schemaVersion} | content v{model.runtimeState.contentVersion}</div>
+      <div className="mt-1 text-cyan-100/58">architecture {architecture.exportedArchitectureVersion ?? architecture.expectedArchitectureVersion} | {formatArchitectureCompatibilityStatus(architecture.status)}</div>
       <div className="mt-1 max-w-[18rem] truncate text-cyan-100/48">{model.runtimeState.checksum}</div>
       <div className="mt-1 text-cyan-100/58">cache {model.runtimeState.cacheStatus} | {model.runtimeState.status}</div>
     </div>

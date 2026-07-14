@@ -125,6 +125,8 @@ function payloadFromState(state: RuntimeContentState): GameRuntimeData {
   return {
     metadata: {
       schemaVersion: state.schemaVersion as "game-runtime-v1",
+      runtimeVersion: state.runtimeVersion,
+      architectureVersion: state.architectureVersion,
       contentVersion: state.contentVersion,
       releaseName: state.releaseName,
       checksum: state.checksum,
@@ -149,6 +151,8 @@ function initialState(): RuntimeContentState {
     activeSource: "mock",
     status: "loading",
     schemaVersion: mockRuntimeData.metadata.schemaVersion,
+    runtimeVersion: mockRuntimeData.metadata.runtimeVersion,
+    architectureVersion: mockRuntimeData.metadata.architectureVersion,
     contentVersion: mockRuntimeData.metadata.contentVersion,
     releaseName: mockRuntimeData.metadata.releaseName,
     checksum: mockRuntimeData.metadata.checksum,

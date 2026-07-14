@@ -63,7 +63,7 @@ const android = runtime.clientProfiles?.android;
 const failures = [];
 const warnings = [];
 
-if (runtime.metadata?.contentVersion !== 11) failures.push(`Expected Studio contentVersion 11, got ${runtime.metadata?.contentVersion ?? "missing"}.`);
+if (runtime.metadata?.contentVersion !== 12) failures.push(`Expected Studio contentVersion 12, got ${runtime.metadata?.contentVersion ?? "missing"}.`);
 if (!ios) failures.push("Missing clientProfiles.ios.");
 if (!android) failures.push("Missing clientProfiles.android.");
 if (platformMissing.length) failures.push(`Missing platform modules: ${platformMissing.join(", ")}.`);

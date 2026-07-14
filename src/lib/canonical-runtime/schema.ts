@@ -31,6 +31,8 @@ export const visibilityRulesSchema = z.object({
 
 export const runtimeMetadataSchema = z.object({
   schemaVersion: z.literal("game-runtime-v1"),
+  runtimeVersion: z.string().optional(),
+  architectureVersion: z.string().optional(),
   contentVersion: z.number().int().positive(),
   releaseName: z.string().optional(),
   checksum: id,

@@ -93,7 +93,7 @@ describe("canonical player runtime", () => {
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
   });
 
-  it("verifies the Studio v11 fixed Survival economy contract", async () => {
+  it("verifies the Studio v12 fixed Survival economy contract", async () => {
     const runtime = await bundledRuntime();
     const laborDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === LABOR_ECONOMY_ID) as Record<string, unknown> | undefined;
     const creditsDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === CREDITS_ECONOMY_ID) as Record<string, unknown> | undefined;
@@ -101,8 +101,8 @@ describe("canonical player runtime", () => {
     const survivalHudIds = getPrimaryHudResourceIds(runtime, "survival");
     const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
-    expect(runtime.metadata.contentVersion).toBe(11);
-    expect(runtime.metadata.checksum).toBe("9a910ba0e5df5d08c09e028a2db6a7ec609b91998d4589241ac08f69a3a1fedd");
+    expect(runtime.metadata.contentVersion).toBe(12);
+    expect(runtime.metadata.checksum).toBe("a037eb2a4ddae234e5acdc48d66e377a0dd58af75981701ce829eb467f4aeea0");
     expect(resolvePrimaryEconomyIdForCurrentEra(runtime, "survival")).toBe(LABOR_ECONOMY_ID);
     expect(survivalHudIds).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
     expect(survivalIconKeys).toEqual(["economy_labor", "economy_credits", "economy_population", "economy_research", "economy_premium_crystals"]);

@@ -4,6 +4,8 @@ export type RuntimeContentStatus = "loading" | "ready" | "refreshing" | "fallbac
 
 export interface RuntimeMetadata {
   schemaVersion: "game-runtime-v1";
+  runtimeVersion?: string;
+  architectureVersion?: string;
   contentVersion: number;
   releaseName?: string;
   checksum: string;
@@ -303,6 +305,8 @@ export interface RuntimeContentState {
   activeSource: RuntimeContentSource;
   status: RuntimeContentStatus;
   schemaVersion: string;
+  runtimeVersion?: string;
+  architectureVersion?: string;
   contentVersion: number;
   releaseName?: string;
   checksum: string;
