@@ -32,7 +32,12 @@ export type PlayerRuntimeLoadSource =
   | "Browser Save"
   | "Imported Save"
   | "Reset to Canonical New Game"
-  | "Deleted Local Save";
+  | "Deleted Local Save"
+  | "Cloud Save"
+  | "Local Selected After Conflict"
+  | "Cloud Selected After Conflict"
+  | "Guest Converted"
+  | "Offline Local";
 
 export type PlayerRuntimeLoadReport = {
   loadedFrom: PlayerRuntimeLoadSource;

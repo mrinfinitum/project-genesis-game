@@ -1,40 +1,19 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import type { CloudSave, CloudSaveResult, PlayerSaveRow } from "./types";
 import { safeSupabaseErrorMessage } from "./errors";
+import { cloudRowToSave, serializePlayerRuntimeForCloud } from "./save-adapter";
 
 const PRIMARY_SLOT_ID = "primary";
-
-function toCloudSave(row: PlayerSaveRow): CloudSave {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    slotId: row.slot_id,
-    saveVersion: row.save_version,
-    contentVersion: row.content_version,
-    playerState: row.player_state,
-    unresolvedState: row.unresolved_state,
-    revision: row.revision,
-    deviceId: row.device_id ?? undefined,
-    deviceName: row.device_name ?? undefined,
-    lastSimulationAt: row.last_simulation_at ?? undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
-  };
-}
 
 function rowPayload(user: User, state: PlayerRuntimeState, deviceId?: string, deviceName?: string) {
   return {
     user_id: user.id,
     slot_id: PRIMARY_SLOT_ID,
-    save_version: state.saveVersion,
-    content_version: state.contentVersion,
-    player_state: state,
-    unresolved_state: state.unresolved,
-    revision: state.revision,
+    ...serializePlayerRuntimeForCloud(state),
     device_id: deviceId ?? null,
-    device_name: deviceName ?? null,
-    last_simulation_at: state.lastSimulationAt
+    device_name: deviceName ?? null
   };
 }
 
@@ -42,7 +21,10 @@ export class NoverisCloudSaveService {
   private pendingState: PlayerRuntimeState | null = null;
   private pendingReason = "";
 
-  constructor(private readonly client: SupabaseClient | null) {}
+  constructor(
+    private readonly client: SupabaseClient | null,
+    private readonly content: GameRuntimeData
+  ) {}
 
   async loadPrimarySave(user: User): Promise<CloudSave | null> {
     if (!this.client) return null;
@@ -53,7 +35,10 @@ export class NoverisCloudSaveService {
       .eq("slot_id", PRIMARY_SLOT_ID)
       .maybeSingle();
     if (error) throw error;
-    return data ? toCloudSave(data) : null;
+    if (!data) return null;
+    const hydrated = cloudRowToSave(data as PlayerSaveRow, this.content);
+    if (!hydrated.ok) throw new Error(`Cloud save is ${hydrated.reason}.`);
+    return hydrated.save;
   }
 
   async createPrimarySave(user: User, state: PlayerRuntimeState, deviceId?: string, deviceName?: string): Promise<CloudSaveResult> {
@@ -65,7 +50,9 @@ export class NoverisCloudSaveService {
       .single();
 
     if (error) return { status: "failed", reason: safeSupabaseErrorMessage(error) };
-    return { status: "saved", save: toCloudSave(data) };
+    const hydrated = cloudRowToSave(data as PlayerSaveRow, this.content);
+    if (!hydrated.ok) return { status: "failed", reason: `Cloud save is ${hydrated.reason}.` };
+    return { status: "saved", save: hydrated.save };
   }
 
   async updatePrimarySave(user: User, state: PlayerRuntimeState, expectedRevision: number, deviceId?: string, deviceName?: string): Promise<CloudSaveResult> {
@@ -87,7 +74,9 @@ export class NoverisCloudSaveService {
 
     if (error) return { status: "failed", reason: safeSupabaseErrorMessage(error) };
     if (!data) return { status: "conflict", expectedRevision };
-    return { status: "saved", save: toCloudSave(data) };
+    const hydrated = cloudRowToSave(data as PlayerSaveRow, this.content);
+    if (!hydrated.ok) return { status: "failed", reason: `Cloud save is ${hydrated.reason}.` };
+    return { status: "saved", save: hydrated.save };
   }
 
   saveNow(user: User, state: PlayerRuntimeState, expectedRevision: number, deviceId?: string, deviceName?: string) {

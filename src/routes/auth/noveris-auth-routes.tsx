@@ -1,8 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { StoryCanvas } from "@/components/game-ui/genesis-ui";
-import { useNoverisAuth } from "@/lib/supabase";
-import type { StartupResult } from "@/lib/startup";
+import { loadCloudSyncMetadata, useNoverisAuth } from "@/lib/supabase";
+import type { SaveSummary, StartupResult } from "@/lib/startup";
 
 function NoverisFrame({ children }: { children: ReactNode }) {
   return (
@@ -138,19 +138,55 @@ export function ResetPasswordRoute() {
   return <AuthPanel title="Reset Password"><AuthForm mode="reset" /></AuthPanel>;
 }
 
-export function SaveConflictRoute() {
+function summaryRows(summary?: SaveSummary) {
+  if (!summary) return ["No save summary available."];
+  return [
+    `Era: ${summary.currentEraId}`,
+    `Labor: ${summary.labor}`,
+    `Credits: ${summary.credits}`,
+    `Population: ${summary.population}`,
+    `Research: ${summary.research}`,
+    `Last saved: ${summary.lastSaved}`,
+    `Revision: ${summary.revision}`,
+    `Save v${summary.saveVersion} / Content v${summary.contentVersion}`,
+    summary.deviceName ? `Device: ${summary.deviceName}` : "Device: This browser"
+  ];
+}
+
+export function SaveConflictRoute({
+  startup,
+  onUseCloud,
+  onUseLocal,
+  onRetry,
+  onSignOut
+}: {
+  startup?: StartupResult;
+  onUseCloud?: () => void;
+  onUseLocal?: () => void;
+  onRetry?: () => void;
+  onSignOut?: () => void;
+}) {
   return (
     <AuthPanel title="Save Conflict">
       <div className="mt-5 grid gap-3 md:grid-cols-2">
-        {["Cloud Save", "This Device"].map((label) => (
+        {[
+          { label: "Cloud Save", summary: startup?.cloudSummary },
+          { label: "This Device", summary: startup?.localSummary }
+        ].map(({ label, summary }) => (
           <div key={label} className="border border-cyan-100/16 bg-black/28 p-3">
             <div className="text-sm font-black uppercase text-cyan-50">{label}</div>
-            <div className="mt-2 text-xs font-semibold leading-5 text-cyan-50/62">Progress differs. Review era, balances, device, and revision before choosing.</div>
+            <div className="mt-2 space-y-1 text-xs font-semibold leading-5 text-cyan-50/62">
+              {summaryRows(summary).map((row) => <div key={row}>{row}</div>)}
+            </div>
           </div>
         ))}
       </div>
+      <div className="mt-3 text-xs font-bold uppercase text-amber-100/80">Comparison: {startup?.comparison ?? "divergent"}</div>
       <div className="mt-4 grid gap-2">
-        <Link className="border border-cyan-200/25 bg-cyan-300/10 px-4 py-3 text-center text-sm font-black uppercase text-cyan-50" to="/">Retry Startup</Link>
+        <button className="border border-cyan-200/25 bg-cyan-300/10 px-4 py-3 text-center text-sm font-black uppercase text-cyan-50 disabled:opacity-45" disabled={!onUseCloud || !startup?.cloudSummary} onClick={onUseCloud}>Use Cloud Save</button>
+        <button className="border border-cyan-200/25 bg-white/[0.06] px-4 py-3 text-center text-sm font-black uppercase text-cyan-50 disabled:opacity-45" disabled={!onUseLocal || !startup?.localSummary} onClick={onUseLocal}>Use This Device</button>
+        <button className="border border-cyan-200/25 bg-white/[0.04] px-4 py-3 text-center text-sm font-black uppercase text-cyan-50" onClick={onRetry}>Retry</button>
+        <button className="border border-rose-200/25 bg-rose-300/10 px-4 py-3 text-center text-sm font-black uppercase text-rose-50" onClick={onSignOut}>Sign Out</button>
         <Link className="border border-cyan-200/20 bg-white/[0.04] px-4 py-3 text-center text-sm font-black uppercase text-cyan-50" to="/account">Account</Link>
       </div>
     </AuthPanel>
@@ -160,12 +196,21 @@ export function SaveConflictRoute() {
 export function AccountRoute() {
   const auth = useNoverisAuth();
   const navigate = useNavigate();
+  const sync = loadCloudSyncMetadata();
   return (
     <AuthPanel title="Account">
       <div className="mt-5 grid gap-2 text-sm font-bold text-cyan-50/78">
         <div>Status: {auth.state.status === "guest" ? "Guest" : auth.state.status === "authenticated" ? "Signed In" : "Signed Out"}</div>
         <div>Email: {auth.state.email ?? "None"}</div>
+        <div>Device: {sync.deviceName ?? "This browser"}</div>
+        <div>Save Source: {sync.activeSaveSource}</div>
         <div>Cloud Sync: {auth.state.cloudAvailable ? "Available" : "Unavailable"}</div>
+        <div>Sync Status: {sync.status}</div>
+        <div>Cloud Revision: {sync.cloudRevision ?? "None"}</div>
+        <div>Local Dirty: {sync.dirty ? "Yes" : "No"}</div>
+        <div>Pending Retry: {sync.pendingRetry ? "Yes" : "No"}</div>
+        <div>Last Sync: {sync.lastSuccessfulSyncAt ?? "Never"}</div>
+        <div>Last Error: {sync.lastCloudError ?? "None"}</div>
       </div>
       <div className="mt-5 grid gap-2">
         {auth.state.status === "guest" ? <Link className="border border-cyan-200/25 bg-cyan-300/10 px-4 py-3 text-center text-sm font-black uppercase text-cyan-50" to="/login">Save Progress to Cloud</Link> : null}

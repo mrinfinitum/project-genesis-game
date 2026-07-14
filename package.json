@@ -11,6 +11,7 @@
     "test": "vitest run",
     "sync:studio-runtime": "tsx scripts/sync-studio-runtime.ts",
     "verify:dashboard-assets": "node scripts/verify-dashboard-assets.mjs",
+    "verify:supabase-game": "node scripts/verify-supabase-game.mjs",
     "storybook": "HOME=$PWD/.storybook-home STORYBOOK_DISABLE_TELEMETRY=1 storybook dev -p 6006 --disable-telemetry",
     "build-storybook": "HOME=$PWD/.storybook-home STORYBOOK_DISABLE_TELEMETRY=1 storybook build --disable-telemetry"
   },

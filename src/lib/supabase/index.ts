@@ -5,4 +5,7 @@ export * from "./cloud-save-service";
 export * from "./device-service";
 export * from "./env";
 export * from "./errors";
+export * from "./profile-service";
+export * from "./save-adapter";
+export * from "./sync-metadata";
 export * from "./types";

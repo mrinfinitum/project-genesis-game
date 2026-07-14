@@ -28,7 +28,7 @@ export type StartupResult = {
   progress: number;
   message: string;
   recoverableError?: string;
-  selectedSaveSource: "new_game" | "local" | "cloud" | "guest_local" | "none";
+  selectedSaveSource: "new_game" | "local" | "cloud" | "guest_local" | "local_selected_after_conflict" | "cloud_selected_after_conflict" | "guest_converted" | "offline_local" | "none";
   localSummary?: SaveSummary;
   cloudSummary?: SaveSummary;
   comparison: SaveComparisonClassification;
@@ -42,6 +42,7 @@ export function useGameStartup({
   playerRuntime,
   cloudSave,
   cloudError,
+  activeSaveSource,
   offlineProgressionApplyCount = 0
 }: {
   runtimeState: RuntimeContentState;
@@ -49,6 +50,7 @@ export function useGameStartup({
   playerRuntime?: PlayerRuntimeState;
   cloudSave?: CloudSave | null;
   cloudError?: string;
+  activeSaveSource?: StartupResult["selectedSaveSource"];
   offlineProgressionApplyCount?: number;
 }): StartupResult {
   return useMemo(() => {
@@ -75,9 +77,9 @@ export function useGameStartup({
       return { phase: "resolving_conflict", progress: 72, message: "Resolving player progress", selectedSaveSource: "none", localSummary, cloudSummary, comparison, offlineProgressionApplyCount, isReady: false };
     }
 
-    const selectedSaveSource = authState.status === "guest" ? "guest_local" : cloudSave ? "cloud" : playerRuntime ? "local" : "new_game";
+    const selectedSaveSource = activeSaveSource ?? (authState.status === "guest" ? "guest_local" : cloudSave ? "cloud" : playerRuntime ? "local" : "new_game");
     return { phase: "ready", progress: 100, message: "Preparing civilization", selectedSaveSource, localSummary, cloudSummary, comparison, offlineProgressionApplyCount, isReady: true };
-  }, [authState, cloudError, cloudSave, offlineProgressionApplyCount, playerRuntime, runtimeState.status]);
+  }, [activeSaveSource, authState, cloudError, cloudSave, offlineProgressionApplyCount, playerRuntime, runtimeState.status]);
 }
 
 export * from "./save-comparison";
