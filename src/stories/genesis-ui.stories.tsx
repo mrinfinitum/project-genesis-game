@@ -1153,6 +1153,64 @@ export const MainDashboard: Story = {
   }
 };
 
+function UpgradeTabsDashboardStory({ categoryId, dataTransform }: { categoryId: string; dataTransform?: (data: ReturnType<typeof useGenesisStoryContent>["data"]) => ReturnType<typeof useGenesisStoryContent>["data"] }) {
+  const { data } = useGenesisStoryContent();
+  const storyData = dataTransform?.(data) ?? data;
+  return <GameShell data={storyData} activeScreen="dashboard" activeEraId="survival" activeCategoryId={categoryId} embedded frameScale={0.58} />;
+}
+
+export const UpgradeTabsWorkforceSelected: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="workforce" />
+};
+
+export const UpgradeTabsIndustrySelected: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="industry" />
+};
+
+export const UpgradeTabsScienceSelected: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="science" />
+};
+
+export const UpgradeTabsTechnologySelected: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="technology" />
+};
+
+export const UpgradeTabsKeyboardNavigation: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="workforce" />
+};
+
+export const UpgradeTabsTouchInteraction: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="industry" />
+};
+
+export const UpgradeTabsEmptyCategory: Story = {
+  render: () => (
+    <UpgradeTabsDashboardStory
+      categoryId="technology"
+      dataTransform={(data) => ({
+        ...data,
+        upgrades: data.upgrades.filter((upgrade) => upgrade.categoryId !== "technology")
+      })}
+    />
+  )
+};
+
+export const UpgradeTabsLongLabel: Story = {
+  render: () => (
+    <UpgradeTabsDashboardStory
+      categoryId="technology"
+      dataTransform={(data) => ({
+        ...data,
+        upgradeCategories: data.upgradeCategories.map((category) => (category.id === "technology" ? { ...category, displayName: "Advanced Technology" } : category))
+      })}
+    />
+  )
+};
+
+export const UpgradeTabsSelectedOverlayComparison1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} />
+};
+
 function topHudStoryPlayerState(overrides: Partial<DashboardPlayerState> = {}): DashboardPlayerState {
   return {
     source: "player-runtime",

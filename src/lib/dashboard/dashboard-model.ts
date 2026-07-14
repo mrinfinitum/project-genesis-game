@@ -1,6 +1,7 @@
 import type { GameRuntimeData, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { dashboardDemoPlayerState } from "@/content/mock/dashboard-demo-state";
 import { getEconomyWarnings, getPrimaryHudResources } from "@/lib/player-runtime/economy";
+import { resolveSelectedUpgradeCategory, resolveUpgradesForCategory } from "@/lib/dashboard/upgrade-categories";
 import type { AiAgentAvailability, AiAgentCustomization, ResolvedAiAgentAsset } from "@/lib/player-runtime/ai-agent";
 import type { AiAgentLaborAssistance, AiAgentProgression } from "@/lib/player-runtime/automation";
 
@@ -134,6 +135,7 @@ export type DashboardModel = {
   currentEra: GameRuntimeData["eras"][number];
   journey: DashboardJourney;
   hudResources: DashboardHudResource[];
+  selectedUpgradeCategory: GameRuntimeData["upgradeCategories"][number] | undefined;
   upgradeRows: DashboardUpgradeRow[];
   alignment: Record<AlignmentAxis, number>;
   alignmentLabel: string;
@@ -243,8 +245,7 @@ function buildUpgradeRows(content: GameRuntimeData, player: DashboardPlayerState
   const profile = content.clientProfiles.web ?? content.clientProfiles.default;
   const rowsVisible = profile.defaultUpgradeRowsVisible ?? 4;
 
-  return content.upgrades
-    .filter((upgrade) => upgrade.categoryId === activeCategoryId)
+  return resolveUpgradesForCategory(content, activeCategoryId)
     .filter((upgrade) => upgrade.eraId === currentEraId || upgrade.visibilityRules?.showTeaser)
     .filter((upgrade) => evaluateVisibilityRules(upgrade, currentEraId))
     .sort((a, b) => {
@@ -310,7 +311,8 @@ export function createDashboardModel(
       : createDefaultPlayerState(content));
   const fallbackEraId = playerState.currentEraId ?? options.activeEraId ?? content.eras[0]?.id;
   const currentEra = content.eras.find((era) => era.id === fallbackEraId) ?? content.eras[0];
-  const activeCategoryId = options.activeCategoryId ?? content.upgradeCategories[0]?.id ?? "";
+  const activeCategory = resolveSelectedUpgradeCategory(content, options.activeCategoryId);
+  const activeCategoryId = activeCategory?.id ?? "";
   const alignment = resolveAlignment(playerState);
   const economyWarnings = getEconomyWarnings(content);
 
@@ -322,6 +324,7 @@ export function createDashboardModel(
     currentEra,
     journey: getCurrentJourney(content.eras, currentEra.id),
     hudResources: buildHudResources(content, playerState, currentEra.id),
+    selectedUpgradeCategory: activeCategory,
     upgradeRows: buildUpgradeRows(content, playerState, currentEra.id, activeCategoryId),
     alignment: alignment.alignment,
     alignmentLabel: alignment.label,

@@ -36,11 +36,13 @@ import {
 import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArtAudit, heroCropSettings, resolveRuntimeAsset, type DashboardArtKey, type DashboardArtResolution, type RuntimeAssetResolution } from "@/lib/canonical-runtime";
 import type { AssetDefinition, ClientProfile, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
+import { isKnownUpgradeCategoryId, resolveDefaultUpgradeCategory, resolveSelectedUpgradeCategory, resolveUpgradeCategories } from "@/lib/dashboard/upgrade-categories";
 import { formatArchitectureCompatibilityStatus, resolveArchitectureCompatibility } from "@/lib/architecture/compatibility";
 import { verifyResourceEconomyContracts } from "@/lib/economy/contracts";
 import { resolveLaborRateBreakdown, resolveResearchRateBreakdown } from "@/lib/economy/rate-calculator";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
+import { UPGRADE_TAB_LAYOUT, type UpgradeTabLayoutKey } from "@/lib/dashboard/upgrade-tabs-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
 import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId, type PlayerRuntimeState } from "@/lib/player-runtime";
@@ -481,13 +483,13 @@ export function CurrentEraJourney({ eras, activeEraId }: { eras: EraDefinition[]
   );
 }
 
-export function UpgradeCategoryTabs({ categories, activeCategoryId }: { categories: UpgradeCategory[]; activeCategoryId: string }) {
+export function UpgradeCategoryTabs({ categories, activeCategoryId, onSelectCategory }: { categories: UpgradeCategory[]; activeCategoryId: string; onSelectCategory?: (categoryId: string) => void }) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-4 gap-2" role="tablist" aria-label="Upgrade categories">
       {categories.map((category) => {
         const active = category.id === activeCategoryId;
         return (
-          <button key={category.id} className={`h-11 rounded-md border px-3 text-sm font-bold transition active:translate-y-px ${active ? "border-cyan-200/60 bg-cyan-300/16 text-white shadow-[0_0_18px_rgba(45,212,255,0.18)]" : "border-white/10 bg-white/[0.04] text-cyan-100/68 hover:border-cyan-200/35 hover:bg-cyan-300/8"}`}>
+          <button key={category.id} type="button" role="tab" aria-selected={active} onClick={() => onSelectCategory?.(category.id)} className={`h-11 rounded-md border px-3 text-sm font-bold transition active:translate-y-px ${active ? "border-cyan-200/60 bg-cyan-300/16 text-white shadow-[0_0_18px_rgba(45,212,255,0.18)]" : "border-white/10 bg-white/[0.04] text-cyan-100/68 hover:border-cyan-200/35 hover:bg-cyan-300/8"}`}>
             {category.displayName}
           </button>
         );
@@ -2488,35 +2490,83 @@ function RobloxHero({ data, model, art: dashboardArt }: { data: GameRuntimeData;
   );
 }
 
-function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art }: { categories: UpgradeCategory[]; activeCategoryId: string; model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap }) {
-  const tabLabelXOffsets = [0.045, 0.07, 0.045, 0.018];
+function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, onSelectCategory }: { categories: UpgradeCategory[]; activeCategoryId: string; model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; onSelectCategory: (categoryId: string) => void }) {
+  const tabPanelId = "dashboard-upgrade-tabpanel";
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const visibleCategories = categories.slice(0, 4);
+
+  const selectCategoryAtIndex = (index: number) => {
+    const category = visibleCategories[index];
+    if (!category) return;
+    onSelectCategory(category.id);
+    tabRefs.current[index]?.focus();
+  };
 
   return (
     <section className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.dashboard_upgrade_background) ? <img src={dashboardImagePath(art.dashboard_upgrade_background)} alt="" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_upgrade_background} className="absolute inset-0" />}
-      {categories.slice(0, 4).map((category, index) => {
+      {dashboardImagePath(art.dashboard_upgrade_background) ? <img src={dashboardImagePath(art.dashboard_upgrade_background)} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_upgrade_background} className="pointer-events-none absolute inset-0" />}
+      <div className="pointer-events-none absolute inset-0 z-10" role="tablist" aria-label="Upgrade categories" data-testid="upgrade-category-tablist">
+      {visibleCategories.map((category, index) => {
           const active = category.id === activeCategoryId;
+          const layout = UPGRADE_TAB_LAYOUT[category.id as UpgradeTabLayoutKey]?.panel;
+          const hitArea = layout?.hitArea ?? { left: index * 25, top: 0, width: 25, height: 16 };
+          const label = layout?.label ?? { left: index * 25, top: 1.76, width: 21.5, height: 5.76 };
+          const labelStyle = {
+            left: `${((label.left - hitArea.left) / hitArea.width) * 100}%`,
+            top: `${((label.top - hitArea.top) / hitArea.height) * 100}%`,
+            width: `${(label.width / hitArea.width) * 100}%`,
+            height: `${(label.height / hitArea.height) * 100}%`
+          };
+          const tabId = `dashboard-upgrade-tab-${category.id}`;
           return (
           <button
             key={category.id}
-            className={`absolute top-0 h-[16%] text-center text-[17px] font-black uppercase transition hover:brightness-125 ${active ? "text-white" : "text-cyan-100/72"}`}
-            style={{ left: `${index * 25}%`, width: "25%" }}
+            ref={(node) => {
+              tabRefs.current[index] = node;
+            }}
+            id={tabId}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            aria-controls={tabPanelId}
+            tabIndex={active ? 0 : -1}
+            data-testid={`upgrade-tab-${category.id}`}
+            data-upgrade-category-id={category.id}
+            className={`pointer-events-auto absolute text-center text-[17px] font-black uppercase outline-none transition hover:brightness-125 focus-visible:ring-2 focus-visible:ring-cyan-100/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:brightness-150 ${active ? "text-white" : "text-cyan-100/72"}`}
+            style={{ left: `${hitArea.left}%`, top: `${hitArea.top}%`, width: `${hitArea.width}%`, height: `${hitArea.height}%` }}
+            onClick={() => onSelectCategory(category.id)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowRight") {
+                event.preventDefault();
+                selectCategoryAtIndex((index + 1) % visibleCategories.length);
+              } else if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                selectCategoryAtIndex((index - 1 + visibleCategories.length) % visibleCategories.length);
+              } else if (event.key === "Home") {
+                event.preventDefault();
+                selectCategoryAtIndex(0);
+              } else if (event.key === "End") {
+                event.preventDefault();
+                selectCategoryAtIndex(visibleCategories.length - 1);
+              }
+            }}
           >
-            <span className="absolute h-[9%] w-[20.5%] whitespace-nowrap" style={{ left: `${tabLabelXOffsets[index] * 400}%`, top: "10%" }}>
+            <span className="pointer-events-none absolute flex items-center justify-center whitespace-nowrap leading-none" data-testid={`upgrade-tab-label-${category.id}`} style={labelStyle}>
               {category.displayName}
             </span>
           </button>
           );
       })}
+      </div>
       <div className="absolute left-[3.4%] top-[16.8%] h-[5%] w-[33%] text-[13px] font-black uppercase text-cyan-200/86">{shortEraName(model.currentEra)} Age</div>
       <div className="absolute left-[33%] right-[7%] top-[19.1%] h-px bg-cyan-100/26" />
-      <div className="absolute left-0 top-[21.5%] h-[75%] w-full overflow-hidden">
+      <div id={tabPanelId} role="tabpanel" aria-labelledby={`dashboard-upgrade-tab-${activeCategoryId}`} className="absolute left-0 top-[21.5%] h-[75%] w-full overflow-hidden" data-testid="dashboard-upgrade-tabpanel" data-upgrade-category-id={activeCategoryId}>
         {model.upgradeRows.length ? model.upgradeRows.slice(0, 4).map((row, index) => {
           const { upgrade } = row;
           const rowArt = resolveRuntimeAsset(upgrade, findAsset(assets, upgrade.iconKey));
           const state: UpgradeState = row.unlocked ? (row.affordable ? "affordable" : "available") : "locked";
           return (
-            <div key={upgrade.id} className="absolute left-0 h-[78px] w-full" style={{ top: index * 78 }}>
+            <div key={upgrade.id} className="absolute left-0 h-[78px] w-full" style={{ top: index * 78 }} data-testid="dashboard-upgrade-row" data-upgrade-category-id={upgrade.categoryId}>
               {rowArt.path ? <ArtworkFrame art={rowArt} className="absolute left-[3.7%] top-[8%] h-[82%] min-h-0 w-[8.2%] rounded-sm border-0" /> : <div className="absolute left-[3.7%] top-[8%] flex h-[82%] w-[8.2%] items-center justify-center text-[26px] font-black text-cyan-100/70">?</div>}
               <div className="absolute left-[14%] top-[6%] h-[27%] w-[40%] truncate text-[18px] font-bold leading-none text-white">{upgrade.displayName}</div>
               <div className="absolute left-[14%] top-[34%] h-[24%] w-[45%] truncate text-[15px] font-medium leading-none text-cyan-50/72">{upgrade.description}</div>
@@ -3473,8 +3523,23 @@ export function GameShell({
   const deviceClass = useMemo(() => resolveDeviceClass(presentationProfile, viewportSize.width, viewportSize.height), [presentationProfile, viewportSize.height, viewportSize.width]);
   const touchProfile = useMemo(() => resolveTouchProfile(presentationProfile), [presentationProfile]);
   const rotateDevice = !embedded && shouldShowRotateDevice(presentationProfile, activeScreen, viewportSize);
-  const category = data.upgradeCategories.find((item) => item.id === activeCategoryId) ?? data.upgradeCategories[0];
-  const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category.id }), [activeEraId, category.id, data, playerState, runtimeState]);
+  const upgradeCategories = useMemo(() => resolveUpgradeCategories(data), [data]);
+  const categoryIdsKey = upgradeCategories.map((item) => item.id).join("|");
+  const [selectedUpgradeCategoryId, setSelectedUpgradeCategoryId] = useState(() => resolveSelectedUpgradeCategory(data, activeCategoryId)?.id ?? resolveDefaultUpgradeCategory(data)?.id ?? "");
+  const lastActiveCategoryProp = useRef(activeCategoryId);
+
+  useEffect(() => {
+    const propChanged = lastActiveCategoryProp.current !== activeCategoryId;
+    lastActiveCategoryProp.current = activeCategoryId;
+    setSelectedUpgradeCategoryId((currentId) => {
+      if (propChanged) return resolveSelectedUpgradeCategory(data, activeCategoryId)?.id ?? resolveDefaultUpgradeCategory(data)?.id ?? "";
+      if (isKnownUpgradeCategoryId(data, currentId)) return currentId;
+      return resolveDefaultUpgradeCategory(data)?.id ?? "";
+    });
+  }, [activeCategoryId, categoryIdsKey, data]);
+
+  const category = resolveSelectedUpgradeCategory(data, selectedUpgradeCategoryId) ?? resolveDefaultUpgradeCategory(data);
+  const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category?.id }), [activeEraId, category?.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
   const artAudit = useMemo(() => getDashboardArtAudit(data.assets), [data.assets]);
   const scaleAssetWarnings = useMemo(() => getDashboardScaleAssetWarnings(2), []);
@@ -3532,7 +3597,7 @@ export function GameShell({
             <RobloxHero data={data} model={model} art={dashboardArt} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
-            <RobloxUpgradePanel categories={data.upgradeCategories} activeCategoryId={category.id} model={model} assets={data.assets} art={dashboardArt} />
+            <RobloxUpgradePanel categories={upgradeCategories} activeCategoryId={category?.id ?? ""} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
             <RobloxRightColumn model={model} art={dashboardArt} />
