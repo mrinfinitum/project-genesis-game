@@ -1564,15 +1564,15 @@ function SettingsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/82 p-4 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
+      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/88 p-4 opacity-100 backdrop-blur-[5px] animate-[settingsFade_220ms_ease-out]"
       data-testid="settings-backdrop"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <style>{`@keyframes settingsFade{from{opacity:0}to{opacity:1}}@keyframes settingsScale{from{opacity:.6;transform:scale(.965)}to{opacity:1;transform:scale(1)}}`}</style>
-      <section ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="settings-title" data-testid="settings-modal" className="grid h-[min(700px,calc(100dvh-32px))] w-[min(1060px,calc(100dvw-32px))] grid-cols-[220px_1fr] overflow-hidden rounded-sm border border-cyan-200/34 bg-slate-950/98 text-cyan-50 shadow-[0_0_52px_rgba(34,211,238,0.2),inset_0_0_30px_rgba(8,145,178,0.14)] animate-[settingsScale_220ms_ease-out]">
-        <nav className="border-r border-cyan-200/20 bg-black/46 p-4">
+      <section ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="settings-title" data-testid="settings-modal" className="grid h-[min(700px,calc(100dvh-32px))] w-[min(1060px,calc(100dvw-32px))] grid-cols-[220px_1fr] overflow-hidden rounded-sm border border-cyan-200/38 bg-[rgba(2,8,23,0.985)] text-cyan-50 shadow-[0_0_52px_rgba(34,211,238,0.22),inset_0_0_30px_rgba(8,145,178,0.14)] animate-[settingsScale_220ms_ease-out]">
+        <nav className="border-r border-cyan-200/22 bg-[rgba(0,0,0,0.76)] p-4">
           <div id="settings-title" className="mb-4 text-sm font-black uppercase tracking-[0.28em] text-cyan-100/75">Settings</div>
           <SettingsProfileButton
             account={account}
@@ -1599,7 +1599,7 @@ function SettingsModal({
           </div>
           {content[activeTab]}
           {pendingDanger ? (
-            <div className="absolute inset-x-6 bottom-6 rounded-sm border border-rose-200/35 bg-rose-950/92 p-4 shadow-[0_0_32px_rgba(244,63,94,0.2)]" data-testid="settings-confirmation">
+            <div className="absolute inset-x-6 bottom-6 rounded-sm border border-rose-200/40 bg-[rgba(76,5,25,0.98)] p-4 shadow-[0_0_32px_rgba(244,63,94,0.22)]" data-testid="settings-confirmation">
               <div className="text-sm font-black uppercase text-rose-50">Confirm {pendingDanger.replace("-", " ")}</div>
               <div className="mt-1 text-xs font-semibold text-rose-100/70">This action can replace or remove progress. Choose carefully.</div>
               <div className="mt-3 flex gap-2">
@@ -2562,7 +2562,7 @@ export function BoostsTray({
         data-closed-position="translateY(calc(100% + 24px))"
         data-bottom-offset="8"
         data-transition={prefersReducedMotion ? "none" : "transform-opacity"}
-        className={`absolute overflow-hidden rounded-md border border-cyan-100/30 bg-[linear-gradient(180deg,rgba(9,22,45,0.96),rgba(3,8,18,0.98))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.34),0_0_26px_rgba(45,212,255,0.12),inset_0_0_24px_rgba(45,212,255,0.055)] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`absolute overflow-hidden rounded-md border border-cyan-100/34 bg-[linear-gradient(180deg,rgba(7,18,38,0.985),rgba(2,7,17,0.99))] p-3 text-cyan-50 shadow-[0_-18px_48px_rgba(0,0,0,0.38),0_0_26px_rgba(45,212,255,0.14),inset_0_0_24px_rgba(45,212,255,0.065)] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         style={trayStyle}
       >
         <div className="flex h-full min-h-0 flex-col gap-2">
