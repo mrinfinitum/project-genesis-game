@@ -249,6 +249,65 @@ describe("Roblox left column geometry", () => {
     expect(performManualLaborClick).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps Click controls disabled until the runtime is hydrated", async () => {
+    const data = await bundledRuntime();
+    const performManualLaborClick = vi.fn();
+    render(
+      <GameShell
+        data={data}
+        playerRuntimeActions={{
+          saveNow: vi.fn(),
+          resetSave: vi.fn(),
+          deleteLocalSave: vi.fn(),
+          exportSave: () => "{}",
+          importSave: () => true,
+          advanceSimulation: vi.fn(),
+          grantTestResources: vi.fn(),
+          grantTestPrimaryEconomy: vi.fn(),
+          grantTestResearch: vi.fn(),
+          performManualLaborClick,
+          toggleAutomation: vi.fn()
+        }}
+        runtimeStatus={{ runtimeId: "hydrating", hydrationComplete: false, gameplayReady: false, actionOwner: "player-runtime-provider", isSimulationRunning: false, simulationStartCount: 0, tickCount: 0, controlsEnabled: false, disabledReason: "startup resolving save" }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("click-power-ring"));
+    fireEvent.click(screen.getByTestId("click-power-button"));
+
+    expect(performManualLaborClick).not.toHaveBeenCalled();
+  });
+
+  it("does not disable Click controls for pending cloud sync", async () => {
+    const data = await bundledRuntime();
+    const performManualLaborClick = vi.fn();
+    render(
+      <GameShell
+        data={data}
+        playerRuntimeActions={{
+          saveNow: vi.fn(),
+          resetSave: vi.fn(),
+          deleteLocalSave: vi.fn(),
+          exportSave: () => "{}",
+          importSave: () => true,
+          advanceSimulation: vi.fn(),
+          grantTestResources: vi.fn(),
+          grantTestPrimaryEconomy: vi.fn(),
+          grantTestResearch: vi.fn(),
+          performManualLaborClick,
+          toggleAutomation: vi.fn()
+        }}
+        cloudSync={{ activeSaveSource: "cloud", status: "Pending Sync", dirty: true, pendingRetry: true, offlineProgressionApplyCount: 1 }}
+        runtimeStatus={{ runtimeId: "runtime-1", hydrationComplete: true, gameplayReady: true, actionOwner: "player-runtime-provider", isSimulationRunning: true, activeSimulationRuntimeId: "runtime-1", simulationStartCount: 1, tickCount: 4, controlsEnabled: true }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("click-power-ring"));
+    fireEvent.click(screen.getByTestId("click-power-button"));
+
+    expect(performManualLaborClick).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps Auto Click controls inside the canonical panel bounds", async () => {
     const data = await bundledRuntime();
     const model = createDashboardModel(data, {

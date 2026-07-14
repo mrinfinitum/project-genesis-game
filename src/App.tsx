@@ -73,6 +73,7 @@ type GenesisOutletContext = {
   cloudSync: CloudSyncMetadata;
   cloudSave: CloudSave | null;
   cloudError?: string;
+  runtimeStatus: PlayerRuntimeStatus;
   refreshCanonicalRuntime: () => Promise<void>;
   clearCanonicalRuntimeCache: () => Promise<void>;
 };
@@ -95,6 +96,21 @@ type PlayerRuntimeActions = {
   grantTestResearch: () => void;
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
+};
+
+type PlayerRuntimeStatus = {
+  runtimeId: string;
+  hydrationComplete: boolean;
+  gameplayReady: boolean;
+  actionOwner: "player-runtime-provider";
+  isSimulationRunning: boolean;
+  activeSimulationRuntimeId?: string;
+  simulationStartCount: number;
+  tickCount: number;
+  lastTickAt?: string;
+  controlsEnabled: boolean;
+  disabledReason?: string;
+  lastClickAt?: string;
 };
 
 function payloadFromState(state: RuntimeContentState): GameRuntimeData {
@@ -215,6 +231,10 @@ function stampRuntimeSource(state: PlayerRuntimeState, source: PlayerRuntimeStat
   };
 }
 
+function runtimeIdentity(state: PlayerRuntimeState, runtimeKey: string) {
+  return `${runtimeKey}:${state.playerId}:${state.revision}:${state.updatedAt}`;
+}
+
 function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: ReturnType<typeof useNoverisAuth>["state"]) {
   const service = useMemo(() => new PlayerRuntimeLocalSaveService(data), [data]);
   const supabaseConfig = useMemo(() => readNoverisSupabaseConfig(), []);
@@ -229,9 +249,21 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
   const [cloudError, setCloudError] = useState<string | undefined>();
   const [cloudSync, setCloudSync] = useState<CloudSyncMetadata>(() => loadCloudSyncMetadata());
   const [startupConflict, setStartupConflict] = useState(false);
+  const [runtimeStatus, setRuntimeStatus] = useState<PlayerRuntimeStatus>({
+    runtimeId: "unhydrated",
+    hydrationComplete: false,
+    gameplayReady: false,
+    actionOwner: "player-runtime-provider",
+    isSimulationRunning: false,
+    simulationStartCount: 0,
+    tickCount: 0,
+    controlsEnabled: false,
+    disabledReason: "runtime not hydrated"
+  });
   const cloudSavingRef = useRef(false);
   const startupTokenRef = useRef("");
-  const displayPlayerRuntime = loadedRuntimeKey === runtimeKey ? playerRuntime : createNewPlayerRuntimeState(data);
+  const runtimeReady = loadedRuntimeKey === runtimeKey && runtimeStatus.hydrationComplete && !startupConflict;
+  const displayPlayerRuntime = runtimeReady ? playerRuntime : createNewPlayerRuntimeState(data);
 
   const updateCloudSync = useCallback((patch: Partial<CloudSyncMetadata>) => {
     setCloudSync((current) => saveCloudSyncMetadata({ ...current, ...patch }));
@@ -287,6 +319,16 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
       setLoadedRuntimeKey("");
       setStartupConflict(false);
       setCloudError(undefined);
+      setRuntimeStatus((current) => ({
+        ...current,
+        runtimeId: "hydrating",
+        hydrationComplete: false,
+        gameplayReady: false,
+        isSimulationRunning: false,
+        activeSimulationRuntimeId: undefined,
+        controlsEnabled: false,
+        disabledReason: "startup resolving save"
+      }));
 
       const localLoaded = service.loadOrCreate();
       let selected = localLoaded;
@@ -304,6 +346,15 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
           if (loadedCloud && shouldShowConflict(comparison)) {
             setPlayerRuntime(localLoaded);
             setStartupConflict(true);
+            setRuntimeStatus((current) => ({
+              ...current,
+              hydrationComplete: false,
+              gameplayReady: false,
+              isSimulationRunning: false,
+              activeSimulationRuntimeId: undefined,
+              controlsEnabled: false,
+              disabledReason: "save conflict requires resolution"
+            }));
             updateCloudSync({
               activeSaveSource: "local",
               status: "Conflict",
@@ -344,8 +395,17 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
       if (cancelled) return;
       const advanced = advanceSimulation(data, selected);
       const saved = service.save(stampRuntimeSource(advanced, activeSaveSource === "cloud" ? "Cloud Save" : activeSaveSource === "offline_local" ? "Offline Local" : selected.runtimeLoadReport.loadedFrom), false);
+      const nextRuntimeId = runtimeIdentity(saved, runtimeKey);
       setPlayerRuntime(saved);
       setLoadedRuntimeKey(runtimeKey);
+      setRuntimeStatus((current) => ({
+        ...current,
+        runtimeId: nextRuntimeId,
+        hydrationComplete: true,
+        gameplayReady: true,
+        controlsEnabled: true,
+        disabledReason: undefined
+      }));
       updateCloudSync({ activeSaveSource, offlineProgressionApplyCount: cloudSync.offlineProgressionApplyCount + 1 });
 
       if (authState.status === "authenticated" && authState.user && (!loadedCloud || activeSaveSource === "local")) {
@@ -361,17 +421,36 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
   }, [authState, cloudService, cloudSync.offlineProgressionApplyCount, data, deviceService, enabled, profileService, runtimeKey, service, syncCloudNow, updateCloudSync]);
 
   useEffect(() => {
-    if (!enabled || loadedRuntimeKey !== runtimeKey || startupConflict) return;
+    if (!enabled || loadedRuntimeKey !== runtimeKey || startupConflict || !runtimeStatus.hydrationComplete) return;
+    const activeSimulationRuntimeId = runtimeStatus.runtimeId;
+    queueMicrotask(() => {
+      setRuntimeStatus((current) => ({
+        ...current,
+        isSimulationRunning: true,
+        activeSimulationRuntimeId,
+        simulationStartCount: current.activeSimulationRuntimeId === activeSimulationRuntimeId && current.isSimulationRunning ? current.simulationStartCount : current.simulationStartCount + 1,
+        controlsEnabled: true,
+        disabledReason: undefined
+      }));
+    });
 
     const id = window.setInterval(() => {
       setPlayerRuntime((current) => advanceSimulation(data, current, { seconds: 1 }));
+      setRuntimeStatus((current) => ({
+        ...current,
+        tickCount: current.tickCount + 1,
+        lastTickAt: new Date().toISOString()
+      }));
     }, 1000);
 
-    return () => window.clearInterval(id);
-  }, [data, enabled, loadedRuntimeKey, runtimeKey, startupConflict]);
+    return () => {
+      window.clearInterval(id);
+      setRuntimeStatus((current) => current.activeSimulationRuntimeId === activeSimulationRuntimeId ? { ...current, isSimulationRunning: false } : current);
+    };
+  }, [data, enabled, loadedRuntimeKey, runtimeKey, startupConflict, runtimeStatus.hydrationComplete, runtimeStatus.runtimeId]);
 
   useEffect(() => {
-    if (!enabled || loadedRuntimeKey !== runtimeKey || startupConflict) return;
+    if (!enabled || loadedRuntimeKey !== runtimeKey || startupConflict || !runtimeStatus.hydrationComplete) return;
 
     const autosaveSeconds = Math.max(5, data.balance.autosaveSeconds || 30);
     const id = window.setInterval(() => {
@@ -383,15 +462,15 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
     }, autosaveSeconds * 1000);
 
     return () => window.clearInterval(id);
-  }, [data.balance.autosaveSeconds, enabled, loadedRuntimeKey, runtimeKey, service, startupConflict, updateCloudSync]);
+  }, [data.balance.autosaveSeconds, enabled, loadedRuntimeKey, runtimeKey, runtimeStatus.hydrationComplete, service, startupConflict, updateCloudSync]);
 
   useEffect(() => {
-    if (!enabled || loadedRuntimeKey !== runtimeKey || startupConflict || authState.status !== "authenticated") return;
+    if (!enabled || loadedRuntimeKey !== runtimeKey || startupConflict || authState.status !== "authenticated" || !runtimeStatus.hydrationComplete) return;
     const id = window.setInterval(() => {
       if (cloudSync.dirty) void syncCloudNow(playerRuntime, "cloud-autosave");
     }, 25_000);
     return () => window.clearInterval(id);
-  }, [authState.status, cloudSync.dirty, enabled, loadedRuntimeKey, playerRuntime, runtimeKey, startupConflict, syncCloudNow]);
+  }, [authState.status, cloudSync.dirty, enabled, loadedRuntimeKey, playerRuntime, runtimeKey, runtimeStatus.hydrationComplete, startupConflict, syncCloudNow]);
 
   useEffect(() => {
     function retryOnline() {
@@ -421,13 +500,19 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
         });
       },
       resetSave() {
-        setPlayerRuntime(service.reset());
+        const next = service.reset();
+        const nextRuntimeId = runtimeIdentity(next, runtimeKey);
+        setPlayerRuntime(next);
         setLoadedRuntimeKey(runtimeKey);
+        setRuntimeStatus((current) => ({ ...current, runtimeId: nextRuntimeId, hydrationComplete: true, gameplayReady: true, controlsEnabled: true, disabledReason: undefined }));
         updateCloudSync({ activeSaveSource: "new_game", dirty: true, status: authState.status === "authenticated" ? "Pending Sync" : "Local Only" });
       },
       deleteLocalSave() {
-        setPlayerRuntime(service.deleteLocalSave());
+        const next = service.deleteLocalSave();
+        const nextRuntimeId = runtimeIdentity(next, runtimeKey);
+        setPlayerRuntime(next);
         setLoadedRuntimeKey(runtimeKey);
+        setRuntimeStatus((current) => ({ ...current, runtimeId: nextRuntimeId, hydrationComplete: true, gameplayReady: true, controlsEnabled: true, disabledReason: undefined }));
         updateCloudSync({ activeSaveSource: "new_game", dirty: true, status: authState.status === "authenticated" ? "Pending Sync" : "Local Only" });
       },
       saveToCloud() {
@@ -450,9 +535,11 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
           void cloudService.createBackup(authState.user, playerRuntime, "before_local_replacement_by_cloud", getOrCreateLocalDeviceId(), getDefaultDeviceName());
         }
         const selected = service.save(stampRuntimeSource(advanceSimulation(data, cloudSave.playerState), "Cloud Selected After Conflict"), false);
+        const nextRuntimeId = runtimeIdentity(selected, runtimeKey);
         setPlayerRuntime(selected);
         setLoadedRuntimeKey(runtimeKey);
         setStartupConflict(false);
+        setRuntimeStatus((current) => ({ ...current, runtimeId: nextRuntimeId, hydrationComplete: true, gameplayReady: true, controlsEnabled: true, disabledReason: undefined }));
         updateCloudSync({ activeSaveSource: "cloud_selected_after_conflict", status: "Synced", dirty: false, pendingRetry: false, lastSyncedRevision: cloudSave.revision, cloudRevision: cloudSave.revision, offlineProgressionApplyCount: cloudSync.offlineProgressionApplyCount + 1 });
       },
       chooseLocalSave() {
@@ -460,9 +547,11 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
           void cloudService.createBackup(authState.user, cloudSave.playerState, "before_cloud_overwrite_by_local", getOrCreateLocalDeviceId(), getDefaultDeviceName());
         }
         const selected = service.save(stampRuntimeSource(advanceSimulation(data, playerRuntime), "Local Selected After Conflict"), false);
+        const nextRuntimeId = runtimeIdentity(selected, runtimeKey);
         setPlayerRuntime(selected);
         setLoadedRuntimeKey(runtimeKey);
         setStartupConflict(false);
+        setRuntimeStatus((current) => ({ ...current, runtimeId: nextRuntimeId, hydrationComplete: true, gameplayReady: true, controlsEnabled: true, disabledReason: undefined }));
         updateCloudSync({ activeSaveSource: "local_selected_after_conflict", status: "Pending Sync", dirty: true, pendingRetry: false, offlineProgressionApplyCount: cloudSync.offlineProgressionApplyCount + 1 });
         void syncCloudNow(selected, "conflict-use-local");
       },
@@ -472,7 +561,9 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
       importSave(serialized: string) {
         const imported = service.importSave(serialized);
         if (imported.ok && imported.state) {
-          setPlayerRuntime(imported.state);
+          const importedState = imported.state;
+          setPlayerRuntime(importedState);
+          setRuntimeStatus((current) => ({ ...current, runtimeId: runtimeIdentity(importedState, runtimeKey), hydrationComplete: true, gameplayReady: true, controlsEnabled: true, disabledReason: undefined }));
           updateCloudSync({ dirty: true });
           return true;
         }
@@ -505,6 +596,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
         });
       },
       performManualLaborClick() {
+        setRuntimeStatus((current) => ({ ...current, lastClickAt: new Date().toISOString() }));
         setPlayerRuntime((current) => {
           updateCloudSync({ dirty: true });
           return service.save(performManualLaborClick(data, current));
@@ -524,7 +616,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
     [authState.status, authState.user, cloudSave, cloudService, cloudSync.offlineProgressionApplyCount, data, playerRuntime, runtimeKey, service, syncCloudNow, updateCloudSync]
   );
 
-  return { playerRuntime: displayPlayerRuntime, actions, cloudSave, cloudError, cloudSync, startupConflict };
+  return { playerRuntime: displayPlayerRuntime, actions, cloudSave, cloudError, cloudSync, startupConflict, runtimeStatus: { ...runtimeStatus, gameplayReady: runtimeReady, controlsEnabled: runtimeReady, disabledReason: runtimeReady ? undefined : runtimeStatus.disabledReason ?? "runtime not ready" } };
 }
 
 function RuntimeRouteShell() {
@@ -532,7 +624,7 @@ function RuntimeRouteShell() {
   const { state, refreshCanonicalRuntime, clearCanonicalRuntimeCache } = useRuntimeContent();
   const data = useMemo(() => payloadFromState(state), [state]);
   const startupEnabled = auth.state.status === "guest" || auth.state.status === "authenticated" || auth.state.status === "error";
-  const { playerRuntime, actions: playerRuntimeActions, cloudSave, cloudError, cloudSync, startupConflict } = usePlayerRuntime(data, state.status !== "loading" && startupEnabled, auth.state);
+  const { playerRuntime, actions: playerRuntimeActions, cloudSave, cloudError, cloudSync, startupConflict, runtimeStatus } = usePlayerRuntime(data, state.status !== "loading" && startupEnabled, auth.state);
   const startup = useGameStartup({
     runtimeState: state,
     authState: auth.state,
@@ -551,13 +643,13 @@ function RuntimeRouteShell() {
     return <SaveConflictRoute startup={startup} onUseCloud={playerRuntimeActions.chooseCloudSave} onUseLocal={playerRuntimeActions.chooseLocalSave} onRetry={playerRuntimeActions.saveNow} onSignOut={() => void auth.signOut()} />;
   }
 
-  if (state.status === "loading" || auth.state.status === "initializing" || !startup.isReady) {
+  if (state.status === "loading" || auth.state.status === "initializing" || !startup.isReady || !runtimeStatus.gameplayReady) {
     return <NoverisLoadingScreen startup={startup} />;
   }
 
   return (
     <>
-      <Outlet context={{ data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError, refreshCanonicalRuntime, clearCanonicalRuntimeCache } satisfies GenesisOutletContext} />
+      <Outlet context={{ data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError, runtimeStatus, refreshCanonicalRuntime, clearCanonicalRuntimeCache } satisfies GenesisOutletContext} />
       {developerToolsEnabled ? (
         <Suspense fallback={null}>
           <RuntimeDiagnostics state={state} onRefresh={refreshCanonicalRuntime} onClearCache={clearCanonicalRuntimeCache} />
@@ -607,7 +699,7 @@ function LazyDataRoute({ component: Component, label }: { component: ComponentTy
 }
 
 function DashboardRoute() {
-  const { data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError } = useGenesisRouteContext();
+  const { data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError, runtimeStatus } = useGenesisRouteContext();
   const auth = useNoverisAuth();
   const dashboardPlayerState = useMemo(() => playerRuntimeToDashboardPlayerState(data, playerRuntime), [data, playerRuntime]);
   return (
@@ -620,6 +712,7 @@ function DashboardRoute() {
       cloudSync={cloudSync}
       cloudSave={cloudSave}
       cloudError={cloudError}
+      runtimeStatus={runtimeStatus}
       settingsAccount={{ status: auth.state.status, email: auth.state.email, supabaseStatus: auth.state.cloudAvailable ? "Available" : "Unavailable" }}
       activeScreen="dashboard"
       activeEraId={playerRuntime.civilization.currentEraId}

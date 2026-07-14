@@ -91,6 +91,21 @@ type SettingsAccountState = {
   supabaseStatus?: string;
 };
 
+type DashboardRuntimeStatus = {
+  runtimeId: string;
+  hydrationComplete: boolean;
+  gameplayReady: boolean;
+  actionOwner: string;
+  isSimulationRunning: boolean;
+  activeSimulationRuntimeId?: string;
+  simulationStartCount: number;
+  tickCount: number;
+  lastTickAt?: string;
+  controlsEnabled: boolean;
+  disabledReason?: string;
+  lastClickAt?: string;
+};
+
 export type BoostSlotState = "available" | "active" | "locked" | "unavailable" | "cooldown";
 
 export type BoostTraySlot = {
@@ -920,6 +935,7 @@ export function ClickPowerPanel({
   art,
   showDevWarnings = false,
   onClick,
+  controlsEnabled = true,
   pressed = false,
   pulseKey = 0
 }: {
@@ -928,12 +944,14 @@ export function ClickPowerPanel({
   art: DashboardArtMap;
   showDevWarnings?: boolean;
   onClick?: () => void;
+  controlsEnabled?: boolean;
   pressed?: boolean;
   pulseKey?: number;
 }) {
   const clickResource = model.playerState.clickOutput?.resourceId ? data.resources.find((resource) => resource.id === model.playerState.clickOutput?.resourceId) : undefined;
   const clickResourceLabel = model.playerState.clickOutput?.label ?? clickResource?.displayName ?? "Civilization Energy";
   const hasClickState = Boolean(model.playerState.clickOutput);
+  const clickEnabled = hasClickState && controlsEnabled;
   const lastClick = model.playerState.clickOutput?.lastGain ?? 0;
 
   return (
@@ -951,9 +969,9 @@ export function ClickPowerPanel({
         innerArt={art.click_ring_inner}
         centerArt={art.dashboard_click_hand}
         variant="click"
-        disabled={!hasClickState}
+        disabled={!clickEnabled}
         pulseKey={pulseKey}
-        onActivate={hasClickState ? onClick : undefined}
+        onActivate={clickEnabled ? onClick : undefined}
         data-testid="click-power-ring"
         data-rojo-rect="31,80,162,162"
         className="left-[31px] top-[80px] h-[162px] w-[162px]"
@@ -968,9 +986,9 @@ export function ClickPowerPanel({
         art={art.dashboard_click_button}
         label="CLICK!"
         tone="cyan"
-        disabled={!hasClickState}
+        disabled={!clickEnabled}
         pressed={pressed}
-        onClick={hasClickState ? onClick : undefined}
+        onClick={clickEnabled ? onClick : undefined}
         data-testid="click-power-button"
         data-rojo-rect="32,250,294,66"
         className="absolute left-[32px] top-[250px] h-[66px] w-[294px]"
@@ -1691,13 +1709,15 @@ function RobloxLeftColumn({
   model,
   art,
   showDevWarnings,
-  playerRuntimeActions
+  playerRuntimeActions,
+  runtimeStatus
 }: {
   data: GameRuntimeData;
   model: DashboardModel;
   art: DashboardArtMap;
   showDevWarnings: boolean;
   playerRuntimeActions?: PlayerRuntimeDashboardActions;
+  runtimeStatus?: DashboardRuntimeStatus;
 }) {
   const [clickPulseKey, setClickPulseKey] = useState(0);
   const [clickPressed, setClickPressed] = useState(false);
@@ -1706,7 +1726,7 @@ function RobloxLeftColumn({
   const hasAutomation = Boolean(model.playerState.automation);
 
   function handleClickPower() {
-    if (!hasClickState) return;
+    if (!hasClickState || runtimeStatus?.controlsEnabled === false) return;
     playerRuntimeActions?.performManualLaborClick();
     setClickPulseKey((current) => current + 1);
     setClickPressed(true);
@@ -1714,7 +1734,7 @@ function RobloxLeftColumn({
   }
 
   function handleAutoToggle() {
-    if (!hasAutomation) return;
+    if (!hasAutomation || runtimeStatus?.controlsEnabled === false) return;
     playerRuntimeActions?.toggleAutomation();
   }
 
@@ -1735,8 +1755,8 @@ function RobloxLeftColumn({
           className="pointer-events-none absolute inset-0 h-full w-full object-fill"
         />
       ) : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
-      <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} pressed={clickPressed} pulseKey={clickPulseKey} />
-      <AutoClickPanel model={model} art={art} onToggle={handleAutoToggle} />
+      <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} controlsEnabled={runtimeStatus?.controlsEnabled ?? true} pressed={clickPressed} pulseKey={clickPulseKey} />
+      <AutoClickPanel model={model} art={art} onToggle={runtimeStatus?.controlsEnabled === false ? undefined : handleAutoToggle} />
 
       <section data-testid="critical-stats-panel" className="absolute left-0 top-[638px] h-[185px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.critical.x},${LEFT_COLUMN_GEOMETRY.critical.y},${LEFT_COLUMN_GEOMETRY.critical.width},${LEFT_COLUMN_GEOMETRY.critical.height}`}>
         {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] text-amber-100" />}
@@ -2765,13 +2785,19 @@ function DashboardDataArtInspector({
   model,
   artAudit,
   playerRuntime,
-  playerRuntimeActions
+  playerRuntimeActions,
+  runtimeStatus,
+  cloudSync,
+  cloudError
 }: {
   data: GameRuntimeData;
   model: DashboardModel;
   artAudit: DashboardArtResolution[];
   playerRuntime?: PlayerRuntimeState;
   playerRuntimeActions?: PlayerRuntimeDashboardActions;
+  runtimeStatus?: DashboardRuntimeStatus;
+  cloudSync?: CloudSyncMetadata;
+  cloudError?: string;
 }) {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const missing = artAudit.filter((item) => item.mappingStatus === "missing" || item.warnings.length);
@@ -2828,6 +2854,28 @@ function DashboardDataArtInspector({
           <div className="font-black">{demoValues.length}</div>
         </div>
       </div>
+      {runtimeStatus ? (
+        <div className="mt-3 rounded-sm border border-cyan-200/18 bg-black/25 p-2">
+          <div className="font-black uppercase text-cyan-100/75">Startup / Runtime / Simulation</div>
+          <div className="mt-1 grid grid-cols-2 gap-1">
+            <div>gameplay ready {runtimeStatus.gameplayReady ? "yes" : "no"}</div>
+            <div>hydrated {runtimeStatus.hydrationComplete ? "yes" : "no"}</div>
+            <div className="col-span-2 truncate">runtime {runtimeStatus.runtimeId}</div>
+            <div className="col-span-2 truncate">action owner {runtimeStatus.actionOwner}</div>
+            <div>simulation {runtimeStatus.isSimulationRunning ? "running" : "stopped"}</div>
+            <div>starts {runtimeStatus.simulationStartCount}</div>
+            <div>ticks {runtimeStatus.tickCount}</div>
+            <div className="truncate">last tick {runtimeStatus.lastTickAt ?? "none"}</div>
+            <div className="col-span-2 truncate">sim runtime {runtimeStatus.activeSimulationRuntimeId ?? "none"}</div>
+            <div>click enabled {runtimeStatus.controlsEnabled ? "yes" : "no"}</div>
+            <div className="truncate">reason {runtimeStatus.disabledReason ?? "none"}</div>
+            <div className="truncate">last click {runtimeStatus.lastClickAt ?? "none"}</div>
+            <div>offline applies {cloudSync?.offlineProgressionApplyCount ?? 0}</div>
+            <div className="col-span-2 truncate">cloud {cloudSync?.status ?? "unknown"} {cloudSync?.pendingRetry ? "pending" : ""}</div>
+            <div className="col-span-2 truncate">cloud error {cloudError ?? cloudSync?.lastCloudError ?? "none"}</div>
+          </div>
+        </div>
+      ) : null}
       {playerRuntime ? (
         <div className="mt-3 rounded-sm border border-cyan-200/18 bg-black/25 p-2">
           <div className="font-black uppercase text-cyan-100/75">Player Runtime</div>
@@ -2934,6 +2982,7 @@ export function GameShell({
   cloudSave,
   cloudError,
   settingsAccount,
+  runtimeStatus,
   activeScreen = "dashboard",
   activeEraId = "survival",
   activeCategoryId = "workforce",
@@ -2950,6 +2999,7 @@ export function GameShell({
   cloudSave?: CloudSave | null;
   cloudError?: string;
   settingsAccount?: SettingsAccountState;
+  runtimeStatus?: DashboardRuntimeStatus;
   activeScreen?: string;
   activeEraId?: string;
   activeCategoryId?: string;
@@ -2995,7 +3045,7 @@ export function GameShell({
             <RobloxNavigation active={activeScreen} art={dashboardArt} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
-            <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} />
+            <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} runtimeStatus={runtimeStatus} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.hero)}>
             <RobloxHero data={data} model={model} art={dashboardArt} />
@@ -3048,7 +3098,7 @@ export function GameShell({
             cloudError={cloudError}
             account={settingsAccount}
           />
-          {dashboardDevToolsEnabled ? <DashboardDataArtInspector data={data} model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} /> : null}
+          {dashboardDevToolsEnabled ? <DashboardDataArtInspector data={data} model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} runtimeStatus={runtimeStatus} cloudSync={cloudSync} cloudError={cloudError} /> : null}
       </GameViewportScaler>
     </main>
   );
