@@ -192,12 +192,20 @@ export interface ClientProfile {
 }
 
 export interface AiAgentAssetKeys {
+  head?: string;
+  ring?: string;
+  open?: string;
+  blink?: string;
+  offline?: string;
+  working?: string;
+  thinking?: string;
+  warning?: string;
+  celebration?: string;
   portraitOpen?: string;
   portraitBlink?: string;
   portraitClosed?: string;
   portraitOffline?: string;
   portraitWorking?: string;
-  ring?: string;
   [key: string]: unknown;
 }
 
@@ -205,13 +213,44 @@ export interface AiAgentDefinition {
   id: string;
   name?: string;
   displayName?: string;
+  shortDisplayName?: string;
   personalityId?: string;
   animationProfileId?: string;
   rarity?: string;
   description?: string;
   unlockRequirements?: UnlockRequirement;
+  baseVariantId?: string;
+  availableVariantIds?: string[];
+  defaultForNewPlayers?: boolean;
+  publishState?: string;
+  approvalState?: string;
+  status?: string;
+  headAssetKey?: string;
+  eyesOpenAssetKey?: string;
+  eyesBlinkAssetKey?: string;
+  eyesClosedAssetKey?: string;
+  expressionAssets?: Record<string, string>;
   assetKeys?: AiAgentAssetKeys;
   capabilities?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface AiAgentVariantDefinition {
+  id: string;
+  agentId: string;
+  displayName?: string;
+  shortDisplayName?: string;
+  description?: string;
+  tier?: number;
+  variantType?: string;
+  unlockRequirements?: UnlockRequirement;
+  unlockText?: string;
+  assetKeys?: AiAgentAssetKeys;
+  safeFallbacks?: Record<string, string>;
+  status?: string;
+  approvalState?: string;
+  publishState?: string;
+  progressionMapping?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -225,16 +264,27 @@ export interface AiAgentPersonalityDefinition {
 
 export interface AiAgentAnimationProfile {
   id: string;
+  displayName?: string;
   blinkMinSeconds?: number;
   blinkMaxSeconds?: number;
+  minIntervalMs?: number;
+  maxIntervalMs?: number;
   blinkDurationMs?: number;
   doubleBlinkChance?: number;
   blinkWhenOffline?: boolean;
   reducedMotion?: boolean;
+  reducedMotionBehavior?: string;
+  visibleOnlyBehavior?: string;
+  allowedStates?: string[];
   [key: string]: unknown;
 }
 
 export interface AutomationPresentation {
+  id?: string;
+  displayName?: string;
+  powerLabel?: string;
+  enabledLabel?: string;
+  disabledLabel?: string;
   title?: string;
   assistanceLabel?: string;
   onlineLabel?: string;
@@ -272,10 +322,13 @@ export interface GameRuntimeData {
     [key: string]: unknown;
   };
   economyDefinitions?: PrimaryHudResourceDefinition[];
+  defaultAiAgentId?: string;
   aiAgents?: AiAgentDefinition[];
+  aiAgentVariants?: AiAgentVariantDefinition[];
   aiAgentPersonalities?: AiAgentPersonalityDefinition[];
   aiAgentAnimationProfiles?: AiAgentAnimationProfile[];
   automationPresentation?: AutomationPresentation;
+  aiAgentSaveSchema?: Record<string, unknown>;
 }
 
 export interface RuntimeValidationResult {

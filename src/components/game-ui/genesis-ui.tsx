@@ -41,7 +41,7 @@ import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
-import type { PlayerRuntimeState } from "@/lib/player-runtime";
+import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId, type PlayerRuntimeState } from "@/lib/player-runtime";
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
 import type { CloudSave, CloudSyncMetadata } from "@/lib/supabase";
 import { cssSafeAreaVariables, defaultStorageService, detectRuntimePlatform, getPresentationProfile, resolveDeviceClass, resolveSafeAreaInsets, resolveTouchProfile, shouldShowRotateDevice, type RuntimePlatform } from "@/platform";
@@ -86,6 +86,7 @@ type PlayerRuntimeDashboardActions = {
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
   selectAiAgent?: (agentId: string) => void;
+  selectAiAgentVariant?: (variantId: string) => void;
   activateBoost?: (definitionId: string) => void;
 };
 
@@ -969,7 +970,7 @@ export function RotatingControlRing({ outerArt, centerArt, centerBlinkArt, middl
       disabled={disabled}
       onClick={onActivate}
       className={`group absolute flex items-center justify-center rounded-full transition active:scale-[0.96] disabled:opacity-50 ${className}`}
-      aria-label={variant === "auto" ? "Toggle auto click" : "Click power"}
+      aria-label={variant === "auto" ? "Toggle AI Agent" : "Click power"}
       data-testid={dataTestId}
       data-rojo-rect={dataRojoRect}
     >
@@ -1102,12 +1103,14 @@ export function AutoClickPanel({
   model,
   art,
   onToggle,
-  onSelectAgent
+  onSelectAgent,
+  onSelectAgentVariant
 }: {
   model: DashboardModel;
   art: DashboardArtMap;
   onToggle?: () => void;
   onSelectAgent?: (agentId: string) => void;
+  onSelectAgentVariant?: (variantId: string) => void;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const hasAutomation = Boolean(model.playerState.automation);
@@ -1127,10 +1130,13 @@ export function AutoClickPanel({
   const openArt = dashboardArtByArtKey(art, autoEnabled ? agentAsset?.openArtKey : agentAsset?.offlineArtKey, "dashboard_auto_robot");
   const blinkArt = dashboardArtByArtKey(art, agentAsset?.blinkArtKey, "auto_robot_blink_icon");
   const selectedAgentName = aiAgent?.name ?? "Noveris Assistant";
+  const selectedVariantName = aiAgent?.variantName;
   const canSelectAgent = aiAgent?.availability.available !== false;
   const agentStatusLabel = autoEnabled ? presentation.onlineLabel : presentation.offlineLabel;
-  const progressionLabel = aiAgent?.progression?.displayLevel;
+  const progressionLabel = selectedVariantName ?? aiAgent?.progression?.displayLevel;
   const nextLevelRate = aiAgent?.progression?.nextLevelRate;
+  const availableVariants = aiAgent?.customization?.availableVariants ?? [];
+  const lockedVariants = aiAgent?.customization?.lockedVariants ?? [];
 
   return (
     <section data-testid="auto-click-panel" className="absolute left-0 top-[344px] h-[270px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.auto.x},${LEFT_COLUMN_GEOMETRY.auto.y},${LEFT_COLUMN_GEOMETRY.auto.width},${LEFT_COLUMN_GEOMETRY.auto.height}`}>
@@ -1196,6 +1202,21 @@ export function AutoClickPanel({
           </div>
           {nextLevelRate !== undefined ? <div className="mt-3 text-[10px] font-black uppercase text-cyan-100/50">Next assistance {compactNumber(nextLevelRate)}/s</div> : null}
           <p className="mt-4 line-clamp-2 text-[11px] font-semibold leading-5 text-cyan-50/62">{aiAgent?.description ?? "Automation remains unchanged. This companion represents the existing Labor assistance system."}</p>
+          <div className="mt-3 max-h-[44px] overflow-auto border-t border-cyan-100/12 pt-2">
+            <div className="text-[9px] font-black uppercase text-cyan-100/44">Available Variants</div>
+            {availableVariants.length ? availableVariants.map((variant) => (
+              <button
+                key={variant.id}
+                type="button"
+                className={`mt-1 mr-1 rounded-sm border px-2 py-1 text-[9px] font-black uppercase ${variant.id === aiAgent?.selectedAiAgentVariantId ? "border-cyan-100/55 bg-cyan-300/18 text-white" : "border-cyan-100/18 bg-white/5 text-cyan-100/70"}`}
+                disabled={!onSelectAgentVariant}
+                onClick={() => onSelectAgentVariant?.(variant.id)}
+              >
+                {variant.shortDisplayName ?? variant.displayName ?? variant.id}
+              </button>
+            )) : <span className="text-[9px] font-semibold text-cyan-100/45">None</span>}
+            {lockedVariants.length ? <div className="mt-1 truncate text-[9px] font-semibold text-cyan-100/36">Locked: {lockedVariants.map((variant) => variant.shortDisplayName ?? variant.displayName ?? variant.id).join(", ")}</div> : null}
+          </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <SettingsButton disabled={!canSelectAgent || !onSelectAgent} onClick={() => {
               if (canSelectAgent && aiAgent) onSelectAgent?.(aiAgent.selectedAiAgentId);
@@ -1691,10 +1712,13 @@ function SettingsModal({
     "ai-agent": (
       <>
         <SettingsRow label="Selected Agent" value={aiAgent?.name ?? "Noveris Assistant"} />
+        <SettingsRow label="Selected Variant" value={aiAgent?.variantName ?? "Default"} />
         <SettingsRow label="Agent Online/Offline" value={model.playerState.automation?.enabled ? aiAgentPresentation?.statusOnlineLabel ?? "Online" : aiAgentPresentation?.statusOfflineLabel ?? "Offline"} />
         <SettingsRow label="Labor Assistance" value={model.playerState.automation ? `${compactNumber(model.playerState.automation.amountPerSecond)}/s` : "Unavailable"} />
         <SettingsRow label="Personality" value={aiAgent?.personality ?? "Supportive"} />
         <SettingsRow label="Rarity" value={aiAgent?.rarity ?? "Common"} />
+        <SettingsRow label="Unlocked Agents" value={playerRuntime?.aiAgent.unlockedAiAgentIds.length ?? 0} />
+        <SettingsRow label="Unlocked Variants" value={playerRuntime?.aiAgent.unlockedAiAgentVariantIds.length ?? 0} />
         <SettingsRow label="Blink Enabled" value={playerRuntime?.aiAgent.blinkEnabled === false ? "Off" : "On"} />
         <SettingsRow label="Reduced Animation" value={playerRuntime?.aiAgent.reducedAnimation ? "On" : "Off"} />
         <SettingsRow label="Unlock Condition" value={aiAgent?.availability.locked ? aiAgent.availability.reason ?? "Locked" : "Available"} />
@@ -1702,7 +1726,7 @@ function SettingsModal({
         <SettingsRow label="Personality Tuning" value="Coming Soon" />
         <div className="mt-5 grid max-w-[24rem] gap-2">
           <SettingsButton onClick={playerRuntimeActions?.toggleAutomation}>{model.playerState.automation?.enabled ? aiAgentPresentation?.offlineLabel ?? "Agent: Offline" : aiAgentPresentation?.onlineLabel ?? "Agent: Online"}</SettingsButton>
-          <SettingsButton tone="muted" disabled>Customize Agent</SettingsButton>
+          <SettingsButton tone="muted" disabled={(aiAgent?.customization?.availableVariants.length ?? 0) <= 1}>Customize Agent</SettingsButton>
         </div>
       </>
     ),
@@ -2115,7 +2139,7 @@ function RobloxLeftColumn({
         />
       ) : <DashboardMissingArt art={art.dashboard_click_panel_background} className="absolute inset-0" />}
       <ClickPowerPanel data={data} model={model} art={art} showDevWarnings={showDevWarnings} onClick={handleClickPower} controlsEnabled={runtimeStatus?.controlsEnabled ?? true} pressed={clickPressed} pulseKey={clickPulseKey} />
-      <AutoClickPanel model={model} art={art} onToggle={runtimeStatus?.controlsEnabled === false ? undefined : handleAutoToggle} onSelectAgent={playerRuntimeActions?.selectAiAgent} />
+      <AutoClickPanel model={model} art={art} onToggle={runtimeStatus?.controlsEnabled === false ? undefined : handleAutoToggle} onSelectAgent={playerRuntimeActions?.selectAiAgent} onSelectAgentVariant={playerRuntimeActions?.selectAiAgentVariant} />
 
       <section data-testid="critical-stats-panel" className="absolute left-0 top-[638px] h-[185px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.critical.x},${LEFT_COLUMN_GEOMETRY.critical.y},${LEFT_COLUMN_GEOMETRY.critical.width},${LEFT_COLUMN_GEOMETRY.critical.height}`}>
         {dashboardImagePath(art.critical_star_icon) ? <img src={dashboardImagePath(art.critical_star_icon)} alt="" data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] object-contain" /> : <Star data-testid="critical-star-icon" data-rojo-rect="46,31,94,94" className="absolute left-[46px] top-[31px] h-[94px] w-[94px] text-amber-100" />}
@@ -3202,6 +3226,11 @@ function DashboardDataArtInspector({
   const loadReport = playerRuntime?.runtimeLoadReport;
   const aiAgent = model.playerState.aiAgent;
   const assistance = model.playerState.automation;
+  const defaultAiAgentId = resolveDefaultAiAgentId(data);
+  const defaultAiAgentVariantId = resolveDefaultAiAgentVariantId(data, defaultAiAgentId);
+  const publishedAgentCount = (aiAgent?.customization?.availableAgents.length ?? 0) + (aiAgent?.customization?.lockedAgents.length ?? 0);
+  const publishedVariantCount = (aiAgent?.customization?.availableVariants.length ?? 0) + (aiAgent?.customization?.lockedVariants.length ?? 0);
+  const resolvedVisualState = playerRuntime?.production.automationEnabled ? "idle" : "offline";
 
   function exportSave() {
     if (!playerRuntimeActions) return;
@@ -3301,9 +3330,14 @@ function DashboardDataArtInspector({
             <div>labor lifetime {compactNumber(playerRuntime.production.lifetimeLaborGenerated)}</div>
             <div className="col-span-2">click {compactNumber(playerRuntime.production.clickPower)} x combo {compactNumber(playerRuntime.production.comboMultiplier)} x crit {compactNumber(playerRuntime.production.criticalMultiplier)}</div>
             <div className="col-span-2">agent {assistance?.enabled ? "online" : "offline"} selected {aiAgent?.selectedAiAgentId ?? "missing"}</div>
+            <div className="col-span-2 truncate">agent variant {aiAgent?.selectedAiAgentVariantId ?? "missing"} default {defaultAiAgentVariantId}</div>
+            <div className="col-span-2 truncate">agent default {defaultAiAgentId} published {publishedAgentCount} agents / {publishedVariantCount} variants</div>
+            <div className="col-span-2 truncate">unlocked agents {playerRuntime.aiAgent.unlockedAiAgentIds.join(", ") || "none"}</div>
+            <div className="col-span-2 truncate">unlocked variants {playerRuntime.aiAgent.unlockedAiAgentVariantIds.join(", ") || "none"}</div>
             <div className="col-span-2">agent output {compactNumber(assistance?.amountPerSecond ?? 0)}/s = base {compactNumber(assistance?.baseAutomationRate ?? playerRuntime.production.autoClickPower)} + upgrades {compactNumber(assistance?.upgradeBonusRate ?? 0)} x {compactNumber(assistance?.multiplier ?? playerRuntime.production.autoClickRate)}</div>
             <div className="col-span-2">agent level {aiAgent?.progression?.displayLevel ?? "none"} next {assistance?.nextLevelRate !== undefined ? compactNumber(assistance.nextLevelRate) : "none"}/s</div>
-            <div className="col-span-2 truncate">portrait {playerRuntime.production.automationEnabled ? aiAgent?.asset.openArtKey : aiAgent?.asset.offlineArtKey} animation {aiAgent?.animation.reducedAnimation ? "reduced" : "enabled"}</div>
+            <div className="col-span-2 truncate">portrait {playerRuntime.production.automationEnabled ? aiAgent?.asset.openArtKey : aiAgent?.asset.offlineArtKey} blink {aiAgent?.asset.blinkArtKey ?? "missing"} ring {aiAgent?.asset.ringArtKey ?? "missing"}</div>
+            <div className="col-span-2 truncate">visual {resolvedVisualState} blink controllers {aiAgent ? 1 : 0} animation {aiAgent?.animation.reducedAnimation ? "reduced" : "enabled"}</div>
             <div className="col-span-2 truncate">migration {playerRuntime.unresolved.migrationNotes.length ? playerRuntime.unresolved.migrationNotes.join(" | ") : "none"}</div>
           </div>
           <div className="mt-2 max-h-28 overflow-auto border-t border-cyan-200/10 pt-2">

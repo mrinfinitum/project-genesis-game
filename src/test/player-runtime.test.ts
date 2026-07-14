@@ -15,11 +15,13 @@ import {
   PlayerRuntimeLocalSaveService,
   playerRuntimeToDashboardPlayerState,
   PLAYER_RUNTIME_SAVE_VERSION,
-  FALLBACK_AI_AGENT_ID,
   resolveAiAgentAvailability,
   resolveAiAgentAnimationProfile,
+  resolveAvailableAiAgents,
+  resolveAvailableAiAgentVariants,
   resolveAiAgentLaborAssistance,
   resolveSelectedAiAgent,
+  resolveSelectedAiAgentVariant,
   resolvePrimaryEconomyIdForCurrentEra,
   resolveAlignmentIdentity,
   selectClickPower,
@@ -44,6 +46,9 @@ async function bundledRuntime() {
 function fixedDate() {
   return new Date("2026-01-02T03:04:05.000Z");
 }
+
+const CANONICAL_AI_AGENT_ID = "AI-AGENT-DEFAULT";
+const CANONICAL_AI_AGENT_VARIANT_ID = "AI-VARIANT-DEFAULT-T1";
 
 describe("canonical player runtime", () => {
   it("creates a deterministic new-game state from canonical balance and the first canonical era", async () => {
@@ -87,14 +92,17 @@ describe("canonical player runtime", () => {
     expect(state.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
     expect(state.economy.balances[RESEARCH_ECONOMY_ID]).toBe(0);
     expect(state.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
-    expect(state.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(state.aiAgent.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(state.aiAgent.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
+    expect(state.aiAgent.unlockedAiAgentIds).toContain(CANONICAL_AI_AGENT_ID);
+    expect(state.aiAgent.unlockedAiAgentVariantIds).toContain(CANONICAL_AI_AGENT_VARIANT_ID);
     expect(state.aiAgent.blinkEnabled).toBe(true);
     expect(Object.keys(state.resources.inventory)).toEqual(getInventoryResources(runtime).map((resource) => resource.id));
     expect(Object.keys(state.resources.inventory)).not.toContain(LABOR_ECONOMY_ID);
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
   });
 
-  it("verifies the Studio v12 fixed Survival economy contract", async () => {
+  it("verifies the Studio v13 fixed Survival economy and AI Agent contract", async () => {
     const runtime = await bundledRuntime();
     const laborDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === LABOR_ECONOMY_ID) as Record<string, unknown> | undefined;
     const creditsDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === CREDITS_ECONOMY_ID) as Record<string, unknown> | undefined;
@@ -102,8 +110,14 @@ describe("canonical player runtime", () => {
     const survivalHudIds = getPrimaryHudResourceIds(runtime, "survival");
     const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
-    expect(runtime.metadata.contentVersion).toBe(12);
-    expect(runtime.metadata.checksum).toBe("1d90bf85cc3652e4c50ec9557946dc7e856dc813bfff729489dd559b93fb45da");
+    expect(runtime.metadata.contentVersion).toBe(13);
+    expect(runtime.metadata.checksum).toBe("e2abae4d8d2418aee9fc247edcddaa2df1a68654de331a578efa16a5fb1c96d3");
+    expect(runtime.defaultAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(runtime.aiAgents).toHaveLength(1);
+    expect(runtime.aiAgentVariants).toHaveLength(1);
+    expect(runtime.aiAgents?.[0]?.id).toBe(CANONICAL_AI_AGENT_ID);
+    expect(runtime.aiAgentVariants?.[0]?.id).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
+    expect(JSON.stringify(runtime)).not.toMatch(/Orion/i);
     expect(resolvePrimaryEconomyIdForCurrentEra(runtime, "survival")).toBe(LABOR_ECONOMY_ID);
     expect(survivalHudIds).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
     expect(survivalIconKeys).toEqual(["economy_labor", "economy_credits", "economy_population", "economy_research", "economy_premium_crystals"]);
@@ -142,7 +156,8 @@ describe("canonical player runtime", () => {
     expect(autosaved.revision).toBeGreaterThan(reloaded.revision);
     expect(imported.ok).toBe(true);
     expect(imported.state?.economy.balances[LABOR_ECONOMY_ID]).toBe(321);
-    expect(imported.state?.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(imported.state?.aiAgent.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(imported.state?.aiAgent.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
     expect(imported.state?.runtimeLoadReport.loadedFrom).toBe("Imported Save");
     expect(reset.economy.balances[LABOR_ECONOMY_ID]).toBe(0);
     expect(reset.economy.balances[CREDITS_ECONOMY_ID]).toBe(0);
@@ -166,18 +181,25 @@ describe("canonical player runtime", () => {
     delete (oldSave as Partial<PlayerRuntimeState>).aiAgent;
 
     const migratedDefault = migratePlayerRuntimeState(oldSave, runtime);
-    expect(migratedDefault.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(migratedDefault.aiAgent.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(migratedDefault.aiAgent.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
+    expect(migratedDefault.aiAgent.unlockedAiAgentIds).toContain(CANONICAL_AI_AGENT_ID);
+    expect(migratedDefault.aiAgent.unlockedAiAgentVariantIds).toContain(CANONICAL_AI_AGENT_VARIANT_ID);
     expect(migratedDefault.unresolved.migrationNotes.some((note) => note.includes("default AI Agent"))).toBe(true);
 
     const selected = migratePlayerRuntimeState({
       ...oldSave,
       aiAgent: {
-        selectedAiAgentId: FALLBACK_AI_AGENT_ID,
+        selectedAiAgentId: CANONICAL_AI_AGENT_ID,
+        selectedAiAgentVariantId: CANONICAL_AI_AGENT_VARIANT_ID,
+        unlockedAiAgentIds: [CANONICAL_AI_AGENT_ID],
+        unlockedAiAgentVariantIds: [CANONICAL_AI_AGENT_VARIANT_ID],
         blinkEnabled: false,
         reducedAnimation: true
       }
     }, runtime);
-    expect(selected.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(selected.aiAgent.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(selected.aiAgent.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
     expect(selected.aiAgent.blinkEnabled).toBe(false);
     expect(selected.aiAgent.reducedAnimation).toBe(true);
 
@@ -189,8 +211,10 @@ describe("canonical player runtime", () => {
         reducedAnimation: false
       }
     }, runtime);
-    expect(unknown.aiAgent.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(unknown.aiAgent.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(unknown.aiAgent.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
     expect(unknown.unresolved.selectedAiAgentId).toBe("studio-agent-not-yet-in-web");
+    expect(unknown.unresolved.selectedAiAgentVariantId).toBeUndefined();
   });
 
   it("persists selected AI Agent metadata through local and cloud serialization", async () => {
@@ -200,7 +224,10 @@ describe("canonical player runtime", () => {
     const state = {
       ...createNewPlayerRuntimeState(runtime, { now: fixedDate() }),
       aiAgent: {
-        selectedAiAgentId: FALLBACK_AI_AGENT_ID,
+        selectedAiAgentId: CANONICAL_AI_AGENT_ID,
+        selectedAiAgentVariantId: CANONICAL_AI_AGENT_VARIANT_ID,
+        unlockedAiAgentIds: [CANONICAL_AI_AGENT_ID],
+        unlockedAiAgentVariantIds: [CANONICAL_AI_AGENT_VARIANT_ID],
         blinkEnabled: false,
         reducedAnimation: true
       }
@@ -214,6 +241,92 @@ describe("canonical player runtime", () => {
     expect(cloud.player_state.aiAgent).toEqual(saved.aiAgent);
   });
 
+  it("keeps published AI Agent variants cosmetic for Labor Assistance", async () => {
+    const runtime = await bundledRuntime();
+    const baseState = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
+    const variantState = {
+      ...baseState,
+      aiAgent: {
+        ...baseState.aiAgent,
+        selectedAiAgentVariantId: CANONICAL_AI_AGENT_VARIANT_ID,
+        unlockedAiAgentVariantIds: [CANONICAL_AI_AGENT_VARIANT_ID]
+      }
+    };
+
+    const baseAssistance = resolveAiAgentLaborAssistance(runtime, baseState);
+    const variantAssistance = resolveAiAgentLaborAssistance(runtime, variantState);
+    const playerState = playerRuntimeToDashboardPlayerState(runtime, variantState);
+
+    expect(baseAssistance.totalRate).toBe(variantAssistance.totalRate);
+    expect(playerState.aiAgent?.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
+    expect(playerState.aiAgent?.variantName).toBe("Genesis I");
+    expect(playerState.aiAgent?.customization?.availableVariants).toHaveLength(1);
+    expect(playerState.aiAgent?.customization?.lockedVariants).toEqual([]);
+  });
+
+  it("hides draft Agents and prevents locked Variants from becoming active", async () => {
+    const runtime = await bundledRuntime();
+    const lockedVariantId = "AI-VARIANT-LOCKED-T2";
+    const draftAgentId = "AI-AGENT-ORION-DRAFT";
+    const runtimeWithPrivateRecords: GameRuntimeData = {
+      ...runtime,
+      aiAgents: [
+        ...(runtime.aiAgents ?? []),
+        {
+          id: draftAgentId,
+          displayName: "Orion",
+          status: "draft",
+          publishState: "draft",
+          approvalState: "draft",
+          assetKeys: {
+            open: "auto_robot_icon"
+          }
+        }
+      ],
+      aiAgentVariants: [
+        ...(runtime.aiAgentVariants ?? []),
+        {
+          id: lockedVariantId,
+          agentId: CANONICAL_AI_AGENT_ID,
+          displayName: "Locked Test Variant",
+          shortDisplayName: "Locked",
+          tier: 2,
+          status: "available",
+          publishState: "published",
+          approvalState: "approved",
+          assetKeys: {
+            open: "auto_robot_icon"
+          }
+        }
+      ]
+    };
+    const selectedLocked = {
+      ...createNewPlayerRuntimeState(runtimeWithPrivateRecords, { now: fixedDate() }),
+      aiAgent: {
+        selectedAiAgentId: CANONICAL_AI_AGENT_ID,
+        selectedAiAgentVariantId: lockedVariantId,
+        unlockedAiAgentIds: [CANONICAL_AI_AGENT_ID],
+        unlockedAiAgentVariantIds: [CANONICAL_AI_AGENT_VARIANT_ID],
+        blinkEnabled: true,
+        reducedAnimation: false
+      }
+    };
+    const selectedDraft = {
+      ...selectedLocked,
+      aiAgent: {
+        ...selectedLocked.aiAgent,
+        selectedAiAgentId: draftAgentId
+      }
+    };
+
+    expect(resolveAvailableAiAgents(runtimeWithPrivateRecords, selectedDraft).map((agent) => agent.id)).not.toContain(draftAgentId);
+    expect(resolveSelectedAiAgent(runtimeWithPrivateRecords, selectedDraft).agent.id).toBe(CANONICAL_AI_AGENT_ID);
+    expect(resolveAvailableAiAgentVariants(runtimeWithPrivateRecords, CANONICAL_AI_AGENT_ID, selectedLocked).map((variant) => variant.id)).not.toContain(lockedVariantId);
+    const resolvedVariant = resolveSelectedAiAgentVariant(runtimeWithPrivateRecords, selectedLocked);
+    expect(resolvedVariant.variant?.id).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
+    expect(resolvedVariant.unresolvedSelectedAiAgentVariantId).toBe(lockedVariantId);
+  });
+
   it("resolves AI Agent selectors with fallback art and canonical animation defaults", async () => {
     const runtime = await bundledRuntime();
     const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
@@ -221,9 +334,9 @@ describe("canonical player runtime", () => {
     const animation = resolveAiAgentAnimationProfile(runtime, state);
     const locked = resolveAiAgentAvailability(runtime, "locked-agent", state);
 
-    expect(selected.agent.id).toBe(FALLBACK_AI_AGENT_ID);
-    expect(selected.source).toBe("fallback");
-    expect(animation.blinkMinSeconds).toBeGreaterThan(0);
+    expect(selected.agent.id).toBe(CANONICAL_AI_AGENT_ID);
+    expect(selected.source).toBe("canonical");
+    expect(animation.minIntervalMs).toBe(3000);
     expect(locked.available).toBe(false);
     expect(locked.locked).toBe(true);
   });
@@ -635,8 +748,10 @@ describe("canonical player runtime", () => {
     expect(playerState.civilizationPrediction).toBe("Unaligned");
     expect(playerState.automation?.label).toBe("AI Agent");
     expect(playerState.automation?.assistanceLabel).toBe("Labor Assistance");
-    expect(playerState.automation?.onlineLabel).toBe("Agent: Online");
-    expect(playerState.aiAgent?.selectedAiAgentId).toBe(FALLBACK_AI_AGENT_ID);
+    expect(playerState.automation?.onlineLabel).toBe("Agent Online");
+    expect(playerState.aiAgent?.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
+    expect(playerState.aiAgent?.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
+    expect(playerState.aiAgent?.variantName).toBe("Genesis I");
     expect(playerState.aiAgent?.asset.openArtKey).toBe("auto_robot_icon");
   });
 

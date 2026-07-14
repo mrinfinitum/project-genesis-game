@@ -1,4 +1,374 @@
 {
+  "aiAgentAnimationProfiles": [
+    {
+      "allowedStates": [
+        "idle",
+        "blink",
+        "working",
+        "thinking",
+        "researching",
+        "celebrating",
+        "warning",
+        "offline"
+      ],
+      "blinkDurationMs": 120,
+      "blinkFrame": "eyesBlinkAssetKey",
+      "displayName": "Default Blink",
+      "doubleBlinkChance": 0.12,
+      "id": "AI-ANIM-BLINK-DEFAULT",
+      "idleFrame": "eyesOpenAssetKey",
+      "maxIntervalMs": 7000,
+      "minIntervalMs": 3000,
+      "reducedMotionBehavior": "static_open",
+      "visibleOnlyBehavior": "pause_when_hidden"
+    }
+  ],
+  "aiAgentPersonalities": [
+    {
+      "dialogueStyle": "Compact summaries with numeric context.",
+      "displayName": "Analyst",
+      "futureVoiceProfile": "neutral-analyst",
+      "id": "AI-PERSONALITY-ANALYST",
+      "notificationStyle": "Metric deltas and trend notices.",
+      "preferredExpressions": [
+        "thinking",
+        "working"
+      ],
+      "shortDescription": "Surfaces metrics, gains, and system deltas.",
+      "tone": "Neutral and data-forward"
+    },
+    {
+      "dialogueStyle": "Contextual, careful, and relationship-aware.",
+      "displayName": "Diplomat",
+      "futureVoiceProfile": "warm-diplomat",
+      "id": "AI-PERSONALITY-DIPLOMAT",
+      "notificationStyle": "Soft warnings and relationship framing.",
+      "preferredExpressions": [
+        "idle",
+        "warning"
+      ],
+      "shortDescription": "Future-ready for factions, civilizations, and negotiations.",
+      "tone": "Measured and empathetic"
+    },
+    {
+      "dialogueStyle": "Operational status, diagnostics, and concise next steps.",
+      "displayName": "Engineer",
+      "futureVoiceProfile": "calm-engineer",
+      "id": "AI-PERSONALITY-ENGINEER",
+      "notificationStyle": "Checklist-driven maintenance alerts.",
+      "preferredExpressions": [
+        "working",
+        "warning"
+      ],
+      "shortDescription": "Frames automation as maintenance and optimization.",
+      "tone": "Practical and systems-minded"
+    },
+    {
+      "dialogueStyle": "Short discovery prompts with confident calls to action.",
+      "displayName": "Explorer",
+      "futureVoiceProfile": "bright-explorer",
+      "id": "AI-PERSONALITY-EXPLORER",
+      "notificationStyle": "Signal pings and discovery callouts.",
+      "preferredExpressions": [
+        "thinking",
+        "celebrating",
+        "surprised"
+      ],
+      "shortDescription": "Celebrates discovery and scanning progress.",
+      "tone": "Curious and adventurous"
+    },
+    {
+      "dialogueStyle": "Brief warnings and secure-action language.",
+      "displayName": "Guardian",
+      "futureVoiceProfile": "steady-guardian",
+      "id": "AI-PERSONALITY-GUARDIAN",
+      "notificationStyle": "Priority safety alerts.",
+      "preferredExpressions": [
+        "warning",
+        "working"
+      ],
+      "shortDescription": "Emphasizes hazards, safety, and defense readiness.",
+      "tone": "Protective and direct"
+    },
+    {
+      "dialogueStyle": "Minimal status copy and fewer flourish lines.",
+      "displayName": "Minimalist",
+      "futureVoiceProfile": "soft-minimal",
+      "id": "AI-PERSONALITY-MINIMALIST",
+      "notificationStyle": "Silent unless important.",
+      "preferredExpressions": [
+        "idle",
+        "offline"
+      ],
+      "shortDescription": "Low-interruption personality for experienced players.",
+      "tone": "Quiet and restrained"
+    },
+    {
+      "dialogueStyle": "Encouraging but brief, with practical guidance.",
+      "displayName": "Optimist",
+      "futureVoiceProfile": "friendly-optimist",
+      "id": "AI-PERSONALITY-OPTIMIST",
+      "notificationStyle": "Positive status confirmations.",
+      "preferredExpressions": [
+        "idle",
+        "celebrating",
+        "thinking"
+      ],
+      "shortDescription": "Default player-facing companion tone.",
+      "tone": "Clear, optimistic, concise"
+    },
+    {
+      "dialogueStyle": "Measured findings and probability language.",
+      "displayName": "Scientist",
+      "futureVoiceProfile": "clear-scientist",
+      "id": "AI-PERSONALITY-SCIENTIST",
+      "notificationStyle": "Research notes and lab-style observations.",
+      "preferredExpressions": [
+        "researching",
+        "thinking"
+      ],
+      "shortDescription": "Supports research, resources, and anomaly analysis.",
+      "tone": "Analytical and precise"
+    }
+  ],
+  "aiAgents": [
+    {
+      "aliases": [
+        "ai_agent_nova",
+        "auto_click_robot",
+        "robot_head"
+      ],
+      "animationProfileId": "AI-ANIM-BLINK-DEFAULT",
+      "approvalState": "approved",
+      "assetKeys": {
+        "blink": "auto_robot_blink_icon",
+        "celebration": "auto_robot_icon",
+        "offline": "auto_robot_blink_icon",
+        "open": "auto_robot_icon",
+        "thinking": "auto_robot_icon",
+        "warning": "auto_robot_blink_icon",
+        "working": "auto_robot_icon"
+      },
+      "assetReadiness": {
+        "auto_robot_blink_icon": "published",
+        "auto_robot_circle": "published",
+        "auto_robot_icon": "published"
+      },
+      "automationPresentationId": "AI-AUTOMATION-PRESENTATION-DEFAULT",
+      "availableVariantIds": [
+        "AI-VARIANT-DEFAULT-T1"
+      ],
+      "baseVariantId": "AI-VARIANT-DEFAULT-T1",
+      "colorTheme": {
+        "accent": "#f8fafc",
+        "primary": "#67e8f9",
+        "secondary": "#2563eb"
+      },
+      "defaultForNewPlayers": true,
+      "description": "Default player-facing AI Agent for automation assistance, tutorials, research prompts, and system status.",
+      "dialogueProfileId": "AI-DIALOGUE-DEFAULT",
+      "displayName": "Genesis Assistant",
+      "eraAvailability": {
+        "ancient": {
+          "available": true,
+          "visualTheme": "rugged utility design"
+        },
+        "galactic": {
+          "available": true,
+          "visualTheme": "galactic synthetic intelligence"
+        },
+        "industrial": {
+          "available": true,
+          "visualTheme": "reinforced mechanical unit"
+        },
+        "interstellar": {
+          "available": true,
+          "visualTheme": "synthetic intelligence"
+        },
+        "medieval": {
+          "available": true,
+          "visualTheme": "rugged utility design"
+        },
+        "modern": {
+          "available": true,
+          "visualTheme": "polished digital assistant"
+        },
+        "renaissance": {
+          "available": true,
+          "visualTheme": "precision instrument companion"
+        },
+        "space-age": {
+          "available": true,
+          "visualTheme": "advanced autonomous companion"
+        },
+        "survival": {
+          "available": true,
+          "visualTheme": "compact mechanical helper"
+        }
+      },
+      "expressionAssets": {
+        "blink": "auto_robot_blink_icon",
+        "celebrating": "auto_robot_icon",
+        "idle": "auto_robot_icon",
+        "offline": "auto_robot_blink_icon",
+        "researching": "auto_robot_icon",
+        "sleeping": "auto_robot_blink_icon",
+        "surprised": "auto_robot_icon",
+        "thinking": "auto_robot_icon",
+        "warning": "auto_robot_blink_icon",
+        "working": "auto_robot_icon"
+      },
+      "eyesBlinkAssetKey": "auto_robot_blink_icon",
+      "eyesClosedAssetKey": "auto_robot_blink_icon",
+      "eyesOpenAssetKey": "auto_robot_icon",
+      "gameplayModifiers": {},
+      "headAssetKey": "auto_robot_circle",
+      "id": "AI-AGENT-DEFAULT",
+      "mobilePresentation": {
+        "blinkPerformanceTier": "standard",
+        "densityAssetSelection": [
+          "1x",
+          "2x",
+          "3x"
+        ],
+        "portraitSizeInPanel": 96,
+        "reducedMotionDefault": false,
+        "safeAreaBehavior": "Profile modal must respect mobile safe-area bounds and avoid bottom home indicator overlap.",
+        "touchTarget": 48
+      },
+      "personalityId": "AI-PERSONALITY-OPTIMIST",
+      "presentation": {
+        "colorTheme": {
+          "accent": "#f8fafc",
+          "primary": "#67e8f9",
+          "secondary": "#2563eb"
+        },
+        "fallbackVariantId": "AI-VARIANT-DEFAULT-T1",
+        "portraitShape": "circle",
+        "preferredPanelMode": "compact"
+      },
+      "publishState": "published",
+      "rarity": "Common",
+      "shortDisplayName": "Genesis",
+      "status": "available",
+      "unlockRequirements": {
+        "default": true
+      },
+      "voiceProfileId": null
+    }
+  ],
+  "aiAgentSaveSchema": {
+    "fields": {
+      "selectedAiAgentId": {
+        "default": "AI-AGENT-DEFAULT",
+        "notes": "Active v1 player preference. Studio exports definitions only, not player-owned state.",
+        "status": "active"
+      },
+      "selectedAiAgentSkinId": {
+        "default": null,
+        "notes": "Reserved for future cosmetic skin selection.",
+        "status": "future"
+      },
+      "selectedAiAgentVariantId": {
+        "default": "AI-VARIANT-DEFAULT-T1",
+        "notes": "Active v1 cosmetic variant preference. Variant selection does not alter automation power.",
+        "status": "active"
+      },
+      "selectedEyeColorId": {
+        "default": null,
+        "notes": "Reserved for future eye-color cosmetic selection.",
+        "status": "future"
+      },
+      "selectedPersonalityId": {
+        "default": null,
+        "notes": "Reserved for future personality override selection.",
+        "status": "future"
+      },
+      "unlockedAiAgentIds": {
+        "default": [
+          "AI-AGENT-DEFAULT"
+        ],
+        "notes": "Player-owned unlock state belongs to the Game save. Studio publishes only schema/default guidance.",
+        "status": "player_owned"
+      },
+      "unlockedAiAgentVariantIds": {
+        "default": [
+          "AI-VARIANT-DEFAULT-T1"
+        ],
+        "notes": "Player-owned variant unlock state belongs to the Game save.",
+        "status": "player_owned"
+      }
+    },
+    "id": "AI-AGENT-SAVE-SCHEMA-V1",
+    "migrationHints": [
+      {
+        "defaultValue": "AI-AGENT-DEFAULT",
+        "field": "selectedAiAgentId",
+        "id": "migration_selected_ai_agent_default",
+        "notes": "Saves without selectedAiAgentId receive AI-AGENT-DEFAULT.",
+        "unknownIdBehavior": "Fall back to default for rendering, preserve unresolved value for diagnostics if the save contains an unknown agent ID."
+      },
+      {
+        "defaultValue": "AI-VARIANT-DEFAULT-T1",
+        "field": "selectedAiAgentVariantId",
+        "id": "migration_selected_ai_agent_variant_default",
+        "notes": "Saves without selectedAiAgentVariantId receive AI-VARIANT-DEFAULT-T1.",
+        "unknownIdBehavior": "Fall back to the default variant for rendering, preserve unresolved value for diagnostics if the save contains an unknown variant ID."
+      }
+    ],
+    "selectedAiAgentIdDefault": "AI-AGENT-DEFAULT",
+    "selectedAiAgentVariantIdDefault": "AI-VARIANT-DEFAULT-T1"
+  },
+  "aiAgentVariants": [
+    {
+      "agentId": "AI-AGENT-DEFAULT",
+      "approvalState": "approved",
+      "assetKeys": {
+        "blink": "auto_robot_blink_icon",
+        "celebration": "auto_robot_icon",
+        "head": "auto_robot_circle",
+        "offline": "auto_robot_blink_icon",
+        "open": "auto_robot_icon",
+        "thinking": "auto_robot_icon",
+        "warning": "auto_robot_blink_icon",
+        "working": "auto_robot_icon"
+      },
+      "description": "Base cosmetic AI Agent visual variant. Automation level controls Labor Assistance separately.",
+      "displayName": "Genesis Assistant Mk I",
+      "id": "AI-VARIANT-DEFAULT-T1",
+      "platformReadiness": {
+        "android": "ready",
+        "ios": "ready",
+        "preview": "ready",
+        "roblox": "ready",
+        "transparency": "required",
+        "web": "ready"
+      },
+      "progressionMapping": {
+        "automationPowerSource": "automation_upgrade_levels",
+        "cosmeticIdentity": true,
+        "notes": "AI Agent variants are visual identity only. Automation upgrade levels continue to define Labor Assistance strength."
+      },
+      "publishState": "published",
+      "safeFallbacks": {
+        "celebrating": "auto_robot_icon",
+        "researching": "auto_robot_icon",
+        "sleeping": "auto_robot_blink_icon",
+        "surprised": "auto_robot_icon",
+        "thinking": "auto_robot_icon",
+        "warning": "auto_robot_blink_icon",
+        "working": "auto_robot_icon"
+      },
+      "shortDisplayName": "Genesis I",
+      "status": "available",
+      "tier": 1,
+      "unlockRequirements": {
+        "default": true
+      },
+      "unlockText": "Available by default",
+      "variantType": "base"
+    }
+  ],
   "assets": [
     {
       "artKey": "active_event_panel",
@@ -2779,6 +3149,24 @@
       "width": null
     }
   ],
+  "automationPresentation": {
+    "disabledLabel": "Agent Offline",
+    "displayName": "AI Agent",
+    "enabledLabel": "Agent Online",
+    "id": "AI-AUTOMATION-PRESENTATION-DEFAULT",
+    "notes": "AI Agent is the presentation and companion layer. Existing automation IDs remain stable for save compatibility and balance.",
+    "powerLabel": "Labor Assistance",
+    "preservedInternalIds": [
+      "auto-click",
+      "auto_click",
+      "base-auto-click-power",
+      "automationActive",
+      "automationUnlocked"
+    ],
+    "previousDisplayName": "Auto Click",
+    "previousPowerLabel": "Auto Click Power",
+    "systemId": "automation"
+  },
   "balance": {
     "autosaveSeconds": 30,
     "baseAutoClickPower": 0,
@@ -4624,6 +5012,7 @@
       "showUnknownUpgradeSlots": true
     }
   },
+  "defaultAiAgentId": "AI-AGENT-DEFAULT",
   "economyDefinitions": [
     {
       "category": "global_economy",
@@ -5099,8 +5488,8 @@
   "metadata": {
     "accessLevel": "public-published",
     "architectureVersion": "1.0.0",
-    "checksum": "1d90bf85cc3652e4c50ec9557946dc7e856dc813bfff729489dd559b93fb45da",
-    "contentVersion": 12,
+    "checksum": "e2abae4d8d2418aee9fc247edcddaa2df1a68654de331a578efa16a5fb1c96d3",
+    "contentVersion": 13,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

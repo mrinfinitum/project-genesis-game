@@ -23,6 +23,9 @@ import {
   PLAYER_RUNTIME_SAVE_VERSION,
   playerRuntimeToDashboardPlayerState,
   performManualLaborClick,
+  isAiAgentUnlocked,
+  isAiAgentVariantUnlocked,
+  resolveDefaultAiAgentVariantId,
   type PlayerRuntimeState
 } from "@/lib/player-runtime";
 import { RESEARCH_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
@@ -98,6 +101,7 @@ type PlayerRuntimeActions = {
   performManualLaborClick: () => void;
   toggleAutomation: () => void;
   selectAiAgent: (agentId: string) => void;
+  selectAiAgentVariant: (variantId: string) => void;
 };
 
 type PlayerRuntimeStatus = {
@@ -731,14 +735,33 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
         }));
       },
       selectAiAgent(agentId: string) {
-        updateCloudSync({ dirty: true });
-        setPlayerRuntime((current) => service.save({
-          ...current,
-          aiAgent: {
-            ...current.aiAgent,
-            selectedAiAgentId: agentId
-          }
-        }));
+        setPlayerRuntime((current) => {
+          if (!isAiAgentUnlocked(data, agentId, current)) return current;
+          updateCloudSync({ dirty: true });
+          const selectedAiAgentVariantId = resolveDefaultAiAgentVariantId(data, agentId);
+          return service.save({
+            ...current,
+            aiAgent: {
+              ...current.aiAgent,
+              selectedAiAgentId: agentId,
+              selectedAiAgentVariantId
+            }
+          });
+        });
+      },
+      selectAiAgentVariant(variantId: string) {
+        setPlayerRuntime((current) => {
+          const variantBelongsToSelectedAgent = data.aiAgentVariants?.some((variant) => variant.id === variantId && variant.agentId === current.aiAgent.selectedAiAgentId) === true;
+          if (!variantBelongsToSelectedAgent || !isAiAgentVariantUnlocked(data, variantId, current)) return current;
+          updateCloudSync({ dirty: true });
+          return service.save({
+            ...current,
+            aiAgent: {
+              ...current.aiAgent,
+              selectedAiAgentVariantId: variantId
+            }
+          });
+        });
       }
     }),
     [authState.status, authState.user, cloudSave, cloudService, cloudSync.offlineProgressionApplyCount, data, playerRuntime, runtimeKey, service, syncCloudNow, updateCloudSync]

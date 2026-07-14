@@ -167,10 +167,11 @@ describe("Roblox left column geometry", () => {
   });
 
   it("uses exact registered action button art and removes non-canonical critical copy", async () => {
-    const { container } = render(<GameShell data={await bundledRuntime()} />);
+    const data = await bundledRuntime();
+    const { container } = render(<GameShell data={data} playerState={playerRuntimeToDashboardPlayerState(data, createNewPlayerRuntimeState(data))} />);
 
     expect(container.querySelector("[data-art-key='dashboard_click_button']")).toBeTruthy();
-    expect(screen.getByTestId("auto-click-button")).toHaveTextContent("Agent: Online");
+    expect(screen.getByTestId("auto-click-button")).toHaveTextContent("Agent Online");
     expect(screen.queryByText(/Next Milestone/i)).toBeNull();
   });
 
@@ -381,7 +382,7 @@ describe("Roblox left column geometry", () => {
 
     render(<AutoClickPanel model={model} art={createDashboardArtMap(data.assets)} />);
 
-    expect(screen.getByTestId("auto-click-button")).toHaveTextContent("Agent: Online");
+    expect(screen.getByTestId("auto-click-button")).toHaveTextContent("Agent Online");
     expect(screen.queryByText(/AUTO:/i)).not.toBeInTheDocument();
   });
 

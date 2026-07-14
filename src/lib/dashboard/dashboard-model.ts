@@ -1,7 +1,7 @@
 import type { GameRuntimeData, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { dashboardDemoPlayerState } from "@/content/mock/dashboard-demo-state";
 import { getEconomyWarnings, getPrimaryHudResources } from "@/lib/player-runtime/economy";
-import type { AiAgentAvailability, ResolvedAiAgentAsset } from "@/lib/player-runtime/ai-agent";
+import type { AiAgentAvailability, AiAgentCustomization, ResolvedAiAgentAsset } from "@/lib/player-runtime/ai-agent";
 import type { AiAgentLaborAssistance, AiAgentProgression } from "@/lib/player-runtime/automation";
 
 export type DashboardPlayerStateSource = "player-runtime" | "default-player-state" | "demo-fixture";
@@ -43,7 +43,10 @@ export type DashboardPlayerState = {
   };
   aiAgent?: {
     selectedAiAgentId: string;
+    selectedAiAgentVariantId?: string;
     name: string;
+    variantName?: string;
+    variantTier?: number;
     personality?: string;
     rarity?: string;
     description?: string;
@@ -68,6 +71,7 @@ export type DashboardPlayerState = {
     };
     availability: AiAgentAvailability;
     progression?: AiAgentProgression;
+    customization?: AiAgentCustomization;
   };
   criticalStats?: {
     chancePercent: number;

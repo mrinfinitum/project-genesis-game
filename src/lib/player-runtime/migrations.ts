@@ -1,7 +1,7 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { CREDITS_ECONOMY_ID, getEconomyResourceIds, getPrimaryHudResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { createNewPlayerRuntimeState } from "./initializer";
-import { resolveSelectedAiAgent } from "./ai-agent";
+import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId, resolveSelectedAiAgent, resolveSelectedAiAgentVariant } from "./ai-agent";
 import { PLAYER_RUNTIME_SAVE_VERSION, type PlayerRuntimeState } from "./types";
 
 function clone<T>(value: T): T {
@@ -102,6 +102,11 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     playerId: typeof record.playerId === "string" ? record.playerId : undefined,
     civilizationName: typeof record.civilization?.civilizationName === "string" ? record.civilization.civilizationName : undefined
   });
+  const recordAiAgent = record.aiAgent && typeof record.aiAgent === "object"
+    ? record.aiAgent as Partial<PlayerRuntimeState["aiAgent"]>
+    : undefined;
+  const defaultAiAgentId = resolveDefaultAiAgentId(content);
+  const defaultAiAgentVariantId = resolveDefaultAiAgentVariantId(content, defaultAiAgentId);
   const next: PlayerRuntimeState = {
     ...seed,
     ...record,
@@ -132,10 +137,13 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     },
     aiAgent: {
       ...seed.aiAgent,
-      ...(record.aiAgent && typeof record.aiAgent === "object" ? record.aiAgent : {}),
-      selectedAiAgentId: typeof record.aiAgent?.selectedAiAgentId === "string" ? record.aiAgent.selectedAiAgentId : seed.aiAgent.selectedAiAgentId,
-      blinkEnabled: typeof record.aiAgent?.blinkEnabled === "boolean" ? record.aiAgent.blinkEnabled : seed.aiAgent.blinkEnabled,
-      reducedAnimation: typeof record.aiAgent?.reducedAnimation === "boolean" ? record.aiAgent.reducedAnimation : seed.aiAgent.reducedAnimation
+      ...(recordAiAgent ?? {}),
+      selectedAiAgentId: typeof recordAiAgent?.selectedAiAgentId === "string" ? recordAiAgent.selectedAiAgentId : seed.aiAgent.selectedAiAgentId,
+      selectedAiAgentVariantId: typeof recordAiAgent?.selectedAiAgentVariantId === "string" ? recordAiAgent.selectedAiAgentVariantId : seed.aiAgent.selectedAiAgentVariantId,
+      unlockedAiAgentIds: normalizeStringArray(recordAiAgent?.unlockedAiAgentIds).length ? normalizeStringArray(recordAiAgent?.unlockedAiAgentIds) : seed.aiAgent.unlockedAiAgentIds,
+      unlockedAiAgentVariantIds: normalizeStringArray(recordAiAgent?.unlockedAiAgentVariantIds).length ? normalizeStringArray(recordAiAgent?.unlockedAiAgentVariantIds) : seed.aiAgent.unlockedAiAgentVariantIds,
+      blinkEnabled: typeof recordAiAgent?.blinkEnabled === "boolean" ? recordAiAgent.blinkEnabled : seed.aiAgent.blinkEnabled,
+      reducedAnimation: typeof recordAiAgent?.reducedAnimation === "boolean" ? recordAiAgent.reducedAnimation : seed.aiAgent.reducedAnimation
     },
     upgrades: {
       levels: { ...seed.upgrades.levels, ...normalizeNumberMap(record.upgrades?.levels) },
@@ -174,6 +182,9 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       activeObjectiveId: typeof record.unresolved?.activeObjectiveId === "string" ? record.unresolved.activeObjectiveId : undefined,
       activeEventId: typeof record.unresolved?.activeEventId === "string" ? record.unresolved.activeEventId : undefined,
       selectedAiAgentId: typeof record.unresolved?.selectedAiAgentId === "string" ? record.unresolved.selectedAiAgentId : undefined,
+      selectedAiAgentVariantId: typeof record.unresolved?.selectedAiAgentVariantId === "string" ? record.unresolved.selectedAiAgentVariantId : undefined,
+      unlockedAiAgentIds: normalizeStringArray(record.unresolved?.unlockedAiAgentIds),
+      unlockedAiAgentVariantIds: normalizeStringArray(record.unresolved?.unlockedAiAgentVariantIds),
       boostDefinitionIds: normalizeStringArray(record.unresolved?.boostDefinitionIds),
       migrationNotes: normalizeStringArray(record.unresolved?.migrationNotes)
     },
@@ -294,6 +305,29 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       next.aiAgent.selectedAiAgentId = resolved.agent.id;
       next.unresolved.migrationNotes.push(`Preserved unresolved AI Agent selection ${next.unresolved.selectedAiAgentId}.`);
     }
+  }
+  if (!next.aiAgent.unlockedAiAgentIds.includes(defaultAiAgentId)) {
+    next.aiAgent.unlockedAiAgentIds.push(defaultAiAgentId);
+    next.unresolved.migrationNotes.push(`Unlocked default AI Agent ${defaultAiAgentId}.`);
+  }
+  if (!next.aiAgent.unlockedAiAgentVariantIds.includes(defaultAiAgentVariantId)) {
+    next.aiAgent.unlockedAiAgentVariantIds.push(defaultAiAgentVariantId);
+    next.unresolved.migrationNotes.push(`Unlocked default AI Agent variant ${defaultAiAgentVariantId}.`);
+  }
+
+  const resolvedVariant = resolveSelectedAiAgentVariant(content, next);
+  if (resolvedVariant.agent.id !== next.aiAgent.selectedAiAgentId) {
+    next.unresolved.selectedAiAgentId = resolvedVariant.unresolvedSelectedAiAgentId ?? next.aiAgent.selectedAiAgentId;
+    next.aiAgent.selectedAiAgentId = resolvedVariant.agent.id;
+    next.unresolved.migrationNotes.push(`Resolved AI Agent selection to ${resolvedVariant.agent.id}.`);
+  }
+  if (resolvedVariant.variant && resolvedVariant.variant.id !== next.aiAgent.selectedAiAgentVariantId) {
+    next.unresolved.selectedAiAgentVariantId = resolvedVariant.unresolvedSelectedAiAgentVariantId ?? next.aiAgent.selectedAiAgentVariantId;
+    next.aiAgent.selectedAiAgentVariantId = resolvedVariant.variant.id;
+    next.unresolved.migrationNotes.push(`Resolved AI Agent variant selection to ${resolvedVariant.variant.id}.`);
+  } else if (!recordAiAgent || typeof recordAiAgent.selectedAiAgentVariantId !== "string") {
+    next.aiAgent.selectedAiAgentVariantId = resolvedVariant.variant?.id ?? defaultAiAgentVariantId;
+    next.unresolved.migrationNotes.push(`Added default AI Agent variant selection ${next.aiAgent.selectedAiAgentVariantId}.`);
   }
 
   return preserveUnresolvedPlayerRuntimeIds(next, content);

@@ -1,4 +1,4 @@
-export const PLAYER_RUNTIME_SAVE_VERSION = 10;
+export const PLAYER_RUNTIME_SAVE_VERSION = 11;
 
 export type AlignmentKey = "industry" | "technology" | "cyber" | "nature" | "corporate";
 
@@ -24,6 +24,9 @@ export type UnresolvedPlayerRuntimeIds = {
   activeObjectiveId?: string;
   activeEventId?: string;
   selectedAiAgentId?: string;
+  selectedAiAgentVariantId?: string;
+  unlockedAiAgentIds: string[];
+  unlockedAiAgentVariantIds: string[];
   boostDefinitionIds: string[];
   migrationNotes: string[];
 };
@@ -96,6 +99,9 @@ export type PlayerRuntimeState = {
   };
   aiAgent: {
     selectedAiAgentId: string;
+    selectedAiAgentVariantId: string;
+    unlockedAiAgentIds: string[];
+    unlockedAiAgentVariantIds: string[];
     blinkEnabled: boolean;
     reducedAnimation: boolean;
   };

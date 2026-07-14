@@ -209,6 +209,117 @@ export const economyRuntimeSchema = z
   })
   .catchall(z.unknown());
 
+export const aiAgentAssetKeysSchema = z
+  .object({
+    head: z.string().optional(),
+    ring: z.string().optional(),
+    open: z.string().optional(),
+    blink: z.string().optional(),
+    offline: z.string().optional(),
+    working: z.string().optional(),
+    thinking: z.string().optional(),
+    warning: z.string().optional(),
+    celebration: z.string().optional(),
+    portraitOpen: z.string().optional(),
+    portraitBlink: z.string().optional(),
+    portraitClosed: z.string().optional(),
+    portraitOffline: z.string().optional(),
+    portraitWorking: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const aiAgentDefinitionSchema = z
+  .object({
+    id,
+    name: z.string().optional(),
+    displayName: z.string().optional(),
+    shortDisplayName: z.string().optional(),
+    personalityId: z.string().optional(),
+    animationProfileId: z.string().optional(),
+    rarity: z.string().optional(),
+    description: z.string().optional(),
+    unlockRequirements: unlockRequirementSchema.optional(),
+    baseVariantId: z.string().optional(),
+    availableVariantIds: stringArray.optional(),
+    defaultForNewPlayers: z.boolean().optional(),
+    publishState: z.string().optional(),
+    approvalState: z.string().optional(),
+    status: z.string().optional(),
+    headAssetKey: z.string().optional(),
+    eyesOpenAssetKey: z.string().optional(),
+    eyesBlinkAssetKey: z.string().optional(),
+    eyesClosedAssetKey: z.string().optional(),
+    expressionAssets: z.record(z.string(), z.string()).optional(),
+    assetKeys: aiAgentAssetKeysSchema.optional(),
+    capabilities: unknownRecord.optional()
+  })
+  .catchall(z.unknown());
+
+export const aiAgentVariantDefinitionSchema = z
+  .object({
+    id,
+    agentId: id,
+    displayName: z.string().optional(),
+    shortDisplayName: z.string().optional(),
+    description: z.string().optional(),
+    tier: finiteNumber.optional(),
+    variantType: z.string().optional(),
+    unlockRequirements: unlockRequirementSchema.optional(),
+    unlockText: z.string().optional(),
+    assetKeys: aiAgentAssetKeysSchema.optional(),
+    safeFallbacks: z.record(z.string(), z.string()).optional(),
+    status: z.string().optional(),
+    approvalState: z.string().optional(),
+    publishState: z.string().optional(),
+    progressionMapping: unknownRecord.optional()
+  })
+  .catchall(z.unknown());
+
+export const aiAgentPersonalitySchema = z
+  .object({
+    id,
+    name: z.string().optional(),
+    displayName: z.string().optional(),
+    description: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const aiAgentAnimationProfileSchema = z
+  .object({
+    id,
+    displayName: z.string().optional(),
+    blinkMinSeconds: finiteNumber.optional(),
+    blinkMaxSeconds: finiteNumber.optional(),
+    minIntervalMs: finiteNumber.optional(),
+    maxIntervalMs: finiteNumber.optional(),
+    blinkDurationMs: finiteNumber.optional(),
+    doubleBlinkChance: finiteNumber.optional(),
+    blinkWhenOffline: z.boolean().optional(),
+    reducedMotion: z.boolean().optional(),
+    reducedMotionBehavior: z.string().optional(),
+    visibleOnlyBehavior: z.string().optional(),
+    allowedStates: stringArray.optional()
+  })
+  .catchall(z.unknown());
+
+export const automationPresentationSchema = z
+  .object({
+    id: z.string().optional(),
+    displayName: z.string().optional(),
+    powerLabel: z.string().optional(),
+    enabledLabel: z.string().optional(),
+    disabledLabel: z.string().optional(),
+    title: z.string().optional(),
+    assistanceLabel: z.string().optional(),
+    onlineLabel: z.string().optional(),
+    offlineLabel: z.string().optional(),
+    statusOnlineLabel: z.string().optional(),
+    statusOfflineLabel: z.string().optional(),
+    profileTitle: z.string().optional(),
+    defaultAiAgentId: z.string().optional()
+  })
+  .catchall(z.unknown());
+
 export const gameRuntimeDataSchema = z.object({
   metadata: runtimeMetadataSchema,
   eras: z.array(eraDefinitionSchema),
@@ -219,7 +330,14 @@ export const gameRuntimeDataSchema = z.object({
   balance: balanceDefinitionSchema,
   clientProfiles: clientProfilesSchema,
   economy: economyRuntimeSchema.optional(),
-  economyDefinitions: z.array(economyDefinitionSchema).optional()
+  economyDefinitions: z.array(economyDefinitionSchema).optional(),
+  defaultAiAgentId: z.string().optional(),
+  aiAgents: z.array(aiAgentDefinitionSchema).optional(),
+  aiAgentVariants: z.array(aiAgentVariantDefinitionSchema).optional(),
+  aiAgentPersonalities: z.array(aiAgentPersonalitySchema).optional(),
+  aiAgentAnimationProfiles: z.array(aiAgentAnimationProfileSchema).optional(),
+  automationPresentation: automationPresentationSchema.optional(),
+  aiAgentSaveSchema: unknownRecord.optional()
 });
 
 function requireUnique(values: string[], label: string, errors: string[]) {

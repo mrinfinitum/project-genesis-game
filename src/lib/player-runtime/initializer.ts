@@ -1,6 +1,6 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
-import { resolveDefaultAiAgentId } from "./ai-agent";
+import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId } from "./ai-agent";
 import { getEconomyResourceIds, getInventoryResources, getStartingEconomyBalances, getStartingEconomyRates, POPULATION_ECONOMY_ID } from "./economy";
 
 export { getEconomyDefinitions, getEconomyResourceIds, getEconomyWarnings, getInventoryResources, getPrimaryHudResourceIds, getPrimaryHudResources, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
@@ -42,6 +42,8 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
   const productionRates = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
   const storageLimits = Object.fromEntries(inventoryResourceIds.map((id) => [id, Number.MAX_SAFE_INTEGER]));
   const startEraId = getStartingEraId(content);
+  const defaultAiAgentId = resolveDefaultAiAgentId(content);
+  const defaultAiAgentVariantId = resolveDefaultAiAgentVariantId(content, defaultAiAgentId);
 
   return {
     playerId: options.playerId ?? createPlayerId(options.now),
@@ -84,7 +86,10 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       totalAutoLaborGenerated: 0
     },
     aiAgent: {
-      selectedAiAgentId: resolveDefaultAiAgentId(content),
+      selectedAiAgentId: defaultAiAgentId,
+      selectedAiAgentVariantId: defaultAiAgentVariantId,
+      unlockedAiAgentIds: [defaultAiAgentId],
+      unlockedAiAgentVariantIds: [defaultAiAgentVariantId],
       blinkEnabled: true,
       reducedAnimation: false
     },
@@ -115,6 +120,9 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       unlockedUpgradeIds: [],
       discoveredUpgradeIds: [],
       selectedAiAgentId: undefined,
+      selectedAiAgentVariantId: undefined,
+      unlockedAiAgentIds: [],
+      unlockedAiAgentVariantIds: [],
       boostDefinitionIds: [],
       migrationNotes: []
     },

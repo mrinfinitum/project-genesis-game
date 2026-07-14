@@ -1,6 +1,6 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
-import { aiAgentName, aiAgentPersonality, resolveAiAgentAnimationProfile, resolveAiAgentAsset, resolveAiAgentAvailability, resolveAutomationPresentation, resolveSelectedAiAgent } from "./ai-agent";
+import { aiAgentName, aiAgentPersonality, aiAgentVariantName, resolveAiAgentAnimationProfile, resolveAiAgentAsset, resolveAiAgentAvailability, resolveAutomationPresentation, resolveSelectedAiAgentVariant, selectAiAgentCustomization } from "./ai-agent";
 import { resolveAiAgentLaborAssistance, resolveAiAgentProgression } from "./automation";
 import { POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { getPrimaryHudResources } from "./initializer";
@@ -95,12 +95,15 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
   const now = Date.now();
   const activeBoosts = state.boosts.active.filter((boost) => Date.parse(boost.endsAt) > now);
   const economyBalances = { ...state.economy.balances, [POPULATION_ECONOMY_ID]: selectPopulation(state) };
-  const aiAgent = resolveSelectedAiAgent(content, state).agent;
+  const resolvedAiAgent = resolveSelectedAiAgentVariant(content, state);
+  const aiAgent = resolvedAiAgent.agent;
+  const aiAgentVariant = resolvedAiAgent.variant;
   const aiAgentPersonalityDefinition = aiAgentPersonality(content, aiAgent);
   const automationPresentation = resolveAutomationPresentation(content);
   const aiAgentAnimation = resolveAiAgentAnimationProfile(content, state);
   const aiAgentAssistance = resolveAiAgentLaborAssistance(content, state);
   const aiAgentProgression = resolveAiAgentProgression(content, state, aiAgent.id);
+  const aiAgentCustomization = selectAiAgentCustomization(content, state);
 
   return {
     source: "player-runtime",
@@ -139,7 +142,10 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
     },
     aiAgent: {
       selectedAiAgentId: aiAgent.id,
+      selectedAiAgentVariantId: aiAgentVariant?.id,
       name: aiAgentName(aiAgent),
+      variantName: aiAgentVariantName(aiAgentVariant),
+      variantTier: aiAgentVariant?.tier,
       personality: aiAgentPersonalityDefinition.displayName ?? aiAgentPersonalityDefinition.name,
       rarity: aiAgent.rarity,
       description: aiAgent.description,
@@ -154,8 +160,8 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
       },
       asset: resolveAiAgentAsset(content, state),
       animation: {
-        blinkMinSeconds: aiAgentAnimation.blinkMinSeconds ?? 4.8,
-        blinkMaxSeconds: aiAgentAnimation.blinkMaxSeconds ?? 8.4,
+        blinkMinSeconds: aiAgentAnimation.blinkMinSeconds ?? (typeof aiAgentAnimation.minIntervalMs === "number" ? aiAgentAnimation.minIntervalMs / 1000 : 4.8),
+        blinkMaxSeconds: aiAgentAnimation.blinkMaxSeconds ?? (typeof aiAgentAnimation.maxIntervalMs === "number" ? aiAgentAnimation.maxIntervalMs / 1000 : 8.4),
         blinkDurationMs: aiAgentAnimation.blinkDurationMs ?? 120,
         doubleBlinkChance: aiAgentAnimation.doubleBlinkChance ?? 0.18,
         blinkWhenOffline: aiAgentAnimation.blinkWhenOffline === true,
@@ -163,7 +169,8 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
         reducedAnimation: state.aiAgent.reducedAnimation || aiAgentAnimation.reducedMotion === true
       },
       availability: resolveAiAgentAvailability(content, aiAgent.id, state),
-      progression: aiAgentProgression
+      progression: aiAgentProgression,
+      customization: aiAgentCustomization
     },
     criticalStats: {
       chancePercent: selectCriticalChance(state),
