@@ -88,6 +88,7 @@ type PlayerRuntimeDashboardActions = {
 type SettingsAccountState = {
   status: "guest" | "authenticated" | "signed_out" | "error" | "initializing" | "signing_in";
   email?: string;
+  displayName?: string;
   supabaseStatus?: string;
 };
 
@@ -1256,6 +1257,91 @@ function SettingsRow({ label, value }: { label: string; value?: ReactNode }) {
   );
 }
 
+function emailPrefixName(email?: string) {
+  const prefix = email?.split("@")[0]?.trim();
+  if (!prefix) return undefined;
+  return prefix
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function resolveProfileDisplayName(account?: SettingsAccountState) {
+  if (account?.status === "guest") return "Guest Player";
+  return account?.displayName?.trim() || emailPrefixName(account?.email) || "Explorer";
+}
+
+function resolveProfileCivilizationName(model: DashboardModel, playerRuntime?: PlayerRuntimeState) {
+  return playerRuntime?.civilization.civilizationName || model.playerState.civilizationName || "Local Civilization";
+}
+
+function formatProfileEra(era: EraDefinition) {
+  return `Era ${era.index} · ${shortEraName(era)}`;
+}
+
+function resolveProfileSyncStatus(cloudSync?: CloudSyncMetadata) {
+  const status = cloudSync?.status ?? "Local Only";
+  if (status === "Synced") return { label: "Synced", icon: "dot", className: "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.72)]", textClassName: "text-emerald-100" };
+  if (status === "Pending Sync" || status === "Saving") return { label: "Pending", icon: "dot", className: "bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,0.7)]", textClassName: "text-amber-100" };
+  if (status === "Conflict") return { label: "Conflict", icon: "warning", className: "text-rose-200 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]", textClassName: "text-rose-100" };
+  if (status === "Offline" || status === "Error") return { label: "Offline", icon: "dot", className: "bg-rose-400 shadow-[0_0_10px_rgba(251,113,133,0.68)]", textClassName: "text-rose-100" };
+  return { label: "Local Only", icon: "dot", className: "bg-cyan-100/32", textClassName: "text-cyan-100/54" };
+}
+
+function SettingsProfileButton({
+  account,
+  model,
+  playerRuntime,
+  cloudSync,
+  active,
+  buttonRef,
+  onClick
+}: {
+  account?: SettingsAccountState;
+  model: DashboardModel;
+  playerRuntime?: PlayerRuntimeState;
+  cloudSync?: CloudSyncMetadata;
+  active: boolean;
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  onClick: () => void;
+}) {
+  const sync = resolveProfileSyncStatus(cloudSync);
+  const authenticated = account?.status === "authenticated";
+  const displayName = resolveProfileDisplayName(account);
+  const civilizationName = resolveProfileCivilizationName(model, playerRuntime);
+  const avatarInitial = displayName.charAt(0).toUpperCase();
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      data-testid="settings-profile-card"
+      data-profile-auth-state={authenticated ? "authenticated" : "guest"}
+      className={`group mb-4 w-full rounded-sm border bg-[#061525]/92 p-3 text-left shadow-[inset_0_0_18px_rgba(8,145,178,0.16),0_0_18px_rgba(8,145,178,0.08)] outline-none transition active:translate-y-px ${active ? "border-cyan-200/52 ring-1 ring-cyan-200/28" : "border-cyan-200/22 hover:border-cyan-200/42 hover:bg-[#082036]/94 focus-visible:border-cyan-100/70 focus-visible:ring-2 focus-visible:ring-cyan-200/36"}`}
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-sm border ${authenticated ? "border-cyan-100/45" : "border-cyan-100/22"} bg-[radial-gradient(circle_at_35%_26%,rgba(125,211,252,0.72),rgba(14,116,144,0.24)_42%,rgba(2,6,23,0.92)_78%)] text-xl font-black text-white shadow-[inset_0_0_16px_rgba(255,255,255,0.08),0_0_18px_rgba(34,211,238,0.12)]`} aria-hidden="true">
+          <span className="relative z-10">{avatarInitial}</span>
+          <div className="absolute inset-x-2 bottom-2 h-px bg-cyan-100/28" />
+          <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-cyan-100/72" />
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-[0.86rem] font-black uppercase leading-tight text-white">{displayName}</div>
+          <div className="mt-0.5 truncate text-[0.72rem] font-black uppercase leading-tight text-cyan-100/72">{civilizationName}</div>
+          <div className="mt-1 truncate text-[0.66rem] font-bold uppercase tracking-wide text-cyan-50/52">{formatProfileEra(model.currentEra)}</div>
+        </div>
+      </div>
+      <div className={`mt-3 flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-wide ${sync.textClassName}`} data-testid="settings-profile-sync">
+        {sync.icon === "warning" ? <AlertTriangle className={`h-3.5 w-3.5 ${sync.className}`} /> : <span className={`h-2.5 w-2.5 rounded-full ${sync.className}`} />}
+        <span>{sync.label}</span>
+      </div>
+      {!authenticated ? <div className="mt-3 rounded-sm border border-cyan-200/18 bg-cyan-300/8 px-2 py-1.5 text-center text-[0.62rem] font-black uppercase tracking-wide text-cyan-50/78">Save Progress to Cloud</div> : null}
+    </button>
+  );
+}
+
 function SettingsModal({
   open,
   onClose,
@@ -1290,6 +1376,8 @@ function SettingsModal({
   const guest = account?.status === "guest" || !authenticated;
   const cloudStatus = cloudSync?.status ?? "Local Only";
   const saveSource = cloudSync?.activeSaveSource ?? playerRuntime?.runtimeLoadReport.loadedFrom ?? "new_game";
+  const profileDisplayName = resolveProfileDisplayName(account);
+  const profileCivilizationName = resolveProfileCivilizationName(model, playerRuntime);
 
   useEffect(() => {
     if (!open) return;
@@ -1354,7 +1442,7 @@ function SettingsModal({
   const content: Record<SettingsTabId, ReactNode> = {
     general: (
       <>
-        <SettingsRow label="Player Name" value={model.playerState.civilizationName ?? "Local Genesis Initiative"} />
+        <SettingsRow label="Player Name" value={profileDisplayName} />
         <SettingsRow label="Current Era" value={shortEraName(model.currentEra)} />
         <SettingsRow label="Content Version" value={`v${data.metadata.contentVersion}`} />
         <SettingsRow label="Save Version" value={playerRuntime?.saveVersion ?? "Story"} />
@@ -1365,6 +1453,12 @@ function SettingsModal({
     ),
     account: guest ? (
       <>
+        <SettingsRow label="Display Name" value={profileDisplayName} />
+        <SettingsRow label="Civilization Name" value={profileCivilizationName} />
+        <SettingsRow label="Current Era" value={formatProfileEra(model.currentEra)} />
+        <SettingsRow label="Cloud Sync Status" value={resolveProfileSyncStatus(cloudSync).label} />
+        <SettingsRow label="Save Source" value={saveSource} />
+        <SettingsRow label="Avatar" value="Coming Soon" />
         <SettingsRow label="Status" value="Playing as Guest" />
         <p className="mt-3 max-w-[34rem] text-sm font-semibold leading-6 text-cyan-50/62">Your progress is currently stored on this device.</p>
         <div className="mt-5 grid max-w-[24rem] gap-2">
@@ -1374,11 +1468,15 @@ function SettingsModal({
       </>
     ) : (
       <>
+        <SettingsRow label="Display Name" value={profileDisplayName} />
         <SettingsRow label="Email" value={account?.email ?? "Signed in"} />
+        <SettingsRow label="Civilization Name" value={profileCivilizationName} />
         <SettingsRow label="Status" value="Signed in" />
         <SettingsRow label="Device Name" value={cloudSync?.deviceName ?? "This browser"} />
+        <SettingsRow label="Save Source" value={saveSource} />
         <SettingsRow label="Last Sync" value={cloudSync?.lastSuccessfulSyncAt ?? "Never"} />
         <SettingsRow label="Cloud Status" value={cloudStatus} />
+        <SettingsRow label="Avatar" value="Coming Soon" />
         <div className="mt-5"><SettingsButton tone="danger" disabled>Sign Out</SettingsButton></div>
       </>
     ),
@@ -1476,9 +1574,18 @@ function SettingsModal({
       <section ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="settings-title" data-testid="settings-modal" className="grid h-[min(700px,calc(100dvh-32px))] w-[min(1060px,calc(100dvw-32px))] grid-cols-[220px_1fr] overflow-hidden rounded-sm border border-cyan-200/30 bg-slate-950/96 text-cyan-50 shadow-[0_0_52px_rgba(34,211,238,0.18),inset_0_0_28px_rgba(8,145,178,0.12)] animate-[settingsScale_220ms_ease-out]">
         <nav className="border-r border-cyan-200/18 bg-black/30 p-4">
           <div id="settings-title" className="mb-4 text-sm font-black uppercase tracking-[0.28em] text-cyan-100/75">Settings</div>
+          <SettingsProfileButton
+            account={account}
+            model={model}
+            playerRuntime={playerRuntime}
+            cloudSync={cloudSync}
+            active={activeTab === "account"}
+            buttonRef={firstButtonRef}
+            onClick={() => setActiveTab("account")}
+          />
           <div className="grid gap-2">
-            {settingsTabs.map((tab, index) => (
-              <button key={tab.id} ref={index === 0 ? firstButtonRef : undefined} className={`rounded-sm border px-3 py-3 text-left text-xs font-black uppercase tracking-wide transition ${activeTab === tab.id ? "border-cyan-200/45 bg-cyan-300/14 text-white shadow-[0_0_18px_rgba(34,211,238,0.12)]" : "border-cyan-200/12 bg-white/[0.03] text-cyan-50/62 hover:border-cyan-200/28 hover:text-cyan-50"}`} onClick={() => setActiveTab(tab.id)}>
+            {settingsTabs.map((tab) => (
+              <button key={tab.id} className={`rounded-sm border px-3 py-3 text-left text-xs font-black uppercase tracking-wide transition ${activeTab === tab.id ? "border-cyan-200/45 bg-cyan-300/14 text-white shadow-[0_0_18px_rgba(34,211,238,0.12)]" : "border-cyan-200/12 bg-white/[0.03] text-cyan-50/62 hover:border-cyan-200/28 hover:text-cyan-50"}`} onClick={() => setActiveTab(tab.id)}>
                 {tab.label}
               </button>
             ))}

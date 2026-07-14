@@ -487,6 +487,132 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByRole("button", { name: "Save Progress to Cloud" })).toBeEnabled();
   });
 
+  it("shows the authenticated player profile header from live runtime and sync state", async () => {
+    const data = await bundledRuntime();
+    const playerRuntime = {
+      ...createNewPlayerRuntimeState(data, { civilizationName: "Planet Prime" }),
+      civilization: {
+        ...createNewPlayerRuntimeState(data).civilization,
+        civilizationName: "Planet Prime"
+      }
+    };
+
+    render(
+      <GameShell
+        data={data}
+        playerRuntime={playerRuntime}
+        cloudSync={{ activeSaveSource: "cloud", status: "Synced", dirty: false, pendingRetry: false, offlineProgressionApplyCount: 0 }}
+        cloudSave={{ id: "cloud", userId: "user-123", slotId: "primary", saveVersion: playerRuntime.saveVersion, contentVersion: playerRuntime.contentVersion, playerState: playerRuntime, unresolvedState: playerRuntime.unresolved, revision: 2, createdAt: playerRuntime.createdAt, updatedAt: playerRuntime.updatedAt }}
+        settingsAccount={{ status: "authenticated", email: "geoff@noveris.life", displayName: "Geoff Tracy" }}
+        initialSettingsOpen
+      />
+    );
+
+    const profile = screen.getByTestId("settings-profile-card");
+    expect(profile).toHaveAttribute("data-profile-auth-state", "authenticated");
+    expect(profile).toHaveTextContent("Geoff Tracy");
+    expect(profile).toHaveTextContent("Planet Prime");
+    expect(profile).toHaveTextContent("Era 1 · Survival");
+    expect(screen.getByTestId("settings-profile-sync")).toHaveTextContent("Synced");
+    expect(screen.queryByText("user-123")).not.toBeInTheDocument();
+  });
+
+  it("shows the guest profile header and opens Account without closing settings", async () => {
+    const data = await bundledRuntime();
+    render(
+      <GameShell
+        data={data}
+        playerRuntime={createNewPlayerRuntimeState(data)}
+        cloudSync={{ activeSaveSource: "new_game", status: "Local Only", dirty: false, pendingRetry: false, offlineProgressionApplyCount: 0 }}
+        settingsAccount={{ status: "guest" }}
+        initialSettingsOpen
+      />
+    );
+
+    const profile = screen.getByTestId("settings-profile-card");
+    expect(profile).toHaveAttribute("data-profile-auth-state", "guest");
+    expect(profile).toHaveTextContent("Guest Player");
+    expect(profile).toHaveTextContent("Local Only");
+    expect(profile).toHaveTextContent("Save Progress to Cloud");
+
+    fireEvent.click(profile);
+
+    expect(screen.getByRole("dialog", { name: /settings/i })).toBeInTheDocument();
+    expect(screen.getByText("Playing as Guest")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Graphics" }));
+    expect(screen.getByTestId("settings-profile-card")).toHaveTextContent("Guest Player");
+  });
+
+  it("falls back to the email prefix for the profile display name", async () => {
+    const data = await bundledRuntime();
+    render(
+      <GameShell
+        data={data}
+        playerRuntime={createNewPlayerRuntimeState(data)}
+        settingsAccount={{ status: "authenticated", email: "geoff.tracy@noveris.life" }}
+        initialSettingsOpen
+      />
+    );
+
+    expect(screen.getByTestId("settings-profile-card")).toHaveTextContent("Geoff Tracy");
+  });
+
+  it("updates the profile era when the runtime advances", async () => {
+    const data = await bundledRuntime();
+    const modern = data.eras.find((era) => era.id === "modern") ?? data.eras[0];
+    const playerRuntime = createNewPlayerRuntimeState(data, { civilizationName: "Forward City" });
+    playerRuntime.civilization.currentEraId = modern.id;
+
+    render(
+      <GameShell
+        data={data}
+        playerRuntime={playerRuntime}
+        activeEraId={modern.id}
+        settingsAccount={{ status: "authenticated", email: "pilot@noveris.life", displayName: "Pilot" }}
+        initialSettingsOpen
+      />
+    );
+
+    expect(screen.getByTestId("settings-profile-card")).toHaveTextContent(`Era ${modern.index} · ${modern.displayName.replace(" Era", "")}`);
+  });
+
+  it("reflects pending, offline, and conflict cloud sync states in the profile header", async () => {
+    const data = await bundledRuntime();
+    const { rerender } = render(
+      <GameShell
+        data={data}
+        playerRuntime={createNewPlayerRuntimeState(data)}
+        cloudSync={{ activeSaveSource: "cloud", status: "Pending Sync", dirty: true, pendingRetry: true, offlineProgressionApplyCount: 0 }}
+        settingsAccount={{ status: "authenticated", email: "pilot@noveris.life", displayName: "Pilot" }}
+        initialSettingsOpen
+      />
+    );
+
+    expect(screen.getByTestId("settings-profile-sync")).toHaveTextContent("Pending");
+
+    rerender(
+      <GameShell
+        data={data}
+        playerRuntime={createNewPlayerRuntimeState(data)}
+        cloudSync={{ activeSaveSource: "offline_local", status: "Offline", dirty: true, pendingRetry: true, offlineProgressionApplyCount: 0 }}
+        settingsAccount={{ status: "authenticated", email: "pilot@noveris.life", displayName: "Pilot" }}
+        initialSettingsOpen
+      />
+    );
+    expect(screen.getByTestId("settings-profile-sync")).toHaveTextContent("Offline");
+
+    rerender(
+      <GameShell
+        data={data}
+        playerRuntime={createNewPlayerRuntimeState(data)}
+        cloudSync={{ activeSaveSource: "local_selected_after_conflict", status: "Conflict", dirty: true, pendingRetry: false, offlineProgressionApplyCount: 0 }}
+        settingsAccount={{ status: "authenticated", email: "pilot@noveris.life", displayName: "Pilot" }}
+        initialSettingsOpen
+      />
+    );
+    expect(screen.getByTestId("settings-profile-sync")).toHaveTextContent("Conflict");
+  });
+
   it("does not introduce direct Roblox asset paths in JSX", () => {
     const source = readFileSync("src/components/game-ui/genesis-ui.tsx", "utf8");
 

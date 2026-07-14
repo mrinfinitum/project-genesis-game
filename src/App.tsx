@@ -113,6 +113,12 @@ type PlayerRuntimeStatus = {
   lastClickAt?: string;
 };
 
+function getSupabaseProfileDisplayName(user: ReturnType<typeof useNoverisAuth>["state"]["user"]) {
+  const metadata = user?.user_metadata as Record<string, unknown> | undefined;
+  const value = metadata?.display_name ?? metadata?.displayName ?? metadata?.full_name ?? metadata?.name;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
 function payloadFromState(state: RuntimeContentState): GameRuntimeData {
   return {
     metadata: {
@@ -713,7 +719,7 @@ function DashboardRoute() {
       cloudSave={cloudSave}
       cloudError={cloudError}
       runtimeStatus={runtimeStatus}
-      settingsAccount={{ status: auth.state.status, email: auth.state.email, supabaseStatus: auth.state.cloudAvailable ? "Available" : "Unavailable" }}
+      settingsAccount={{ status: auth.state.status, email: auth.state.email, displayName: getSupabaseProfileDisplayName(auth.state.user), supabaseStatus: auth.state.cloudAvailable ? "Available" : "Unavailable" }}
       activeScreen="dashboard"
       activeEraId={playerRuntime.civilization.currentEraId}
       activeCategoryId="workforce"
