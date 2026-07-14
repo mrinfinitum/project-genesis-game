@@ -18,6 +18,7 @@ import {
   FALLBACK_AI_AGENT_ID,
   resolveAiAgentAvailability,
   resolveAiAgentAnimationProfile,
+  resolveAiAgentLaborAssistance,
   resolveSelectedAiAgent,
   resolvePrimaryEconomyIdForCurrentEra,
   resolveAlignmentIdentity,
@@ -504,6 +505,8 @@ describe("canonical player runtime", () => {
       }
     };
     const advanced = advanceSimulation(runtime, autoState, { seconds: 10, now: new Date("2026-01-02T03:04:15.000Z") });
+    const displayedState = playerRuntimeToDashboardPlayerState(runtime, autoState);
+    const assistance = resolveAiAgentLaborAssistance(runtime, autoState);
 
     expect(clicked.economy.balances[LABOR_ECONOMY_ID]).toBeGreaterThan(state.economy.balances[LABOR_ECONOMY_ID] ?? 0);
     expect(clicked.economy.balances[CREDITS_ECONOMY_ID]).toBe(state.economy.balances[CREDITS_ECONOMY_ID]);
@@ -511,6 +514,9 @@ describe("canonical player runtime", () => {
     expect(clicked.production.totalManualClicks).toBe(1);
     expect(clicked.civilization.discoveryPoints).toBeGreaterThanOrEqual(1);
     expect(advanced.production.autoClickPower).toBeGreaterThan(0);
+    expect(assistance.totalRate).toBe(advanced.production.autoClickPower);
+    expect(displayedState.automation?.amountPerSecond).toBe(assistance.totalRate);
+    expect(displayedState.aiAgent?.progression?.level).toBe(1);
     expect(advanced.economy.rates[LABOR_ECONOMY_ID]).toBeGreaterThanOrEqual(1);
     expect(advanced.economy.balances[LABOR_ECONOMY_ID]).toBeGreaterThan(clicked.economy.balances[LABOR_ECONOMY_ID]);
     expect(advanced.economy.rates[CREDITS_ECONOMY_ID]).toBe(0);
@@ -530,9 +536,13 @@ describe("canonical player runtime", () => {
     };
 
     const advanced = advanceSimulation(runtime, state, { seconds: 10, now: new Date("2026-01-02T03:04:15.000Z") });
+    const displayedState = playerRuntimeToDashboardPlayerState(runtime, state);
+    const assistance = resolveAiAgentLaborAssistance(runtime, state);
 
     expect(advanced.economy.balances[LABOR_ECONOMY_ID]).toBe(10);
     expect(advanced.economy.rates[LABOR_ECONOMY_ID]).toBe(1);
+    expect(assistance.totalRate).toBe(0);
+    expect(displayedState.automation?.amountPerSecond).toBe(0);
     expect(advanced.economy.balances[CREDITS_ECONOMY_ID]).toBe(state.economy.balances[CREDITS_ECONOMY_ID]);
     expect(advanced.economy.rates[CREDITS_ECONOMY_ID]).toBe(0);
     expect(advanced.production.totalAutoLaborGenerated).toBe(0);

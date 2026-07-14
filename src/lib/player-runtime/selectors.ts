@@ -1,6 +1,7 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { aiAgentName, aiAgentPersonality, resolveAiAgentAnimationProfile, resolveAiAgentAsset, resolveAiAgentAvailability, resolveAutomationPresentation, resolveSelectedAiAgent } from "./ai-agent";
+import { resolveAiAgentLaborAssistance, resolveAiAgentProgression } from "./automation";
 import { POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { getPrimaryHudResources } from "./initializer";
 import { resolveUpgradeCost, resolveUpgradeEffect } from "./simulation";
@@ -98,6 +99,8 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
   const aiAgentPersonalityDefinition = aiAgentPersonality(content, aiAgent);
   const automationPresentation = resolveAutomationPresentation(content);
   const aiAgentAnimation = resolveAiAgentAnimationProfile(content, state);
+  const aiAgentAssistance = resolveAiAgentLaborAssistance(content, state);
+  const aiAgentProgression = resolveAiAgentProgression(content, state, aiAgent.id);
 
   return {
     source: "player-runtime",
@@ -122,11 +125,17 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
       : undefined,
     automation: {
       label: automationPresentation.title,
-      amountPerSecond: selectAutoClickPower(state),
+      amountPerSecond: aiAgentAssistance.totalRate,
       enabled: state.production.automationEnabled,
       assistanceLabel: automationPresentation.assistanceLabel,
       onlineLabel: automationPresentation.onlineLabel,
-      offlineLabel: automationPresentation.offlineLabel
+      offlineLabel: automationPresentation.offlineLabel,
+      baseAutomationRate: aiAgentAssistance.baseAutomationRate,
+      upgradeBonusRate: aiAgentAssistance.upgradeBonusRate,
+      multiplier: aiAgentAssistance.multiplier,
+      rawRate: aiAgentAssistance.rawRate,
+      nextLevelRate: aiAgentAssistance.nextLevelRate,
+      sourceBreakdown: aiAgentAssistance.sourceBreakdown
     },
     aiAgent: {
       selectedAiAgentId: aiAgent.id,
@@ -153,7 +162,8 @@ export function playerRuntimeToDashboardPlayerState(content: GameRuntimeData, st
         blinkEnabled: state.aiAgent.blinkEnabled,
         reducedAnimation: state.aiAgent.reducedAnimation || aiAgentAnimation.reducedMotion === true
       },
-      availability: resolveAiAgentAvailability(content, aiAgent.id, state)
+      availability: resolveAiAgentAvailability(content, aiAgent.id, state),
+      progression: aiAgentProgression
     },
     criticalStats: {
       chancePercent: selectCriticalChance(state),

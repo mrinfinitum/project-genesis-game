@@ -170,7 +170,7 @@ describe("Roblox left column geometry", () => {
     const { container } = render(<GameShell data={await bundledRuntime()} />);
 
     expect(container.querySelector("[data-art-key='dashboard_click_button']")).toBeTruthy();
-    expect(container.querySelector("[data-art-key='dashboard_auto_button_on'], [data-art-key='dashboard_auto_button_off']")).toBeTruthy();
+    expect(screen.getByTestId("auto-click-button")).toHaveTextContent("Agent: Online");
     expect(screen.queryByText(/Next Milestone/i)).toBeNull();
   });
 
@@ -367,6 +367,22 @@ describe("Roblox left column geometry", () => {
     expect(portrait).toHaveAttribute("data-agent-expression", "offline");
     expect(portrait.getAttribute("src")).toContain("click-robot-eyes-blink.png");
     expect(screen.getByTestId("auto-click-robot-blink")).toHaveTextContent("Closed eyes");
+  });
+
+  it("uses live AI Agent status text instead of baked Auto labels", async () => {
+    const data = await bundledRuntime();
+    const runtimeState = createNewPlayerRuntimeState(data);
+    const playerState = playerRuntimeToDashboardPlayerState(data, runtimeState);
+    const model = createDashboardModel(data, {
+      activeEraId: data.eras[0]?.id ?? "survival",
+      activeCategoryId: data.upgradeCategories[0]?.id ?? "workforce",
+      playerState
+    });
+
+    render(<AutoClickPanel model={model} art={createDashboardArtMap(data.assets)} />);
+
+    expect(screen.getByTestId("auto-click-button")).toHaveTextContent("Agent: Online");
+    expect(screen.queryByText(/AUTO:/i)).not.toBeInTheDocument();
   });
 
   it("keeps Critical stats spacing aligned to the reference column", async () => {

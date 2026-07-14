@@ -1,4 +1,5 @@
 import type { GameRuntimeData, UpgradeDefinition } from "@/lib/canonical-runtime";
+import { isAutomationUpgrade, resolveAiAgentLaborAssistance } from "./automation";
 import { getEconomyResourceIds, getStartingEconomyRates, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { getPrimaryHudResourceIds } from "./initializer";
 import type { PlayerRuntimeState } from "./types";
@@ -57,7 +58,7 @@ export function recomputeProduction(content: GameRuntimeData, state: PlayerRunti
     const effect = resolveUpgradeEffect(upgrade, level - 1) * level;
     const type = upgrade.effectType.toLowerCase();
     if (type.includes("labor per click")) clickPower += effect;
-    if (type.includes("auto")) autoClickPower += effect;
+    if (isAutomationUpgrade(upgrade)) autoClickPower += effect;
     if (type.includes("critical chance")) criticalChance += effect;
     if (type.includes("critical multiplier")) criticalMultiplier += effect;
   }
@@ -119,7 +120,7 @@ export function advanceSimulation(content: GameRuntimeData, state: PlayerRuntime
 
   if (primaryEconomyId) {
     const passivePerSecond = Math.max(0, canonicalRates[primaryEconomyId] ?? 0);
-    const autoPerSecond = next.production.automationEnabled ? Math.max(0, Math.floor(next.production.autoClickPower * Math.max(0, next.production.autoClickRate))) : 0;
+    const autoPerSecond = resolveAiAgentLaborAssistance(content, next).totalRate;
     const totalPrimaryPerSecond = passivePerSecond + autoPerSecond;
 
     if (elapsedSeconds > 0 && passivePerSecond > 0) {

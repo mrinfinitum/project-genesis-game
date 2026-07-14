@@ -1126,9 +1126,11 @@ export function AutoClickPanel({
   const ringArt = dashboardArtByArtKey(art, agentAsset?.ringArtKey, "dashboard_auto_ring");
   const openArt = dashboardArtByArtKey(art, autoEnabled ? agentAsset?.openArtKey : agentAsset?.offlineArtKey, "dashboard_auto_robot");
   const blinkArt = dashboardArtByArtKey(art, agentAsset?.blinkArtKey, "auto_robot_blink_icon");
-  const autoArt = autoEnabled ? art.dashboard_auto_button_on : art.dashboard_auto_button_off;
   const selectedAgentName = aiAgent?.name ?? "Noveris Assistant";
   const canSelectAgent = aiAgent?.availability.available !== false;
+  const agentStatusLabel = autoEnabled ? presentation.onlineLabel : presentation.offlineLabel;
+  const progressionLabel = aiAgent?.progression?.displayLevel;
+  const nextLevelRate = aiAgent?.progression?.nextLevelRate;
 
   return (
     <section data-testid="auto-click-panel" className="absolute left-0 top-[344px] h-[270px] w-full" data-rojo-rect={`${LEFT_COLUMN_GEOMETRY.auto.x},${LEFT_COLUMN_GEOMETRY.auto.y},${LEFT_COLUMN_GEOMETRY.auto.width},${LEFT_COLUMN_GEOMETRY.auto.height}`}>
@@ -1159,18 +1161,20 @@ export function AutoClickPanel({
         <div className="mt-[14px] text-[32px] font-black leading-none text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.68)]">{hasAutomation ? compactNumber(model.playerState.automation?.amountPerSecond ?? 0) : "--"}</div>
         <div className="mt-[14px] text-[18px] font-black uppercase leading-none text-cyan-200">Per/S</div>
         <div className="mt-[8px] truncate text-[10px] font-black uppercase leading-none text-cyan-100/48">{selectedAgentName}</div>
+        {progressionLabel ? <div className="mt-[5px] truncate text-[9px] font-black uppercase leading-none text-cyan-100/38" data-testid="ai-agent-progression-label">{progressionLabel}</div> : null}
       </div>
-      <BeveledActionButton
-        art={autoArt}
-        label={autoEnabled ? presentation.onlineLabel : presentation.offlineLabel}
-        tone={hasAutomation ? (autoEnabled ? "green" : "muted") : "muted"}
-        active={autoEnabled}
+      <button
+        type="button"
         disabled={!hasAutomation}
         onClick={hasAutomation ? onToggle : undefined}
+        data-agent-state={autoEnabled ? "online" : "offline"}
         data-testid="auto-click-button"
         data-rojo-rect="33,209,286,47"
-        className="absolute left-[33px] top-[209px] h-[47px] w-[286px]"
-      />
+        className={`absolute left-[33px] top-[209px] h-[47px] w-[286px] overflow-hidden border px-4 text-[16px] font-black uppercase tracking-normal text-white transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 [clip-path:polygon(4%_0,96%_0,100%_26%,100%_74%,96%_100%,4%_100%,0_74%,0_26%)] ${autoEnabled ? "border-emerald-200/55 bg-[linear-gradient(180deg,rgba(33,126,66,0.94),rgba(18,82,44,0.98))] shadow-[0_0_18px_rgba(52,245,106,0.22)]" : "border-cyan-100/32 bg-[linear-gradient(180deg,rgba(88,91,91,0.86),rgba(40,42,43,0.98))] shadow-[0_0_14px_rgba(125,249,255,0.12)]"}`}
+      >
+        <span className="pointer-events-none absolute inset-[2px] border border-white/18 [clip-path:polygon(4%_0,96%_0,100%_26%,100%_74%,96%_100%,4%_100%,0_74%,0_26%)]" />
+        <span className="relative z-10 [text-shadow:0_2px_6px_rgba(0,0,0,0.72)]">{agentStatusLabel}</span>
+      </button>
       {profileOpen ? (
         <div className="absolute left-[10px] top-[10px] z-40 h-[248px] w-[330px] rounded-sm border border-cyan-100/45 bg-[rgba(3,13,28,0.98)] p-4 shadow-[0_0_36px_rgba(34,211,238,0.18)]" data-testid="ai-agent-profile-modal" role="dialog" aria-modal="true" aria-label={presentation.profileTitle}>
           <button type="button" aria-label="Close AI Agent profile" className="absolute right-3 top-3 rounded-sm border border-cyan-100/25 bg-black/30 p-1 text-cyan-50" onClick={() => setProfileOpen(false)}>
@@ -1183,13 +1187,14 @@ export function AutoClickPanel({
             </div>
             <div>
               <div className="truncate text-[16px] font-black uppercase text-white">{selectedAgentName}</div>
-              <div className="mt-1 text-[11px] font-black uppercase text-cyan-100/55">{aiAgent?.rarity ?? "Common"} · {aiAgent?.personality ?? "Supportive"}</div>
+              <div className="mt-1 text-[11px] font-black uppercase text-cyan-100/55">{[progressionLabel, aiAgent?.rarity ?? "Common", aiAgent?.personality ?? "Supportive"].filter(Boolean).join(" · ")}</div>
               <div className={`mt-3 inline-flex items-center gap-2 rounded-sm border px-2 py-1 text-[10px] font-black uppercase ${autoEnabled ? "border-emerald-200/35 bg-emerald-400/10 text-emerald-100" : "border-white/20 bg-white/5 text-cyan-100/60"}`}>
                 <span className={`h-2 w-2 rounded-full ${autoEnabled ? "bg-emerald-300" : "bg-cyan-100/35"}`} />
                 {autoEnabled ? presentation.statusOnlineLabel : presentation.statusOfflineLabel}
               </div>
             </div>
           </div>
+          {nextLevelRate !== undefined ? <div className="mt-3 text-[10px] font-black uppercase text-cyan-100/50">Next assistance {compactNumber(nextLevelRate)}/s</div> : null}
           <p className="mt-4 line-clamp-2 text-[11px] font-semibold leading-5 text-cyan-50/62">{aiAgent?.description ?? "Automation remains unchanged. This companion represents the existing Labor assistance system."}</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <SettingsButton disabled={!canSelectAgent || !onSelectAgent} onClick={() => {
@@ -2875,6 +2880,7 @@ function dashboardDataAudit(model: DashboardModel) {
     { label: "economy amounts/rates", source: model.hudResources.length ? model.playerState.source : "missing source/default zero", value: model.hudResources.length ? model.playerState.sourceLabel : "default zero" },
     { label: "click power", source: model.playerState.clickOutput ? model.playerState.source : "missing source", value: model.playerState.clickOutput ? compactNumber(model.playerState.clickOutput.amount) : "missing" },
     { label: "AI Agent assistance", source: model.playerState.automation ? model.playerState.source : "missing source", value: model.playerState.automation ? compactNumber(model.playerState.automation.amountPerSecond) : "missing" },
+    { label: "AI Agent progression", source: model.playerState.aiAgent?.progression ? "automation upgrade progression" : "missing source", value: model.playerState.aiAgent?.progression?.displayLevel ?? "not published" },
     { label: "critical stats", source: model.playerState.criticalStats ? model.playerState.source : "missing source", value: model.playerState.criticalStats ? `${model.playerState.criticalStats.chancePercent}% / x${model.playerState.criticalStats.multiplier}` : "missing" },
     { label: "objective", source: model.playerState.objective ? model.playerState.source : "missing source", value: model.playerState.objective?.title ?? "missing" },
     { label: "era journey", source: "canonical Studio definitions", value: model.journey.current.displayName },
@@ -3194,6 +3200,8 @@ function DashboardDataArtInspector({
   const autoClickTarget = playerRuntime?.production.automationEnabled && resolvedPrimaryEconomyId ? resolvedPrimaryEconomyId : "none";
   const hudSlotIds = model.hudResources.map((resource) => resource.resourceId);
   const loadReport = playerRuntime?.runtimeLoadReport;
+  const aiAgent = model.playerState.aiAgent;
+  const assistance = model.playerState.automation;
 
   function exportSave() {
     if (!playerRuntimeActions) return;
@@ -3292,7 +3300,10 @@ function DashboardDataArtInspector({
             <div>manual clicks {compactNumber(playerRuntime.production.totalManualClicks)}</div>
             <div>labor lifetime {compactNumber(playerRuntime.production.lifetimeLaborGenerated)}</div>
             <div className="col-span-2">click {compactNumber(playerRuntime.production.clickPower)} x combo {compactNumber(playerRuntime.production.comboMultiplier)} x crit {compactNumber(playerRuntime.production.criticalMultiplier)}</div>
-            <div className="col-span-2">auto {compactNumber(playerRuntime.production.autoClickPower)} x rate {compactNumber(playerRuntime.production.autoClickRate)} {playerRuntime.production.automationEnabled ? "on" : "off"}</div>
+            <div className="col-span-2">agent {assistance?.enabled ? "online" : "offline"} selected {aiAgent?.selectedAiAgentId ?? "missing"}</div>
+            <div className="col-span-2">agent output {compactNumber(assistance?.amountPerSecond ?? 0)}/s = base {compactNumber(assistance?.baseAutomationRate ?? playerRuntime.production.autoClickPower)} + upgrades {compactNumber(assistance?.upgradeBonusRate ?? 0)} x {compactNumber(assistance?.multiplier ?? playerRuntime.production.autoClickRate)}</div>
+            <div className="col-span-2">agent level {aiAgent?.progression?.displayLevel ?? "none"} next {assistance?.nextLevelRate !== undefined ? compactNumber(assistance.nextLevelRate) : "none"}/s</div>
+            <div className="col-span-2 truncate">portrait {playerRuntime.production.automationEnabled ? aiAgent?.asset.openArtKey : aiAgent?.asset.offlineArtKey} animation {aiAgent?.animation.reducedAnimation ? "reduced" : "enabled"}</div>
             <div className="col-span-2 truncate">migration {playerRuntime.unresolved.migrationNotes.length ? playerRuntime.unresolved.migrationNotes.join(" | ") : "none"}</div>
           </div>
           <div className="mt-2 max-h-28 overflow-auto border-t border-cyan-200/10 pt-2">
