@@ -267,7 +267,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
     disabledReason: "runtime not hydrated"
   });
   const cloudSavingRef = useRef(false);
-  const startupTokenRef = useRef("");
+  const completedStartupTokenRef = useRef("");
   const runtimeReady = loadedRuntimeKey === runtimeKey && runtimeStatus.hydrationComplete && !startupConflict;
   const displayPlayerRuntime = runtimeReady ? playerRuntime : createNewPlayerRuntimeState(data);
 
@@ -320,8 +320,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
     async function start() {
       const userId = authState.user?.id ?? authState.status;
       const startupToken = `${runtimeKey}:${userId}`;
-      if (startupTokenRef.current === startupToken) return;
-      startupTokenRef.current = startupToken;
+      if (completedStartupTokenRef.current === startupToken) return;
       setLoadedRuntimeKey("");
       setStartupConflict(false);
       setCloudError(undefined);
@@ -371,6 +370,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
               cloudRevision: loadedCloud.revision,
               lastSyncedRevision: loadedCloud.revision
             });
+            completedStartupTokenRef.current = startupToken;
             return;
           }
 
@@ -412,6 +412,7 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean, authState: Re
         controlsEnabled: true,
         disabledReason: undefined
       }));
+      completedStartupTokenRef.current = startupToken;
       updateCloudSync({ activeSaveSource, offlineProgressionApplyCount: cloudSync.offlineProgressionApplyCount + 1 });
 
       if (authState.status === "authenticated" && authState.user && (!loadedCloud || activeSaveSource === "local")) {
