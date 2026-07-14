@@ -357,9 +357,39 @@ describe("Roblox left column geometry", () => {
       left: "58px",
       width: "390px"
     });
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("left-[10px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("left-[42px]");
     expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("top-[18px]");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[360px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[326px]");
+    expect(screen.getByTestId("top-hud-civilization-era")).toHaveClass("left-[42px]");
+    expect(screen.getByTestId("top-hud-civilization-era")).toHaveClass("w-[326px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveStyle({
+      left: "34px",
+      top: "32px"
+    });
+    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveStyle({
+      left: "110px",
+      width: "150px"
+    });
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveStyle({
+      left: "48px",
+      top: "32px"
+    });
+    expect(screen.getByTestId("top-hud-economy-value-ECON-CREDITS")).toHaveStyle({
+      left: "126px",
+      width: "146px"
+    });
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-POPULATION")).toHaveStyle({
+      left: "8px",
+      top: "32px"
+    });
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-RESEARCH")).toHaveStyle({
+      left: "0px",
+      top: "32px"
+    });
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-PREMIUM-CRYSTALS")).toHaveStyle({
+      left: "8px",
+      top: "32px"
+    });
     expect(screen.getByTestId("top-hud-left-utility-1")).toHaveStyle({
       left: "50px",
       top: "8px"
@@ -421,7 +451,7 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[31px]");
     expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[17px]");
     expect(screen.getByTestId("top-hud-civilization-title").style.fontSize).toBe("21px");
-    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[360px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[326px]");
     expect(screen.getByTestId("top-hud-civilization-title")).toHaveAttribute("title", "The Really Long Civilization Name");
   });
 
