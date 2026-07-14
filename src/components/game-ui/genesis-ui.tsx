@@ -37,6 +37,8 @@ import { createDashboardArtMap, dashboardAssetFailureDiagnostic, getDashboardArt
 import type { AssetDefinition, ClientProfile, EraDefinition, GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeCategory, UpgradeDefinition } from "@/lib/canonical-runtime";
 import { CANONICAL_ALIGNMENT_AXES, createDashboardModel, type DashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { formatArchitectureCompatibilityStatus, resolveArchitectureCompatibility } from "@/lib/architecture/compatibility";
+import { verifyResourceEconomyContracts } from "@/lib/economy/contracts";
+import { resolveLaborRateBreakdown, resolveResearchRateBreakdown } from "@/lib/economy/rate-calculator";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
@@ -3226,6 +3228,9 @@ function DashboardDataArtInspector({
   const loadReport = playerRuntime?.runtimeLoadReport;
   const aiAgent = model.playerState.aiAgent;
   const assistance = model.playerState.automation;
+  const contractVerification = verifyResourceEconomyContracts(data);
+  const laborRate = playerRuntime ? resolveLaborRateBreakdown(data, playerRuntime) : undefined;
+  const researchRate = playerRuntime ? resolveResearchRateBreakdown(data, playerRuntime) : undefined;
   const defaultAiAgentId = resolveDefaultAiAgentId(data);
   const defaultAiAgentVariantId = resolveDefaultAiAgentVariantId(data, defaultAiAgentId);
   const publishedAgentCount = (aiAgent?.customization?.availableAgents.length ?? 0) + (aiAgent?.customization?.lockedAgents.length ?? 0);
@@ -3323,6 +3328,9 @@ function DashboardDataArtInspector({
             <div>boosts {playerRuntime.boosts.active.length}</div>
             <div>unresolved {Object.keys(playerRuntime.unresolved.resources).length + Object.keys(playerRuntime.unresolved.upgradeLevels).length}</div>
             <div>population {compactNumber(playerRuntime.economy.balances["ECON-POPULATION"] ?? playerRuntime.civilization.population)}</div>
+            <div>capacity {compactNumber(playerRuntime.civilization.populationCapacity)}</div>
+            <div>workforce {compactNumber(playerRuntime.civilization.availableWorkforce)}/{compactNumber(playerRuntime.civilization.assignedWorkforce)}</div>
+            <div>growth {compactNumber(playerRuntime.civilization.populationGrowthRate)}/s</div>
             <div>labor {compactNumber(playerRuntime.economy.balances[LABOR_ECONOMY_ID] ?? 0)}</div>
             <div>credits {compactNumber(playerRuntime.economy.balances[CREDITS_ECONOMY_ID] ?? 0)}</div>
             <div>last +{compactNumber(playerRuntime.production.lastClickGain)}{playerRuntime.production.lastClickWasCritical ? " crit" : ""}</div>
@@ -3338,6 +3346,9 @@ function DashboardDataArtInspector({
             <div className="col-span-2">agent level {aiAgent?.progression?.displayLevel ?? "none"} next {assistance?.nextLevelRate !== undefined ? compactNumber(assistance.nextLevelRate) : "none"}/s</div>
             <div className="col-span-2 truncate">portrait {playerRuntime.production.automationEnabled ? aiAgent?.asset.openArtKey : aiAgent?.asset.offlineArtKey} blink {aiAgent?.asset.blinkArtKey ?? "missing"} ring {aiAgent?.asset.ringArtKey ?? "missing"}</div>
             <div className="col-span-2 truncate">visual {resolvedVisualState} blink controllers {aiAgent ? 1 : 0} animation {aiAgent?.animation.reducedAnimation ? "reduced" : "enabled"}</div>
+            <div className="col-span-2 truncate">v14 contracts {contractVerification.ok ? "ok" : "missing"} producers {contractVerification.counts.producers} effects {contractVerification.counts.buildingEffects}</div>
+            <div className="col-span-2 truncate">labor rate base {compactNumber(laborRate?.flatBaseRate ?? 0)} + producers {compactNumber(laborRate?.producerContributions.reduce((sum, contribution) => sum + contribution.amountPerSecond, 0) ?? 0)} = {compactNumber(laborRate?.displayedRate ?? 0)}/s</div>
+            <div className="col-span-2 truncate">research rate {compactNumber(researchRate?.displayedRate ?? 0)}/s paused {researchRate?.pausedReasons.slice(0, 2).join(", ") || "none"}</div>
             <div className="col-span-2 truncate">migration {playerRuntime.unresolved.migrationNotes.length ? playerRuntime.unresolved.migrationNotes.join(" | ") : "none"}</div>
           </div>
           <div className="mt-2 max-h-28 overflow-auto border-t border-cyan-200/10 pt-2">

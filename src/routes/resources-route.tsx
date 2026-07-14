@@ -1,7 +1,7 @@
 import { Coins, Factory, FlaskConical, Gauge, MapPinned, PackageOpen, RotateCw, Warehouse } from "lucide-react";
 import type { ReactNode } from "react";
 import { StoryCanvas } from "@/components/game-ui/genesis-ui";
-import type { GameRuntimeData, ResourceDefinition, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
+import type { GameRuntimeData, InventoryResourceMetadata, RuntimeContentState, UpgradeDefinition } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { getInventoryResources, getPrimaryHudResourceIds } from "@/lib/player-runtime";
 
@@ -15,10 +15,9 @@ function compactNumber(value: number) {
   return new Intl.NumberFormat("en", { notation: Math.abs(value) > 9999 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
 }
 
-function resourcePlanetAvailability(resource: ResourceDefinition) {
-  const tags = resource.tags ?? [];
-  const likelyPlanetTags = tags.filter((tag) => ["Earth", "Terrestrial", "Desert", "Ocean", "Dead", "Lava", "Ice", "Void", "Living", "Bio", "Ancient", "Energy", "Gas Giant", "Crystal", "Toxic", "Artificial", "Primordial", "Cosmic"].includes(tag));
-  return likelyPlanetTags.length ? likelyPlanetTags.join(", ") : "Awaiting planet availability export";
+function listPreview(values: string[] | undefined, fallback: string) {
+  if (!values?.length) return fallback;
+  return values.slice(0, 4).join(", ") + (values.length > 4 ? ` +${values.length - 4}` : "");
 }
 
 function upgradeNames(upgrades: UpgradeDefinition[]) {
@@ -29,6 +28,7 @@ function upgradeNames(upgrades: UpgradeDefinition[]) {
 export default function ResourcesRoute({ data, runtimeState, playerState }: RouteProps) {
   const hudIds = new Set(getPrimaryHudResourceIds(data));
   const inventoryResources = getInventoryResources(data);
+  const metadataByResourceId = new Map((data.inventoryResourceMetadata ?? []).map((metadata) => [metadata.resourceId, metadata]));
 
   return (
     <StoryCanvas>
@@ -49,9 +49,11 @@ export default function ResourcesRoute({ data, runtimeState, playerState }: Rout
               const amount = playerState.resourceInventory[resource.id] ?? 0;
               const rate = playerState.resourceRates[resource.id] ?? 0;
               const storage = playerState.resourceStorageLimits?.[resource.id] ?? Number.MAX_SAFE_INTEGER;
+              const metadata = metadataByResourceId.get(resource.id) as InventoryResourceMetadata | undefined;
               const consumedBy = data.upgrades.filter((upgrade) => upgrade.costResourceId === resource.id);
               const researchLinks = data.upgrades.filter((upgrade) => upgrade.costResourceId === resource.id || upgrade.description.toLowerCase().includes(resource.name.toLowerCase()) || upgrade.effectType.toLowerCase().includes("research"));
-              const usage = consumedBy.length ? `Upgrade cost input for ${consumedBy.length} canonical upgrades` : resource.tradable ? "Tradable inventory material" : "Cataloged inventory material";
+              const storageLimit = typeof metadata?.storageRules?.storageLimit === "number" ? metadata.storageRules.storageLimit : typeof metadata?.storageRules?.stackSize === "number" ? metadata.storageRules.stackSize : storage;
+              const usage = listPreview(metadata?.consumptionUses, consumedBy.length ? `Upgrade cost input for ${consumedBy.length} canonical upgrades` : resource.tradable ? "Tradable inventory material" : "Cataloged inventory material");
 
               return (
                 <article key={resource.id} className="min-h-[25rem] rounded-md border border-cyan-200/18 bg-slate-950/72 p-3 shadow-[0_18px_48px_rgba(0,0,0,0.34)]">
@@ -70,16 +72,16 @@ export default function ResourcesRoute({ data, runtimeState, playerState }: Rout
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Metric icon={<Coins className="h-4 w-4" />} label="Inventory" value={compactNumber(amount)} />
                     <Metric icon={<Gauge className="h-4 w-4" />} label="Production" value={`${rate >= 0 ? "+" : ""}${compactNumber(rate)}/s`} />
-                    <Metric icon={<Warehouse className="h-4 w-4" />} label="Storage" value={storage === Number.MAX_SAFE_INTEGER ? "Unbounded" : compactNumber(storage)} />
-                    <Metric icon={<RotateCw className="h-4 w-4" />} label="Consumption" value={`${consumedBy.length} upgrades`} />
+                    <Metric icon={<Warehouse className="h-4 w-4" />} label="Storage" value={storageLimit === Number.MAX_SAFE_INTEGER || storageLimit === null ? "Unbounded" : compactNumber(storageLimit)} />
+                    <Metric icon={<RotateCw className="h-4 w-4" />} label="Consumption" value={metadata?.consumptionUses?.length ? `${metadata.consumptionUses.length} uses` : `${consumedBy.length} upgrades`} />
                   </div>
 
                   <div className="mt-3 space-y-2 text-xs leading-5 text-cyan-50/72">
                     <InfoLine label="Usage" value={usage} />
-                    <InfoLine label="Sources" value={(resource.tags ?? []).slice(0, 5).join(", ") || "Canonical resource catalog"} />
-                    <InfoLine label="Buildings" value="Awaiting canonical building export" icon={<Factory className="h-3.5 w-3.5" />} />
-                    <InfoLine label="Research" value={upgradeNames(researchLinks)} icon={<FlaskConical className="h-3.5 w-3.5" />} />
-                    <InfoLine label="Planet Availability" value={resourcePlanetAvailability(resource)} icon={<MapPinned className="h-3.5 w-3.5" />} />
+                    <InfoLine label="Sources" value={listPreview(metadata?.productionSources, (resource.tags ?? []).slice(0, 5).join(", ") || "Canonical resource catalog")} />
+                    <InfoLine label="Buildings" value={listPreview(metadata?.buildingRelationships, "No canonical building relationships")} icon={<Factory className="h-3.5 w-3.5" />} />
+                    <InfoLine label="Research" value={listPreview(metadata?.researchRelationships, upgradeNames(researchLinks))} icon={<FlaskConical className="h-3.5 w-3.5" />} />
+                    <InfoLine label="Planet Availability" value={listPreview(metadata?.planetAvailability, "Awaiting planet availability export")} icon={<MapPinned className="h-3.5 w-3.5" />} />
                   </div>
                 </article>
               );

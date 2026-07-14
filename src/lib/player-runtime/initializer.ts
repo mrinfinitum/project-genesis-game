@@ -38,6 +38,7 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
   const inventoryResourceIds = getInventoryResources(content).map((resource) => resource.id);
   const economyBalances = getStartingEconomyBalances(content);
   const economyRates = { ...Object.fromEntries(economyIds.map((id) => [id, 0])), ...getStartingEconomyRates(content) };
+  const startingPopulation = economyBalances[POPULATION_ECONOMY_ID] ?? balanceNumber(content, "startingPopulation", 0);
   const inventory = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
   const productionRates = Object.fromEntries(inventoryResourceIds.map((id) => [id, 0]));
   const storageLimits = Object.fromEntries(inventoryResourceIds.map((id) => [id, Number.MAX_SAFE_INTEGER]));
@@ -58,12 +59,19 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       currentEraId: startEraId,
       eraProgress: 0,
       eraMastery: 0,
-      population: economyBalances[POPULATION_ECONOMY_ID] ?? balanceNumber(content, "startingPopulation", 0),
+      population: startingPopulation,
+      currentPopulation: startingPopulation,
+      populationCapacity: startingPopulation,
+      availableWorkforce: startingPopulation,
+      assignedWorkforce: 0,
+      populationGrowthRate: 0,
       discoveryPoints: 0
     },
     economy: {
       balances: economyBalances,
-      rates: economyRates
+      rates: economyRates,
+      recentTransactions: [],
+      premiumCrystalAudit: []
     },
     resources: {
       inventory,

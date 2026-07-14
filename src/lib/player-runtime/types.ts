@@ -1,4 +1,4 @@
-export const PLAYER_RUNTIME_SAVE_VERSION = 11;
+export const PLAYER_RUNTIME_SAVE_VERSION = 12;
 
 export type AlignmentKey = "industry" | "technology" | "cyber" | "nature" | "corporate";
 
@@ -9,6 +9,22 @@ export type PlayerRuntimeBoost = {
   startedAt: string;
   endsAt: string;
   multiplier: number;
+};
+
+export type ResourceTransactionOperation = "grant" | "produce" | "spend" | "refund" | "transfer" | "adjust" | "purchase" | "discover";
+
+export type ResourceTransaction = {
+  id: string;
+  economyId: string;
+  amount: number;
+  operation: ResourceTransactionOperation;
+  sourceType: string;
+  sourceId: string;
+  scope: string;
+  timestamp: string;
+  reasonCode: string;
+  verified?: boolean;
+  entitlementId?: string;
 };
 
 export type UnresolvedPlayerRuntimeIds = {
@@ -71,11 +87,18 @@ export type PlayerRuntimeState = {
     eraProgress: number;
     eraMastery: number;
     population: number;
+    currentPopulation: number;
+    populationCapacity: number;
+    availableWorkforce: number;
+    assignedWorkforce: number;
+    populationGrowthRate: number;
     discoveryPoints: number;
   };
   economy: {
     balances: Record<string, number>;
     rates: Record<string, number>;
+    recentTransactions: ResourceTransaction[];
+    premiumCrystalAudit: ResourceTransaction[];
   };
   resources: {
     inventory: Record<string, number>;

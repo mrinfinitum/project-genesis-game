@@ -296,6 +296,162 @@ export interface AutomationPresentation {
   [key: string]: unknown;
 }
 
+export interface ResourceBehaviorContract {
+  id: string;
+  economyId: string;
+  behaviorType?: string;
+  startingAmount: number;
+  basePassiveRate: number;
+  manualProduction?: {
+    enabled?: boolean;
+    baseClick?: number;
+    target?: boolean;
+    formula?: string;
+    [key: string]: unknown;
+  };
+  automatedProduction?: {
+    enabled?: boolean;
+    aiAgentTarget?: boolean;
+    formula?: string;
+    [key: string]: unknown;
+  };
+  buildingProduction?: Record<string, unknown>;
+  eventProduction?: Record<string, unknown>;
+  discoveryProduction?: Record<string, unknown>;
+  purchaseProduction?: Record<string, unknown>;
+  spendable?: boolean;
+  capacityResource?: boolean;
+  premiumResource?: boolean;
+  canGoNegative?: boolean;
+  integerOnly?: boolean;
+  capPolicy?: Record<string, unknown>;
+  offlineProgressEligible?: boolean;
+  displayProfile?: Record<string, unknown>;
+  validationRules?: string[];
+  saveBehavior?: Record<string, unknown>;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+export interface ResourceProducerDefinition {
+  id: string;
+  sourceType: string;
+  sourceId: string;
+  economyId: string;
+  scope: string;
+  productionMode: string;
+  baseAmount: number;
+  intervalSeconds?: number | null;
+  requirements?: Record<string, unknown>;
+  staffing?: Record<string, unknown>;
+  powerCost?: number;
+  inputCosts?: Array<Record<string, unknown>>;
+  multipliers?: Array<Record<string, unknown>>;
+  offlineEligible?: boolean;
+  activeConditions?: string[];
+  notes?: string;
+  [key: string]: unknown;
+}
+
+export interface BuildingResourceEffect {
+  id: string;
+  buildingId: string;
+  buildingName?: string;
+  economyId: string;
+  scope: string;
+  effectKind: string;
+  productionMode: string;
+  amount: number;
+  intervalSeconds?: number | null;
+  displayText?: string;
+  staffingRequirement?: number;
+  eraId?: string;
+  sourceField?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+export interface ResourceScopeRule {
+  id: string;
+  scope: string;
+  rollupBehavior: string;
+  appliesToEconomyIds: string[];
+  doubleCountingRule?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+export interface ResourceOfflinePolicy {
+  id: string;
+  economyId: string;
+  eligible: boolean;
+  maximumOfflineSeconds: number;
+  producerEligibility?: string;
+  capBehavior?: string;
+  suspendedConditions?: string[];
+  deterministicOrder?: string[];
+  [key: string]: unknown;
+}
+
+export interface ResourceRateBreakdownDefinition {
+  id: string;
+  economyId: string;
+  labels?: Array<{
+    id: string;
+    displayName?: string;
+    sourceTypes?: string[];
+    operation?: string;
+    [key: string]: unknown;
+  }>;
+  formula?: string;
+  displayRule?: string;
+  [key: string]: unknown;
+}
+
+export interface ResourceTransactionReason {
+  id: string;
+  economyId: string;
+  operation: string;
+  sourceTypes: string[];
+  serverAuthoritativeRequired?: boolean;
+  playerHistoryOwnedBy?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+export interface ResourceCalculationRules {
+  id?: string;
+  multiplierOrder?: string[];
+  multiplierStacking?: Record<string, unknown>;
+  rounding?: {
+    internalPrecision?: number;
+    displayPrecision?: number;
+    integerEconomyIds?: string[];
+    roundingMode?: string;
+    maximumSafeValueStrategy?: string;
+    serializationFormat?: string;
+    [key: string]: unknown;
+  };
+  laborFormula?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface InventoryResourceMetadata {
+  id: string;
+  resourceId: string;
+  displayName?: string;
+  classification?: string;
+  productionSources?: string[];
+  consumptionUses?: string[];
+  storageRules?: Record<string, unknown>;
+  buildingRelationships?: string[];
+  researchRelationships?: string[];
+  planetAvailability?: string[];
+  eraAvailability?: string[];
+  relationshipStatus?: string;
+  [key: string]: unknown;
+}
+
 export interface ClientProfiles {
   default: ClientProfile;
   web?: ClientProfile;
@@ -322,6 +478,17 @@ export interface GameRuntimeData {
     [key: string]: unknown;
   };
   economyDefinitions?: PrimaryHudResourceDefinition[];
+  economyBehaviorContracts?: ResourceBehaviorContract[];
+  eraEconomyProfiles?: Array<Record<string, unknown>>;
+  economyUsageRelationships?: Record<string, unknown>;
+  inventoryResourceMetadata?: InventoryResourceMetadata[];
+  resourceProducerDefinitions?: ResourceProducerDefinition[];
+  buildingResourceEffects?: BuildingResourceEffect[];
+  economyScopeRules?: ResourceScopeRule[];
+  economyTransactionReasons?: ResourceTransactionReason[];
+  economyRateBreakdownDefinitions?: ResourceRateBreakdownDefinition[];
+  offlineProgressionPolicies?: ResourceOfflinePolicy[];
+  economyCalculationRules?: ResourceCalculationRules;
   defaultAiAgentId?: string;
   aiAgents?: AiAgentDefinition[];
   aiAgentVariants?: AiAgentVariantDefinition[];
@@ -374,6 +541,17 @@ export interface RuntimeContentState {
   clientProfiles: ClientProfiles;
   economy?: GameRuntimeData["economy"];
   economyDefinitions?: PrimaryHudResourceDefinition[];
+  economyBehaviorContracts?: ResourceBehaviorContract[];
+  eraEconomyProfiles?: Array<Record<string, unknown>>;
+  economyUsageRelationships?: Record<string, unknown>;
+  inventoryResourceMetadata?: InventoryResourceMetadata[];
+  resourceProducerDefinitions?: ResourceProducerDefinition[];
+  buildingResourceEffects?: BuildingResourceEffect[];
+  economyScopeRules?: ResourceScopeRule[];
+  economyTransactionReasons?: ResourceTransactionReason[];
+  economyRateBreakdownDefinitions?: ResourceRateBreakdownDefinition[];
+  offlineProgressionPolicies?: ResourceOfflinePolicy[];
+  economyCalculationRules?: ResourceCalculationRules;
   validationErrors: string[];
   validationWarnings: string[];
   lastCheckedAt?: string;

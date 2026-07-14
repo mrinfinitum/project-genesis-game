@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
+import { grantPremiumCrystals, resolveLaborRateBreakdown, resolveResearchRateBreakdown, verifyResourceEconomyContracts } from "@/lib/economy";
 import {
   advanceSimulation,
   createNewPlayerRuntimeState,
@@ -70,7 +71,12 @@ describe("canonical player runtime", () => {
       civilization: {
         civilizationName: "Test Civilization",
         currentEraId: "survival",
-        population: 5
+        population: 5,
+        currentPopulation: 5,
+        populationCapacity: 5,
+        availableWorkforce: 5,
+        assignedWorkforce: 0,
+        populationGrowthRate: 0
       },
       production: {
         clickPower: runtime.balance.baseClickPower,
@@ -92,6 +98,8 @@ describe("canonical player runtime", () => {
     expect(state.economy.balances[POPULATION_ECONOMY_ID]).toBe(5);
     expect(state.economy.balances[RESEARCH_ECONOMY_ID]).toBe(0);
     expect(state.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
+    expect(state.economy.recentTransactions).toEqual([]);
+    expect(state.economy.premiumCrystalAudit).toEqual([]);
     expect(state.aiAgent.selectedAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
     expect(state.aiAgent.selectedAiAgentVariantId).toBe(CANONICAL_AI_AGENT_VARIANT_ID);
     expect(state.aiAgent.unlockedAiAgentIds).toContain(CANONICAL_AI_AGENT_ID);
@@ -102,16 +110,27 @@ describe("canonical player runtime", () => {
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
   });
 
-  it("verifies the Studio v13 fixed Survival economy and AI Agent contract", async () => {
+  it("verifies the Studio v14 resource economy and AI Agent contract", async () => {
     const runtime = await bundledRuntime();
-    const laborDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === LABOR_ECONOMY_ID) as Record<string, unknown> | undefined;
-    const creditsDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === CREDITS_ECONOMY_ID) as Record<string, unknown> | undefined;
-    const populationDefinition = (runtime.economyDefinitions ?? []).find((definition) => definition.id === POPULATION_ECONOMY_ID) as Record<string, unknown> | undefined;
+    const verification = verifyResourceEconomyContracts(runtime);
+    const laborContract = runtime.economyBehaviorContracts?.find((contract) => contract.economyId === LABOR_ECONOMY_ID);
+    const creditsContract = runtime.economyBehaviorContracts?.find((contract) => contract.economyId === CREDITS_ECONOMY_ID);
+    const populationContract = runtime.economyBehaviorContracts?.find((contract) => contract.economyId === POPULATION_ECONOMY_ID);
     const survivalHudIds = getPrimaryHudResourceIds(runtime, "survival");
     const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
-    expect(runtime.metadata.contentVersion).toBe(13);
-    expect(runtime.metadata.checksum).toBe("e2abae4d8d2418aee9fc247edcddaa2df1a68654de331a578efa16a5fb1c96d3");
+    expect(verification.ok).toBe(true);
+    expect(runtime.metadata.contentVersion).toBe(14);
+    expect(runtime.metadata.checksum).toBe("84000b947e8ac9d9bd6e0eff7649267b0edf22c3c9c217288b496af0cc881dc3");
+    expect(verification.counts).toMatchObject({
+      behaviorContracts: 5,
+      producers: 569,
+      buildingEffects: 566,
+      scopeRules: 4,
+      transactionReasons: 11,
+      rateBreakdowns: 5,
+      offlinePolicies: 5
+    });
     expect(runtime.defaultAiAgentId).toBe(CANONICAL_AI_AGENT_ID);
     expect(runtime.aiAgents).toHaveLength(1);
     expect(runtime.aiAgentVariants).toHaveLength(1);
@@ -121,11 +140,13 @@ describe("canonical player runtime", () => {
     expect(resolvePrimaryEconomyIdForCurrentEra(runtime, "survival")).toBe(LABOR_ECONOMY_ID);
     expect(survivalHudIds).toEqual([LABOR_ECONOMY_ID, CREDITS_ECONOMY_ID, POPULATION_ECONOMY_ID, RESEARCH_ECONOMY_ID, PREMIUM_CRYSTALS_ECONOMY_ID]);
     expect(survivalIconKeys).toEqual(["economy_labor", "economy_credits", "economy_population", "economy_research", "economy_premium_crystals"]);
-    expect(laborDefinition?.startingRate).toBe(1);
-    expect(laborDefinition?.manualClickTarget).toBe(true);
-    expect(creditsDefinition?.startingAmount).toBe(0);
-    expect(creditsDefinition?.startingRate).toBe(0);
-    expect(populationDefinition?.startingAmount).toBe(5);
+    expect(laborContract?.startingAmount).toBe(0);
+    expect(laborContract?.basePassiveRate).toBe(1);
+    expect(laborContract?.manualProduction?.target).toBe(true);
+    expect(creditsContract?.startingAmount).toBe(0);
+    expect(creditsContract?.basePassiveRate).toBe(0);
+    expect(populationContract?.startingAmount).toBe(5);
+    expect(populationContract?.capacityResource).toBe(true);
   });
 
   it("persists explicit saves, autosaves, resets, exports, and imports through the local service", async () => {
@@ -636,6 +657,85 @@ describe("canonical player runtime", () => {
     expect(advanced.economy.balances[CREDITS_ECONOMY_ID]).toBe(clicked.economy.balances[CREDITS_ECONOMY_ID]);
     expect(advanced.economy.rates[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
     expect(advanced.civilization.eraProgress).toBeGreaterThan(state.civilization.eraProgress);
+  });
+
+  it("uses v14 rate breakdowns for Labor and keeps Research at zero without active producers", async () => {
+    const runtime = await bundledRuntime();
+    const base = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
+    const offline = {
+      ...base,
+      production: {
+        ...base.production,
+        automationEnabled: false
+      }
+    };
+    const online = {
+      ...base,
+      production: {
+        ...base.production,
+        automationEnabled: true
+      },
+      upgrades: {
+        ...base.upgrades,
+        levels: {
+          ...base.upgrades.levels,
+          [runtime.upgrades.find((upgrade) => upgrade.effectType.toLowerCase().includes("auto"))!.id]: 1
+        }
+      }
+    };
+
+    const offlineLabor = resolveLaborRateBreakdown(runtime, offline);
+    const onlineLabor = resolveLaborRateBreakdown(runtime, online);
+    const research = resolveResearchRateBreakdown(runtime, online);
+
+    expect(offlineLabor.flatBaseRate).toBe(1);
+    expect(offlineLabor.producerContributions.find((contribution) => contribution.sourceType === "ai_agent")).toBeUndefined();
+    expect(offlineLabor.displayedRate).toBe(1);
+    expect(onlineLabor.producerContributions.find((contribution) => contribution.sourceType === "ai_agent")?.amountPerSecond).toBeGreaterThan(0);
+    expect(onlineLabor.displayedRate).toBeGreaterThan(offlineLabor.displayedRate);
+    expect(onlineLabor.sourceBreakdown.calculationOrderSteps).toBe(7);
+    expect(research.displayedRate).toBe(0);
+    expect(research.pausedReasons).toContain("no_active_econ_research_producer");
+  });
+
+  it("records manual Labor transactions and protects Premium Crystal grants", async () => {
+    const runtime = await bundledRuntime();
+    const state = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
+    const clicked = performManualLaborClick(runtime, state, { now: fixedDate(), forceCritical: false });
+    const genericGrant = grantTestResources(runtime, state, 1000);
+    const unsafePremium = grantPremiumCrystals(runtime, state, {
+      amount: 10,
+      reasonCode: "premium_purchase",
+      sourceType: "verified_purchase",
+      sourceId: "local-callback",
+      verified: false
+    });
+    const safePremium = grantPremiumCrystals(runtime, state, {
+      amount: 10,
+      reasonCode: "premium_purchase",
+      sourceType: "verified_purchase",
+      sourceId: "entitlement-1",
+      entitlementId: "entitlement-1",
+      verified: true
+    });
+
+    expect(clicked.economy.recentTransactions[0]).toMatchObject({
+      economyId: LABOR_ECONOMY_ID,
+      amount: 1,
+      operation: "produce",
+      sourceType: "manual_click",
+      reasonCode: "labor_produce"
+    });
+    expect(genericGrant.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(0);
+    expect(unsafePremium.ok).toBe(false);
+    expect(unsafePremium.reason).toBe("verified_premium_source_required");
+    expect(safePremium.ok).toBe(true);
+    expect(safePremium.state?.economy.balances[PREMIUM_CRYSTALS_ECONOMY_ID]).toBe(10);
+    expect(safePremium.state?.economy.premiumCrystalAudit[0]).toMatchObject({
+      economyId: PREMIUM_CRYSTALS_ECONOMY_ID,
+      operation: "purchase",
+      verified: true
+    });
   });
 
   it("routes passive Survival production to Labor while automation is off", async () => {

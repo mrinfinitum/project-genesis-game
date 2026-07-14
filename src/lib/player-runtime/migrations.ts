@@ -120,11 +120,18 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       ...seed.civilization,
       ...(record.civilization ?? {}),
       currentEraId: typeof record.civilization?.currentEraId === "string" ? record.civilization.currentEraId : seed.civilization.currentEraId,
-      population: typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.population
+      population: typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.population,
+      currentPopulation: typeof record.civilization?.currentPopulation === "number" ? record.civilization.currentPopulation : typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.currentPopulation,
+      populationCapacity: typeof record.civilization?.populationCapacity === "number" ? record.civilization.populationCapacity : Math.max(seed.civilization.populationCapacity, typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.currentPopulation),
+      availableWorkforce: typeof record.civilization?.availableWorkforce === "number" ? record.civilization.availableWorkforce : typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.availableWorkforce,
+      assignedWorkforce: typeof record.civilization?.assignedWorkforce === "number" ? record.civilization.assignedWorkforce : seed.civilization.assignedWorkforce,
+      populationGrowthRate: typeof record.civilization?.populationGrowthRate === "number" ? record.civilization.populationGrowthRate : seed.civilization.populationGrowthRate
     },
     economy: {
       balances: { ...seed.economy.balances, ...normalizeNumberMap(record.economy?.balances) },
-      rates: { ...seed.economy.rates, ...normalizeNumberMap(record.economy?.rates) }
+      rates: { ...seed.economy.rates, ...normalizeNumberMap(record.economy?.rates) },
+      recentTransactions: Array.isArray(record.economy?.recentTransactions) ? record.economy.recentTransactions : seed.economy.recentTransactions,
+      premiumCrystalAudit: Array.isArray(record.economy?.premiumCrystalAudit) ? record.economy.premiumCrystalAudit : seed.economy.premiumCrystalAudit
     },
     resources: {
       inventory: { ...seed.resources.inventory, ...normalizeNumberMap(record.resources?.inventory) },
@@ -197,6 +204,9 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     const savedCivilizationPopulation = typeof record.civilization?.population === "number" ? record.civilization.population : seed.civilization.population;
     if ((legacyPopulation === undefined || legacyPopulation === 0) && savedCivilizationPopulation > 0) {
       next.economy.balances[POPULATION_ECONOMY_ID] = savedCivilizationPopulation;
+      next.civilization.currentPopulation = savedCivilizationPopulation;
+      next.civilization.populationCapacity = Math.max(next.civilization.populationCapacity, savedCivilizationPopulation);
+      next.civilization.availableWorkforce = Math.max(0, savedCivilizationPopulation - next.civilization.assignedWorkforce);
       next.unresolved.migrationNotes.push(`Migrated ${POPULATION_ECONOMY_ID} from civilization.population.`);
     }
     if (next.economy.balances[LABOR_ECONOMY_ID] === undefined) {
@@ -225,6 +235,9 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     if (untouchedStarter && seedPopulation !== 125) {
       next.economy.balances[POPULATION_ECONOMY_ID] = seedPopulation;
       next.civilization.population = seedPopulation;
+      next.civilization.currentPopulation = seedPopulation;
+      next.civilization.populationCapacity = Math.max(seedPopulation, next.civilization.populationCapacity);
+      next.civilization.availableWorkforce = Math.max(0, seedPopulation - next.civilization.assignedWorkforce);
       next.unresolved.migrationNotes.push(`Migrated untouched starter ${POPULATION_ECONOMY_ID} from 125 to ${seedPopulation}.`);
     }
   }
@@ -286,6 +299,9 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     if (staleUntouchedPopulation && seedPopulation !== 125) {
       next.economy.balances[POPULATION_ECONOMY_ID] = seedPopulation;
       next.civilization.population = seedPopulation;
+      next.civilization.currentPopulation = seedPopulation;
+      next.civilization.populationCapacity = Math.max(seedPopulation, next.civilization.populationCapacity);
+      next.civilization.availableWorkforce = Math.max(0, seedPopulation - next.civilization.assignedWorkforce);
       next.unresolved.migrationNotes.push(`Repaired stale untouched ${POPULATION_ECONOMY_ID} from 125 to ${seedPopulation}.`);
     }
   }
@@ -329,6 +345,13 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
     next.aiAgent.selectedAiAgentVariantId = resolvedVariant.variant?.id ?? defaultAiAgentVariantId;
     next.unresolved.migrationNotes.push(`Added default AI Agent variant selection ${next.aiAgent.selectedAiAgentVariantId}.`);
   }
+
+  next.civilization.currentPopulation = next.economy.balances[POPULATION_ECONOMY_ID] ?? next.civilization.currentPopulation ?? next.civilization.population;
+  next.civilization.population = next.civilization.currentPopulation;
+  next.civilization.populationCapacity = Math.max(next.civilization.populationCapacity ?? 0, next.civilization.currentPopulation);
+  next.civilization.assignedWorkforce = Math.max(0, next.civilization.assignedWorkforce ?? 0);
+  next.civilization.availableWorkforce = Math.max(0, next.civilization.currentPopulation - next.civilization.assignedWorkforce);
+  next.civilization.populationGrowthRate = Math.max(0, next.civilization.populationGrowthRate ?? 0);
 
   return preserveUnresolvedPlayerRuntimeIds(next, content);
 }

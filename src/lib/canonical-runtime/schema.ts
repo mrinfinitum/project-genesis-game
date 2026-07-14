@@ -320,6 +320,146 @@ export const automationPresentationSchema = z
   })
   .catchall(z.unknown());
 
+export const resourceBehaviorContractSchema = z
+  .object({
+    id,
+    economyId: id,
+    behaviorType: z.string().optional(),
+    startingAmount: finiteNumber,
+    basePassiveRate: finiteNumber,
+    manualProduction: unknownRecord.optional(),
+    automatedProduction: unknownRecord.optional(),
+    buildingProduction: unknownRecord.optional(),
+    eventProduction: unknownRecord.optional(),
+    discoveryProduction: unknownRecord.optional(),
+    purchaseProduction: unknownRecord.optional(),
+    spendable: z.boolean().optional(),
+    capacityResource: z.boolean().optional(),
+    premiumResource: z.boolean().optional(),
+    canGoNegative: z.boolean().optional(),
+    integerOnly: z.boolean().optional(),
+    capPolicy: unknownRecord.optional(),
+    offlineProgressEligible: z.boolean().optional(),
+    displayProfile: unknownRecord.optional(),
+    validationRules: stringArray.optional(),
+    saveBehavior: unknownRecord.optional(),
+    notes: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const resourceProducerDefinitionSchema = z
+  .object({
+    id,
+    sourceType: id,
+    sourceId: id,
+    economyId: id,
+    scope: id,
+    productionMode: id,
+    baseAmount: finiteNumber,
+    intervalSeconds: finiteNumber.nullable().optional(),
+    requirements: unknownRecord.optional(),
+    staffing: unknownRecord.optional(),
+    powerCost: finiteNumber.optional(),
+    inputCosts: z.array(unknownRecord).optional(),
+    multipliers: z.array(unknownRecord).optional(),
+    offlineEligible: z.boolean().optional(),
+    activeConditions: stringArray.optional(),
+    notes: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const buildingResourceEffectSchema = z
+  .object({
+    id,
+    buildingId: id,
+    buildingName: z.string().optional(),
+    economyId: id,
+    scope: id,
+    effectKind: id,
+    productionMode: id,
+    amount: finiteNumber,
+    intervalSeconds: finiteNumber.nullable().optional(),
+    displayText: z.string().optional(),
+    staffingRequirement: finiteNumber.optional(),
+    eraId: z.string().optional(),
+    sourceField: z.string().optional(),
+    notes: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const resourceScopeRuleSchema = z
+  .object({
+    id,
+    scope: id,
+    rollupBehavior: z.string(),
+    appliesToEconomyIds: stringArray,
+    doubleCountingRule: z.string().optional(),
+    notes: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const resourceOfflinePolicySchema = z
+  .object({
+    id,
+    economyId: id,
+    eligible: z.boolean(),
+    maximumOfflineSeconds: finiteNumber,
+    producerEligibility: z.string().optional(),
+    capBehavior: z.string().optional(),
+    suspendedConditions: stringArray.optional(),
+    deterministicOrder: stringArray.optional()
+  })
+  .catchall(z.unknown());
+
+export const resourceRateBreakdownDefinitionSchema = z
+  .object({
+    id,
+    economyId: id,
+    labels: z.array(unknownRecord).optional(),
+    formula: z.string().optional(),
+    displayRule: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const resourceTransactionReasonSchema = z
+  .object({
+    id,
+    economyId: id,
+    operation: id,
+    sourceTypes: stringArray,
+    serverAuthoritativeRequired: z.boolean().optional(),
+    playerHistoryOwnedBy: z.string().optional(),
+    notes: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const inventoryResourceMetadataSchema = z
+  .object({
+    id,
+    resourceId: id,
+    displayName: z.string().optional(),
+    classification: z.string().optional(),
+    productionSources: stringArray.optional(),
+    consumptionUses: stringArray.optional(),
+    storageRules: unknownRecord.optional(),
+    buildingRelationships: stringArray.optional(),
+    researchRelationships: stringArray.optional(),
+    planetAvailability: stringArray.optional(),
+    eraAvailability: stringArray.optional(),
+    relationshipStatus: z.string().optional()
+  })
+  .catchall(z.unknown());
+
+export const resourceCalculationRulesSchema = z
+  .object({
+    id: z.string().optional(),
+    multiplierOrder: stringArray.optional(),
+    multiplierStacking: unknownRecord.optional(),
+    rounding: unknownRecord.optional(),
+    laborFormula: unknownRecord.optional()
+  })
+  .catchall(z.unknown());
+
 export const gameRuntimeDataSchema = z.object({
   metadata: runtimeMetadataSchema,
   eras: z.array(eraDefinitionSchema),
@@ -331,6 +471,17 @@ export const gameRuntimeDataSchema = z.object({
   clientProfiles: clientProfilesSchema,
   economy: economyRuntimeSchema.optional(),
   economyDefinitions: z.array(economyDefinitionSchema).optional(),
+  economyBehaviorContracts: z.array(resourceBehaviorContractSchema).optional(),
+  eraEconomyProfiles: z.array(unknownRecord).optional(),
+  economyUsageRelationships: unknownRecord.optional(),
+  inventoryResourceMetadata: z.array(inventoryResourceMetadataSchema).optional(),
+  resourceProducerDefinitions: z.array(resourceProducerDefinitionSchema).optional(),
+  buildingResourceEffects: z.array(buildingResourceEffectSchema).optional(),
+  economyScopeRules: z.array(resourceScopeRuleSchema).optional(),
+  economyTransactionReasons: z.array(resourceTransactionReasonSchema).optional(),
+  economyRateBreakdownDefinitions: z.array(resourceRateBreakdownDefinitionSchema).optional(),
+  offlineProgressionPolicies: z.array(resourceOfflinePolicySchema).optional(),
+  economyCalculationRules: resourceCalculationRulesSchema.optional(),
   defaultAiAgentId: z.string().optional(),
   aiAgents: z.array(aiAgentDefinitionSchema).optional(),
   aiAgentVariants: z.array(aiAgentVariantDefinitionSchema).optional(),

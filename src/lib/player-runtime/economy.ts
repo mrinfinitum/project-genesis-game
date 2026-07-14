@@ -1,4 +1,5 @@
 import type { GameRuntimeData, PrimaryHudResourceDefinition } from "@/lib/canonical-runtime";
+import { getBasePassiveRateFromContract, getBehaviorContract, getStartingAmountFromContract } from "@/lib/economy/contracts";
 
 export const CREDITS_ECONOMY_ID = "ECON-CREDITS";
 export const POPULATION_ECONOMY_ID = "ECON-POPULATION";
@@ -172,10 +173,18 @@ export function resolveEraEconomyProfile(content: GameRuntimeData, currentEraId?
 
 function getConfiguredHudSlots(content: GameRuntimeData, currentEraId?: string) {
   const profile = resolveEraEconomyProfile(content, currentEraId);
+  const hudSlots = Array.isArray(profile.hudSlots) ? profile.hudSlots : [];
   const profileSlots = Array.isArray(profile.primaryHudSlots) ? profile.primaryHudSlots : [];
   const profileResources = Array.isArray(profile.primaryHudResources) ? profile.primaryHudResources : [];
+  const fixedHudSlots = Array.isArray(profile.fixedHudSlots) ? profile.fixedHudSlots : [];
+  const visibleHudEconomyIds = Array.isArray(profile.visibleHudEconomyIds) ? profile.visibleHudEconomyIds : [];
   const economySlots = Array.isArray(content.economy?.primaryHudResources) ? content.economy.primaryHudResources : [];
-  return profileSlots.length ? profileSlots : [...profileResources, ...economySlots];
+  if (hudSlots.length) return hudSlots;
+  if (profileSlots.length) return profileSlots;
+  if (profileResources.length) return profileResources;
+  if (fixedHudSlots.length) return fixedHudSlots;
+  if (visibleHudEconomyIds.length) return visibleHudEconomyIds;
+  return economySlots;
 }
 
 export function getPrimaryHudResources(content: GameRuntimeData, currentEraId?: string): PrimaryHudResourceDefinition[] {
@@ -246,7 +255,7 @@ export function getStartingEconomyBalances(content: GameRuntimeData) {
     getEconomyDefinitions(content).map((resource) => {
       const canonicalValue = numericField(resource, STARTING_VALUE_KEYS);
       const balanceValue = resource.balanceKey ? content.balance[resource.balanceKey] : undefined;
-      const amount = canonicalValue ?? (typeof balanceValue === "number" && Number.isFinite(balanceValue) ? balanceValue : getCanonicalStartingEconomyBalance(content, resource.id) ?? 0);
+      const amount = getStartingAmountFromContract(content, resource.id) ?? canonicalValue ?? (typeof balanceValue === "number" && Number.isFinite(balanceValue) ? balanceValue : getCanonicalStartingEconomyBalance(content, resource.id) ?? 0);
       return [resource.id, amount];
     })
   );
@@ -254,7 +263,7 @@ export function getStartingEconomyBalances(content: GameRuntimeData) {
 
 export function getStartingEconomyRates(content: GameRuntimeData) {
   return Object.fromEntries(
-    getEconomyDefinitions(content).map((resource) => [resource.id, numericField(resource, STARTING_RATE_KEYS) ?? getCanonicalStartingEconomyRate(content, resource.id) ?? 0])
+    getEconomyDefinitions(content).map((resource) => [resource.id, getBasePassiveRateFromContract(content, resource.id) ?? numericField(resource, STARTING_RATE_KEYS) ?? getCanonicalStartingEconomyRate(content, resource.id) ?? 0])
   );
 }
 
@@ -278,4 +287,8 @@ export function getEconomyWarnings(content: GameRuntimeData) {
   }
 
   return warnings;
+}
+
+export function getResourceBehaviorContract(content: GameRuntimeData, economyId: string) {
+  return getBehaviorContract(content, economyId);
 }
