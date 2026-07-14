@@ -25,6 +25,8 @@ const initialAuthState: NoverisAuthState = {
   cloudAvailable: false
 };
 
+const AUTH_STARTUP_WATCHDOG_TIMEOUT_MS = 6000;
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function NoverisAuthProvider({ children }: { children: ReactNode }) {
@@ -35,12 +37,62 @@ export function NoverisAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    void service.restoreSession().then((restored) => {
-      if (!cancelled) setState(restored);
-    });
-    const subscription = service.onAuthStateChange((next) => setState(next));
+    let resolved = false;
+    const timeout = window.setTimeout(() => {
+      if (cancelled || resolved) return;
+      resolved = true;
+      setState({
+        status: "error",
+        session: null,
+        user: null,
+        error: "Account startup timed out. Continuing offline.",
+        cloudAvailable: service.isConfigured
+      });
+    }, AUTH_STARTUP_WATCHDOG_TIMEOUT_MS);
+
+    void service.restoreSession()
+      .then((restored) => {
+        if (cancelled) return;
+        resolved = true;
+        window.clearTimeout(timeout);
+        setState(restored);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        resolved = true;
+        window.clearTimeout(timeout);
+        setState({
+          status: "error",
+          session: null,
+          user: null,
+          error: safeSupabaseErrorMessage(error, "Account startup failed. Continuing offline."),
+          cloudAvailable: service.isConfigured
+        });
+      });
+
+    let subscription: { unsubscribe: () => void };
+    try {
+      subscription = service.onAuthStateChange((next) => {
+        resolved = true;
+        window.clearTimeout(timeout);
+        setState(next);
+      });
+    } catch (error) {
+      resolved = true;
+      window.clearTimeout(timeout);
+      subscription = { unsubscribe() {} };
+      setState({
+        status: "error",
+        session: null,
+        user: null,
+        error: safeSupabaseErrorMessage(error, "Account listener failed. Continuing offline."),
+        cloudAvailable: service.isConfigured
+      });
+    }
+
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [service]);

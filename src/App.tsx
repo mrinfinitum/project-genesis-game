@@ -197,17 +197,44 @@ function useRuntimeContent() {
 
   useEffect(() => {
     let cancelled = false;
+    let completed = false;
+
+    function applyFallbackRuntime(reason: string) {
+      if (cancelled || completed) return;
+      completed = true;
+      setState((current) => ({
+        ...current,
+        status: "fallback",
+        isUsingFallback: true,
+        fallbackReason: reason,
+        cacheStatus: current.cacheStatus === "unknown" ? "empty" : current.cacheStatus
+      }));
+    }
+
+    const watchdog = window.setTimeout(() => {
+      applyFallbackRuntime("Runtime startup watchdog timed out. Continuing with bundled fallback content.");
+    }, STARTUP_WATCHDOG_TIMEOUT_MS);
 
     async function load() {
-      const startup = await manager.loadStartup();
-      if (cancelled) return;
-      setState(startup);
+      try {
+        const startup = await withStartupTimeout(manager.loadStartup(), "Runtime startup");
+        if (cancelled || completed) return;
+        setState(startup);
 
-      if (manager.getConfig().configuredMode === "live") {
-        const refreshed = await manager.refreshLiveContent(payloadFromState(startup), startup.activeSource);
-        if (!cancelled) {
-          setState(refreshed.state);
+        if (manager.getConfig().configuredMode === "live") {
+          const refreshed = await withStartupTimeout(manager.refreshLiveContent(payloadFromState(startup), startup.activeSource), "Runtime refresh");
+          if (!cancelled && !completed) {
+            completed = true;
+            window.clearTimeout(watchdog);
+            setState(refreshed.state);
+          }
+          return;
         }
+
+        completed = true;
+        window.clearTimeout(watchdog);
+      } catch (error) {
+        applyFallbackRuntime(startupErrorMessage(error, "Runtime startup failed. Continuing with bundled fallback content."));
       }
     }
 
@@ -215,19 +242,40 @@ function useRuntimeContent() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(watchdog);
     };
   }, [manager]);
 
   async function refreshCanonicalRuntime() {
     setState((current) => ({ ...current, status: "refreshing" }));
-    const refreshed = await manager.refreshLiveContent(payloadFromState(state), state.activeSource);
-    setState(refreshed.state);
+    try {
+      const refreshed = await withStartupTimeout(manager.refreshLiveContent(payloadFromState(state), state.activeSource), "Runtime refresh");
+      setState(refreshed.state);
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        status: "fallback",
+        isUsingFallback: true,
+        fallbackReason: startupErrorMessage(error, "Runtime refresh failed. Continuing with current content."),
+        cacheStatus: current.cacheStatus === "unknown" ? "valid" : current.cacheStatus
+      }));
+    }
   }
 
   async function clearCanonicalRuntimeCache() {
     setState((current) => ({ ...current, status: "refreshing" }));
-    const cleared = await manager.clearCache();
-    setState(cleared);
+    try {
+      const cleared = await withStartupTimeout(manager.clearCache(), "Runtime cache clear");
+      setState(cleared);
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        status: "fallback",
+        isUsingFallback: true,
+        fallbackReason: startupErrorMessage(error, "Runtime cache could not be cleared."),
+        cacheStatus: "unknown"
+      }));
+    }
   }
 
   return { state, refreshCanonicalRuntime, clearCanonicalRuntimeCache };
