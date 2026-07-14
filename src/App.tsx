@@ -25,6 +25,18 @@ import {
   type PlayerRuntimeState
 } from "@/lib/player-runtime";
 import { RESEARCH_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
+import { NoverisAuthProvider, useNoverisAuth } from "@/lib/supabase";
+import { useGameStartup } from "@/lib/startup";
+import {
+  AccountRoute,
+  ForgotPasswordRoute,
+  LoginRoute,
+  NoverisLoadingScreen,
+  ResetPasswordRoute,
+  SaveConflictRoute,
+  SignupRoute,
+  WelcomeRoute
+} from "@/routes/auth/noveris-auth-routes";
 
 const ProductionRoute = lazy(() => import("@/routes/production-route"));
 const ResearchRoute = lazy(() => import("@/routes/research-route"));
@@ -273,21 +285,19 @@ function usePlayerRuntime(data: GameRuntimeData, enabled: boolean) {
 }
 
 function RuntimeRouteShell() {
+  const auth = useNoverisAuth();
   const { state, refreshCanonicalRuntime, clearCanonicalRuntimeCache } = useRuntimeContent();
   const data = useMemo(() => payloadFromState(state), [state]);
-  const { playerRuntime, actions: playerRuntimeActions } = usePlayerRuntime(data, state.status !== "loading");
+  const startupEnabled = auth.state.status === "guest" || auth.state.status === "authenticated" || auth.state.status === "error";
+  const { playerRuntime, actions: playerRuntimeActions } = usePlayerRuntime(data, state.status !== "loading" && startupEnabled);
+  const startup = useGameStartup({ runtimeState: state, authState: auth.state, playerRuntime });
 
-  if (state.status === "loading") {
-    return (
-      <StoryCanvas>
-        <div className="flex min-h-screen items-center justify-center text-center">
-          <div className="rounded-md border border-cyan-200/25 bg-black/30 px-5 py-4 text-cyan-50">
-            <div className="text-xs font-bold uppercase text-cyan-100/60">Project Genesis</div>
-            <div className="mt-1 text-xl font-black text-white">Loading runtime content</div>
-          </div>
-        </div>
-      </StoryCanvas>
-    );
+  if (auth.state.status === "signed_out") {
+    return <Navigate to="/welcome" replace />;
+  }
+
+  if (state.status === "loading" || auth.state.status === "initializing" || !startup.isReady) {
+    return <NoverisLoadingScreen startup={startup} />;
   }
 
   return (
@@ -349,22 +359,31 @@ function DashboardRoute() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<RuntimeRouteShell />}>
-          <Route index element={<DashboardRoute />} />
-          <Route path="production" element={<LazyDataRoute component={ProductionRoute} label="Production" />} />
-          <Route path="research" element={<LazyDataRoute component={ResearchRoute} label="Research" />} />
-          <Route path="resources" element={<LazyDataRoute component={ResourcesRoute} label="Resources" />} />
-          <Route path="civilization" element={<LazyDataRoute component={CivilizationRoute} label="Civilization" />} />
-          <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
-          <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
-          <Route path="discovery" element={<LazyDataRoute component={DiscoveryRoute} label="Discovery" />} />
-          <Route path="art-review" element={<LazyDataRoute component={ArtReviewRoute} label="Art Review" />} />
-          <Route path="parity-review" element={<LazyDataRoute component={ParityReviewRoute} label="Parity Review" />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <NoverisAuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="welcome" element={<WelcomeRoute />} />
+          <Route path="login" element={<LoginRoute />} />
+          <Route path="signup" element={<SignupRoute />} />
+          <Route path="forgot-password" element={<ForgotPasswordRoute />} />
+          <Route path="reset-password" element={<ResetPasswordRoute />} />
+          <Route path="save-conflict" element={<SaveConflictRoute />} />
+          <Route path="account" element={<AccountRoute />} />
+          <Route element={<RuntimeRouteShell />}>
+            <Route index element={<DashboardRoute />} />
+            <Route path="production" element={<LazyDataRoute component={ProductionRoute} label="Production" />} />
+            <Route path="research" element={<LazyDataRoute component={ResearchRoute} label="Research" />} />
+            <Route path="resources" element={<LazyDataRoute component={ResourcesRoute} label="Resources" />} />
+            <Route path="civilization" element={<LazyDataRoute component={CivilizationRoute} label="Civilization" />} />
+            <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
+            <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
+            <Route path="discovery" element={<LazyDataRoute component={DiscoveryRoute} label="Discovery" />} />
+            <Route path="art-review" element={<LazyDataRoute component={ArtReviewRoute} label="Art Review" />} />
+            <Route path="parity-review" element={<LazyDataRoute component={ParityReviewRoute} label="Parity Review" />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </NoverisAuthProvider>
   );
 }
