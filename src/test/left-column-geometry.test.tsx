@@ -354,9 +354,12 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toBe(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS").getAttribute("src"));
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toContain("leaf");
     expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle({
-      left: "190px",
-      width: "355px"
+      left: "92px",
+      width: "345px"
     });
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("left-[10px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("top-[13px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[320px]");
     expect(screen.getByTestId("top-hud-left-utility-1")).toHaveStyle({
       left: "50px",
       top: "8px"
@@ -387,6 +390,7 @@ describe("Roblox left column geometry", () => {
         playerState={{
           source: "player-runtime",
           sourceLabel: "Large Value Test",
+          civilizationName: "The Really Long Civilization Name",
           currentEraId: "survival",
           economyBalances: {
             "ECON-LABOR": 5392.3,
@@ -412,10 +416,13 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveTextContent("5.39K");
     expect(screen.getByTestId("top-hud-economy-value-ECON-RESEARCH")).toHaveTextContent("1.84M");
     expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveTextContent("+1/s");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("h-[50px]");
-    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[50px]");
-    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[30px]");
-    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[15px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("h-[60px]");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR")).toHaveClass("w-[60px]");
+    expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveClass("text-[36px]");
+    expect(screen.getByTestId("top-hud-economy-rate-ECON-LABOR")).toHaveClass("text-[20px]");
+    expect(screen.getByTestId("top-hud-civilization-title").style.fontSize).toBe("22px");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveClass("w-[320px]");
+    expect(screen.getByTestId("top-hud-civilization-title")).toHaveAttribute("title", "The Really Long Civilization Name");
   });
 
   it("opens and closes the Settings modal from the top-right gear with focus restoration", async () => {

@@ -1243,6 +1243,13 @@ const settingsTabs: Array<{ id: SettingsTabId; label: string }> = [
   { id: "about", label: "About" }
 ];
 
+function topHudTitleFontSize(title: string) {
+  if (title.length > 28) return 22;
+  if (title.length > 22) return 25;
+  if (title.length > 16) return 29;
+  return 34;
+}
+
 function SettingsButton({ children, tone = "default", disabled = false, onClick }: { children: ReactNode; tone?: "default" | "danger" | "muted"; disabled?: boolean; onClick?: () => void }) {
   const toneClass = tone === "danger" ? "border-rose-200/35 bg-rose-400/12 text-rose-50" : tone === "muted" ? "border-cyan-200/18 bg-white/[0.035] text-cyan-50/55" : "border-cyan-200/28 bg-cyan-300/10 text-cyan-50";
   return <button disabled={disabled} onClick={onClick} className={`rounded-sm border px-3 py-2 text-left text-[0.72rem] font-black uppercase tracking-wide transition hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-45 ${toneClass}`}>{children}</button>;
@@ -1617,31 +1624,39 @@ function SettingsModal({
 
 function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsClick, settingsButtonRef }: { model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; showDevWarnings?: boolean; onSettingsClick?: () => void; settingsButtonRef?: RefObject<HTMLButtonElement | null> }) {
   const resourceSlots = [
-    { x: 515, w: 230, iconX: 30, valueX: 92, textW: 128 },
-    { x: 755, w: 230, iconX: 24, valueX: 86, textW: 128 },
-    { x: 995, w: 230, iconX: -2, valueX: 60, textW: 128 },
-    { x: 1215, w: 230, iconX: -2, valueX: 60, textW: 128 },
-    { x: 1445, w: 185, iconX: -2, valueX: 58, textW: 112 }
+    { x: 438, w: 270, iconX: 28, valueX: 104, textW: 150 },
+    { x: 725, w: 270, iconX: 30, valueX: 106, textW: 150 },
+    { x: 1013, w: 270, iconX: 22, valueX: 98, textW: 150 },
+    { x: 1290, w: 245, iconX: 18, valueX: 94, textW: 134 },
+    { x: 1548, w: 185, iconX: 4, valueX: 82, textW: 90 }
   ];
   const hudResources = model.hudResources.slice(0, resourceSlots.length);
   const civilizationTitle = model.playerState.civilizationName ?? "Planet Prime";
+  const civilizationTitleFontSize = topHudTitleFontSize(civilizationTitle);
 
   return (
     <header className="relative h-full w-full" data-testid="roblox-top-hud" data-layout-mode="fixed-rojo-coordinates">
       {dashboardImagePath(art.dashboard_top_hud) ? <img src={dashboardImagePath(art.dashboard_top_hud)} alt="" data-testid="roblox-top-hud-background" data-art-key="dashboard_top_hud" className="absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_top_hud} className="absolute inset-0" />}
 
-      <div className="absolute left-[23px] top-[15px] h-[58px] w-[142px]" data-testid="top-hud-left-utility-cluster">
+      <div className="hidden absolute left-[23px] top-[15px] h-[58px] w-[142px]" data-testid="top-hud-left-utility-cluster" aria-hidden="true">
         {[Hexagon, Gauge, CircleHelp].map((Icon, index) => (
-          <button key={index} className="absolute flex h-[42px] w-[42px] items-center justify-center text-cyan-100/82 transition hover:brightness-125" style={{ left: index * 50, top: 8 }} data-testid={`top-hud-left-utility-${index}`}>
+          <button key={index} tabIndex={-1} className="absolute flex h-[42px] w-[42px] items-center justify-center text-cyan-100/82 transition hover:brightness-125" style={{ left: index * 50, top: 8 }} data-testid={`top-hud-left-utility-${index}`}>
             {dashboardImagePath(art.topbar_hex_button) ? <img src={dashboardImagePath(art.topbar_hex_button)} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <span className="absolute inset-0 rounded-full bg-black/48" />}
             <Icon className="relative h-[22px] w-[22px]" />
           </button>
         ))}
       </div>
 
-      <div className="absolute top-0 min-w-0" style={{ left: 190, width: 355, height: "100%" }} data-testid="top-hud-civilization-identity">
-        <div className="absolute left-[12px] top-[22px] w-[320px] truncate text-[2rem] font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]">{civilizationTitle}</div>
-        <div className="absolute left-[12px] top-[61px] w-[320px] truncate text-[1.18rem] font-medium leading-none text-cyan-50/82">Era 1 - {shortEraName(model.currentEra)}</div>
+      <div className="absolute top-0 min-w-0" style={{ left: 92, width: 345, height: "100%" }} data-testid="top-hud-civilization-identity">
+        <div
+          className="absolute left-[10px] top-[13px] w-[320px] truncate font-black uppercase leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.18)]"
+          data-testid="top-hud-civilization-title"
+          style={{ fontSize: civilizationTitleFontSize }}
+          title={civilizationTitle}
+        >
+          {civilizationTitle}
+        </div>
+        <div data-testid="top-hud-civilization-era" className="absolute left-[10px] top-[57px] w-[320px] truncate text-[22px] font-medium leading-none text-cyan-50/84">Era 1 - {shortEraName(model.currentEra)}</div>
       </div>
 
       {showDevWarnings && model.economyWarnings.length ? (
@@ -1656,14 +1671,14 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, onSettingsC
           const icon = resolveTopHudIcon(resource, assets, art);
           return (
           <div key={resource.resourceId} className="absolute top-0 h-full min-w-0" style={{ left: `${(slot.x / 1920) * 100}%`, width: `${(slot.w / 1920) * 100}%` }}>
-            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="h-[50px] w-[50px]" style={{ left: slot.iconX, top: 26 }} />
-            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate text-[30px] font-semibold leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={{ left: slot.valueX, top: 20, width: slot.textW }}>{compactNumber(resource.amount)}</div>
-            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate text-[15px] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 56, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
+            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="h-[60px] w-[60px]" style={{ left: slot.iconX, top: 24 }} />
+            <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate text-[36px] font-semibold leading-none text-white [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={{ left: slot.valueX, top: 18, width: slot.textW }}>{compactNumber(resource.amount)}</div>
+            <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate text-[20px] font-bold leading-none text-emerald-200" style={{ left: slot.valueX, top: 63, width: slot.textW }}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
           </div>
           );
       })}
 
-      <button title="Add resources" className="absolute flex items-center justify-center" style={{ left: 1582, top: 30, width: 46, height: 46 }}>
+      <button title="Add resources" className="absolute flex items-center justify-center" style={{ left: 1668, top: 30, width: 46, height: 46 }}>
         {dashboardImagePath(art.topbar_plus_button) ? <img src={dashboardImagePath(art.topbar_plus_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.topbar_plus_button} className="h-full w-full" />}
       </button>
 
