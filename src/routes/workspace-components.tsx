@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BookOpen, FlaskConical, Lock, Network, Orbit, Rocket, ScanSearch, Sparkles, Wrench, type LucideIcon } from "lucide-react";
 import type { GameRuntimeData, RuntimeContentState } from "@/lib/canonical-runtime";
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
@@ -17,6 +17,7 @@ import {
 import type { DiscoveryCatalogViewModel } from "@/lib/discovery";
 
 const discoveryDevToolsEnabled = import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
+const GalaxySemanticMap = lazy(() => import("@/components/galaxy/GalaxySemanticMap"));
 
 export type WorkspaceRouteProps = {
   data: GameRuntimeData;
@@ -241,8 +242,18 @@ export function EventsWorkspace(props: WorkspaceRouteProps) {
   return <SimpleManagementWorkspace screenId="events" title="Events" eyebrow="Event Workspace" icon={Orbit} description="Event and milestone content is hosted inside the workspace slot while global shell controls remain stable." metrics={[{ label: "Active Event", value: props.playerRuntime.events.activeEventId ?? "None" }, { label: "Revision", value: props.playerRuntime.revision }, { label: "Source", value: props.runtimeState.activeSource }]} playerRuntime={props.playerRuntime} />;
 }
 
-export function GalaxyWorkspace(props: WorkspaceRouteProps) {
-  return <SimpleManagementWorkspace screenId="galaxy" title="Galaxy" eyebrow="Galaxy Workspace" icon={Orbit} description="Galaxy exploration can preserve selected object and camera state without duplicating global HUD elements." metrics={[{ label: "Eras", value: props.data.eras.length }, { label: "Discovery Points", value: props.playerRuntime.civilization.discoveryPoints }, { label: "Automation", value: props.playerRuntime.production.automationEnabled ? "Online" : "Offline" }]} playerRuntime={props.playerRuntime} />;
+export function GalaxyWorkspace(props: WorkspaceRouteProps & { entry?: "galaxy" | "solar-system" }) {
+  return (
+    <div
+      className="h-full w-full overflow-hidden"
+      data-testid="galaxy-workspace"
+      data-workspace-screen-id={props.entry === "solar-system" ? "solar-system" : "galaxy"}
+    >
+      <Suspense fallback={<div className="grid h-full w-full place-items-center bg-slate-950 text-sm font-black uppercase tracking-[0.2em] text-cyan-100/72">Loading universe map</div>}>
+        <GalaxySemanticMap data={props.data} playerRuntime={props.playerRuntime} entry={props.entry ?? "galaxy"} />
+      </Suspense>
+    </div>
+  );
 }
 
 export function DiscoveryJournalWorkspace(props: WorkspaceRouteProps) {
