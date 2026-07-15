@@ -1397,7 +1397,7 @@ function resolveTopHudIcon(resource: DashboardModel["hudResources"][number], ass
   };
 }
 
-function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, className = "", style }: { resolution: TopHudIconResolution; fallback: typeof Hexagon; resourceId: string; className?: string; style?: CSSProperties }) {
+function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, className = "", style, canvasBounds, visibleBounds }: { resolution: TopHudIconResolution; fallback: typeof Hexagon; resourceId: string; className?: string; style?: CSSProperties; canvasBounds?: string; visibleBounds?: string }) {
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(resolution.path) && !failed;
 
@@ -1416,6 +1416,8 @@ function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, classN
         data-fallback-used={resolution.fallbackUsed ? "true" : "false"}
         data-failure-reason={resolution.failureReason}
         data-image-status="loaded"
+        data-canvas-bounds={canvasBounds}
+        data-visible-art-bounds={visibleBounds}
         className={`absolute object-contain ${className}`}
         style={style}
         onError={() => setFailed(true)}
@@ -1437,6 +1439,8 @@ function SafeTopHudIcon({ resolution, fallback: FallbackIcon, resourceId, classN
       data-fallback-used="true"
       data-failure-reason={failed ? "image-load-error" : resolution.failureReason ?? "semantic-fallback"}
       data-image-status="fallback"
+      data-canvas-bounds={canvasBounds}
+      data-visible-art-bounds={visibleBounds}
       className={`absolute flex items-center justify-center rounded-sm border border-cyan-100/18 bg-black/25 text-cyan-100/78 shadow-[inset_0_0_14px_rgba(45,212,255,0.08)] ${className}`}
       style={style}
     >
@@ -1883,9 +1887,26 @@ function CalibrationRect({ rect, label, tone = "cyan" }: { rect: { x: number; y:
   );
 }
 
+function CalibrationLine({ x, y, height, label, tone = "gold" }: { x: number; y: number; height: number; label: string; tone?: "cyan" | "gold" | "green" | "purple" | "rose" }) {
+  const toneClass = {
+    cyan: "border-cyan-200/70 text-cyan-100",
+    gold: "border-amber-200/80 text-amber-100",
+    green: "border-emerald-200/75 text-emerald-100",
+    purple: "border-fuchsia-200/70 text-fuchsia-100",
+    rose: "border-rose-200/75 text-rose-100"
+  }[tone];
+  return (
+    <div className={`pointer-events-none absolute border-l ${toneClass}`} style={{ left: `${x}px`, top: `${y - TOP_HUD_BACKGROUND_ASSET.designBounds.y}px`, height: `${height}px` }}>
+      <span className="absolute left-1 top-0 whitespace-nowrap bg-black/75 px-1 text-[9px] font-black uppercase leading-3">{label}</span>
+    </div>
+  );
+}
+
 function TopHudCalibrationOverlay() {
   const economyEntries = Object.entries(TOP_HUD_LAYOUT.economies);
   const utilityEntries = Object.entries(TOP_HUD_LAYOUT.utilities);
+  const premium = TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"];
+  const addCrystals = TOP_HUD_LAYOUT.premiumActions.addCrystals;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20" data-testid="top-hud-calibration-overlay" aria-hidden="true">
@@ -1896,12 +1917,22 @@ function TopHudCalibrationOverlay() {
       {economyEntries.map(([id, layout]) => (
         <Fragment key={id}>
           <CalibrationRect rect={layout.slot} label={id} tone="cyan" />
-          <CalibrationRect rect={layout.icon} label={`${id} icon`} tone="green" />
+          <CalibrationLine x={layout.dividerReferenceX} y={TOP_HUD_BACKGROUND_ASSET.designBounds.y} height={TOP_HUD_BACKGROUND_ASSET.designBounds.height} label={`${id} divider`} tone="rose" />
+          <CalibrationLine x={layout.valueColumn.x} y={TOP_HUD_BACKGROUND_ASSET.designBounds.y} height={TOP_HUD_BACKGROUND_ASSET.designBounds.height} label={`${id} value anchor`} tone="gold" />
+          <CalibrationRect rect={layout.icon} label={`${id} icon canvas / D→I ${layout.dividerToIconVisualGap}px`} tone="green" />
+          <CalibrationRect rect={layout.icon} label={`${id} visible art / I→V ${layout.iconToValueGap}px`} tone="purple" />
+          <CalibrationRect rect={layout.valueColumn} label={`${id} value column`} tone="gold" />
           <CalibrationRect rect={layout.value} label={`${id} value`} tone="gold" />
           <CalibrationRect rect={layout.rate} label={`${id} rate`} tone="purple" />
         </Fragment>
       ))}
+      <CalibrationRect rect={addCrystals.hitArea} label="Premium Plus hit area" tone="rose" />
+      <CalibrationRect rect={addCrystals.visible} label={`Premium Plus visible / Value→Plus ${addCrystals.visible.x - (premium.valueColumn.x + premium.valueColumn.width)}px`} tone="green" />
+      <CalibrationLine x={TOP_HUD_LAYOUT.utilities.calendar.x} y={TOP_HUD_BACKGROUND_ASSET.designBounds.y} height={TOP_HUD_BACKGROUND_ASSET.designBounds.height} label="Calendar hit boundary" tone="rose" />
       {utilityEntries.map(([id, rect]) => <CalibrationRect key={id} rect={rect} label={`utility ${id}`} tone="rose" />)}
+      <div className="absolute right-[92px] top-[88px] rounded-sm border border-cyan-100/30 bg-black/72 px-2 py-1 text-[9px] font-black uppercase text-cyan-50">
+        Nudge controls: 1px / 5px via TOP_HUD_LAYOUT manifest
+      </div>
     </div>
   );
 }
@@ -1949,15 +1980,25 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, initialCali
           const icon = resolveTopHudIcon(resource, assets, art);
           return (
           <div key={resource.resourceId} className="absolute min-w-0" style={topHudRectStyle(slot.slot)} data-testid={`top-hud-economy-slot-${resource.resourceId}`} data-layout-source="TOP_HUD_LAYOUT" data-economy-id={resource.resourceId}>
-            <SafeTopHudIcon resolution={icon} fallback={Icon} resourceId={resource.resourceId} className="" style={topHudLocalRectStyle(slot.icon, slot.slot)} />
+            <SafeTopHudIcon
+              resolution={icon}
+              fallback={Icon}
+              resourceId={resource.resourceId}
+              className=""
+              style={topHudLocalRectStyle(slot.icon, slot.slot)}
+              canvasBounds={`${slot.iconCanvas.width}x${slot.iconCanvas.height}`}
+              visibleBounds={`${slot.iconVisibleBounds.x},${slot.iconVisibleBounds.y},${slot.iconVisibleBounds.width},${slot.iconVisibleBounds.height}`}
+            />
             <div data-testid={`top-hud-economy-value-${resource.resourceId}`} className="absolute truncate font-semibold text-white [font-variant-numeric:tabular-nums] [text-shadow:0_0_16px_rgba(45,212,255,0.22)]" style={topHudLocalTextStyle(slot.value, slot.slot)}>{compactNumber(resource.amount)}</div>
             <div data-testid={`top-hud-economy-rate-${resource.resourceId}`} className="absolute truncate font-bold text-emerald-200 [font-variant-numeric:tabular-nums]" style={topHudLocalTextStyle(slot.rate, slot.slot)}>{typeof resource.rate === "number" ? `${resource.rate >= 0 ? "+" : ""}${compactNumber(resource.rate)}/s` : resource.label}</div>
           </div>
           );
       })}
 
-      <button title="Add resources" data-testid="top-hud-utility-add" data-layout-source="TOP_HUD_LAYOUT" className="absolute flex items-center justify-center" style={topHudRectStyle(TOP_HUD_LAYOUT.utilities.add)}>
-        {dashboardImagePath(art.topbar_plus_button) ? <img src={dashboardImagePath(art.topbar_plus_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.topbar_plus_button} className="h-full w-full" />}
+      <button title="Add Premium Crystals" aria-label="Add Premium Crystals" data-testid="top-hud-utility-add" data-layout-source="TOP_HUD_LAYOUT" className="absolute" style={topHudRectStyle(TOP_HUD_LAYOUT.premiumActions.addCrystals.hitArea)}>
+        <span className="absolute" style={topHudLocalRectStyle(TOP_HUD_LAYOUT.premiumActions.addCrystals.visible, TOP_HUD_LAYOUT.premiumActions.addCrystals.hitArea)} data-testid="top-hud-utility-add-visible">
+          {dashboardImagePath(art.topbar_plus_button) ? <img src={dashboardImagePath(art.topbar_plus_button)} alt="" className="h-full w-full object-contain" /> : <DashboardMissingArt art={art.topbar_plus_button} className="h-full w-full" />}
+        </span>
       </button>
 
       <div className="absolute inset-0" data-testid="top-hud-right-utility-cluster" data-layout-source="TOP_HUD_LAYOUT">

@@ -5,7 +5,7 @@ import { AutoClickPanel, ClickPowerPanel, GameShell, RobloxNavigation } from "@/
 import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
 import { ROBLOX_DASHBOARD_LAYOUT } from "@/lib/dashboard/dashboard-layout";
-import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectInsideSlot, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
+import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, TOP_HUD_SPACING, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectInsideSlot, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { createNewPlayerRuntimeState, playerRuntimeToDashboardPlayerState } from "@/lib/player-runtime";
 
 async function bundledRuntime() {
@@ -415,6 +415,8 @@ describe("Roblox left column geometry", () => {
     expect(screen.getByTestId("top-hud-economy-icon-ECON-PREMIUM-CRYSTALS").getAttribute("src")).toContain("icon_civilization_points_crystal_96x96.png");
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toBe(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS").getAttribute("src"));
     expect(screen.getByTestId("top-hud-economy-icon-ECON-LABOR").getAttribute("src")).not.toContain("leaf");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveAttribute("data-canvas-bounds", "96x96");
+    expect(screen.getByTestId("top-hud-economy-icon-ECON-CREDITS")).toHaveAttribute("data-visible-art-bounds", "0,0,96,96");
     expect(screen.getByTestId("top-hud-civilization-identity")).toHaveAttribute("data-layout-source", "TOP_HUD_LAYOUT");
     expect(screen.getByTestId("top-hud-civilization-identity")).toHaveStyle(topHudRectStyle(TOP_HUD_LAYOUT.identity));
     const titleRect = topHudLocalTextStyle(TOP_HUD_LAYOUT.identity.title, TOP_HUD_LAYOUT.identity);
@@ -435,11 +437,20 @@ describe("Roblox left column geometry", () => {
       expect(screen.getByTestId(`top-hud-economy-icon-${economyId}`)).toHaveStyle(topHudLocalRectStyle(layout.icon, layout.slot));
       expect(screen.getByTestId(`top-hud-economy-value-${economyId}`)).toHaveStyle(topHudLocalTextStyle(layout.value, layout.slot));
       expect(screen.getByTestId(`top-hud-economy-rate-${economyId}`)).toHaveStyle(topHudLocalTextStyle(layout.rate, layout.slot));
+      expect(layout.value.x).toBe(layout.rate.x);
+      expect(layout.value.x).toBe(layout.valueColumn.x);
+      expect(layout.rate.x).toBe(layout.valueColumn.x);
+      expect(layout.dividerToIconVisualGap).toBeCloseTo(TOP_HUD_SPACING.dividerToIconVisualGap, TOP_HUD_SPACING.tolerancePx);
+      expect(layout.iconToValueGap).toBeCloseTo(TOP_HUD_SPACING.iconToValueGap, TOP_HUD_SPACING.tolerancePx);
+      expect(layout.icon.width).toBe(TOP_HUD_SPACING.iconCanvasSize);
+      expect(layout.icon.height).toBe(TOP_HUD_SPACING.iconCanvasSize);
       expect(topHudRectInsideSlot(layout.icon, layout.slot)).toBe(true);
       expect(topHudRectInsideSlot(layout.value, layout.slot)).toBe(true);
       expect(topHudRectInsideSlot(layout.rate, layout.slot)).toBe(true);
     });
     expect(screen.getByTestId("top-hud-utility-add")).toHaveStyle(topHudRectStyle(TOP_HUD_LAYOUT.utilities.add));
+    expect(screen.getByTestId("top-hud-utility-add")).toHaveAttribute("aria-label", "Add Premium Crystals");
+    expect(screen.getByTestId("top-hud-utility-add-visible")).toHaveStyle(topHudLocalRectStyle(TOP_HUD_LAYOUT.premiumActions.addCrystals.visible, TOP_HUD_LAYOUT.premiumActions.addCrystals.hitArea));
     expect(screen.getByTestId("top-hud-left-utility-1")).toHaveStyle({
       left: "50px",
       top: "8px"
@@ -470,6 +481,68 @@ describe("Roblox left column geometry", () => {
     expect(topHudRectInsideSlot(TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].value, TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].slot)).toBe(true);
     expect(TOP_HUD_LAYOUT.utilities.add.x).toBeGreaterThan(TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].icon.x);
     expect(TOP_HUD_LAYOUT.utilities.add.x).not.toBe(TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"].value.x);
+  });
+
+  it("keeps calibrated top HUD economy spacing independent of slot index and value length", async () => {
+    const data = await bundledRuntime();
+    const source = readFileSync("src/components/game-ui/genesis-ui.tsx", "utf8");
+    const topHudSource = source.slice(source.indexOf("function RobloxTopHud"), source.indexOf("function RobloxNavigation"));
+    const values = ["0", "5", "125", "999", "39.76K", "999.99K", "1.25M", "999.99M"];
+    const premium = TOP_HUD_LAYOUT.economies["ECON-PREMIUM-CRYSTALS"];
+    const plus = TOP_HUD_LAYOUT.premiumActions.addCrystals;
+    const calendar = TOP_HUD_LAYOUT.utilities.calendar;
+
+    for (const economyId of Object.keys(TOP_HUD_LAYOUT.economies) as TopHudEconomyId[]) {
+      const layout = TOP_HUD_LAYOUT.economies[economyId];
+      expect(layout.dividerReferenceX).toBeLessThan(layout.icon.x);
+      expect(layout.contentStartX).toBe(layout.dividerReferenceX + TOP_HUD_SPACING.dividerToIconVisualGap);
+      expect(layout.iconToValueGap).toBe(TOP_HUD_SPACING.iconToValueGap);
+      expect(layout.value.x).toBe(layout.rate.x);
+      expect(layout.value.fontSize).toBe(TOP_HUD_SPACING.valueFontSize);
+      expect(layout.rate.fontSize).toBe(TOP_HUD_SPACING.rateFontSize);
+    }
+
+    for (const amount of values) {
+      const numericAmount = amount.endsWith("K") ? 39760 : amount.endsWith("M") ? 1250000 : Number.parseFloat(amount);
+      cleanup();
+      render(
+        <GameShell
+          data={data}
+          playerState={{
+            source: "player-runtime",
+            sourceLabel: `Top HUD ${amount}`,
+            civilizationName: "Planet Prime",
+            currentEraId: "survival",
+            economyBalances: {
+              "ECON-LABOR": numericAmount,
+              "ECON-CREDITS": numericAmount,
+              "ECON-POPULATION": numericAmount,
+              "ECON-RESEARCH": numericAmount,
+              "ECON-PREMIUM-CRYSTALS": numericAmount
+            },
+            economyRates: {
+              "ECON-LABOR": 1,
+              "ECON-CREDITS": 0,
+              "ECON-POPULATION": 0,
+              "ECON-RESEARCH": 0,
+              "ECON-PREMIUM-CRYSTALS": 0
+            },
+            resourceInventory: {},
+            resourceRates: {},
+            upgradeLevels: {}
+          }}
+        />
+      );
+      expect(screen.getByTestId("top-hud-economy-value-ECON-LABOR")).toHaveStyle(topHudLocalTextStyle(TOP_HUD_LAYOUT.economies["ECON-LABOR"].value, TOP_HUD_LAYOUT.economies["ECON-LABOR"].slot));
+      expect(screen.getByTestId("top-hud-economy-value-ECON-PREMIUM-CRYSTALS")).toHaveStyle(topHudLocalTextStyle(premium.value, premium.slot));
+    }
+
+    expect(plus.visible.x - (premium.valueColumn.x + premium.valueColumn.width)).toBe(TOP_HUD_SPACING.premiumValueToAddButtonGap);
+    expect(plus.hitArea.x + plus.hitArea.width).toBeLessThanOrEqual(calendar.x);
+    expect(plus.visible.x).toBeGreaterThan(premium.rate.x);
+    expect(topHudSource).not.toContain("space-between");
+    expect(topHudSource).not.toContain("justify-between");
+    expect(topHudSource).not.toMatch(/index \\* 2[0-9]/);
   });
 
   it("keeps top HUD calibration overlay behind development controls", async () => {

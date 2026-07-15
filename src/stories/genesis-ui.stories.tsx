@@ -1429,6 +1429,56 @@ export const DashboardTopHudLargeValues1920: Story = {
   )
 };
 
+export const DashboardTopHudAllZeroValues1920: Story = {
+  render: () => (
+    <DashboardViewportStory
+      width={1920}
+      height={1080}
+      playerState={topHudStoryPlayerState({
+        economyBalances: {
+          "ECON-LABOR": 0,
+          "ECON-CREDITS": 0,
+          "ECON-POPULATION": 0,
+          "ECON-RESEARCH": 0,
+          "ECON-PREMIUM-CRYSTALS": 0
+        },
+        economyRates: {
+          "ECON-LABOR": 0,
+          "ECON-CREDITS": 0,
+          "ECON-POPULATION": 0,
+          "ECON-RESEARCH": 0,
+          "ECON-PREMIUM-CRYSTALS": 0
+        }
+      })}
+    />
+  )
+};
+
+export const DashboardTopHudMixedValues1920: Story = {
+  render: () => (
+    <DashboardViewportStory
+      width={1920}
+      height={1080}
+      playerState={topHudStoryPlayerState({
+        economyBalances: {
+          "ECON-LABOR": 39_760,
+          "ECON-CREDITS": 999,
+          "ECON-POPULATION": 5,
+          "ECON-RESEARCH": 1_250_000,
+          "ECON-PREMIUM-CRYSTALS": 0
+        },
+        economyRates: {
+          "ECON-LABOR": 1,
+          "ECON-CREDITS": 0,
+          "ECON-POPULATION": 512,
+          "ECON-RESEARCH": 73,
+          "ECON-PREMIUM-CRYSTALS": 0
+        }
+      })}
+    />
+  )
+};
+
 export const DashboardTopHudMaximumCompactValues1920: Story = {
   render: () => (
     <DashboardViewportStory
@@ -1454,11 +1504,46 @@ export const DashboardTopHudMaximumCompactValues1920: Story = {
   )
 };
 
+export const DashboardTopHudPremiumPurchaseEmphasis1920: Story = {
+  render: () => (
+    <DashboardViewportStory
+      width={1920}
+      height={1080}
+      playerState={topHudStoryPlayerState({
+        economyBalances: {
+          "ECON-LABOR": 125,
+          "ECON-CREDITS": 0,
+          "ECON-POPULATION": 5,
+          "ECON-RESEARCH": 0,
+          "ECON-PREMIUM-CRYSTALS": 3250
+        }
+      })}
+      calibration
+    />
+  )
+};
+
 export const DashboardTopHudLongCivilizationName1920: Story = {
   render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState({ civilizationName: "The Really Long Civilization Name" })} />
 };
 
 export const DashboardTopHudCalibrationGuides1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration />
+};
+
+export const DashboardTopHudIconCanvasGuides1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration />
+};
+
+export const DashboardTopHudIconVisibleBoundsGuides1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration />
+};
+
+export const DashboardTopHudGapMeasurementGuides1920: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration />
+};
+
+export const DashboardTopHudReferenceCrop1920: Story = {
   render: () => <DashboardViewportStory width={1920} height={1080} playerState={topHudStoryPlayerState()} calibration />
 };
 
