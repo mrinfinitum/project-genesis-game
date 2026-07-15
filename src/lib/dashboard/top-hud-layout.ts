@@ -112,18 +112,18 @@ export const TOP_HUD_LAYOUT = {
   economies: {
     "ECON-LABOR": economyLayout({ slot: { x: 500, y: 12, width: 260, height: 108 }, dividerReferenceX: 510, iconX: 534, valueX: 606, valueWidth: 144 }),
     "ECON-CREDITS": economyLayout({ slot: { x: 745, y: 12, width: 270, height: 108 }, dividerReferenceX: 758, iconX: 782, valueX: 854, valueWidth: 146 }),
-    "ECON-POPULATION": economyLayout({ slot: { x: 950, y: 12, width: 290, height: 108 }, dividerReferenceX: 934, iconX: 958, valueX: 1030, valueWidth: 132 }),
-    "ECON-RESEARCH": economyLayout({ slot: { x: 1170, y: 12, width: 285, height: 108 }, dividerReferenceX: 1153, iconX: 1177, valueX: 1249, valueWidth: 124 }),
-    "ECON-PREMIUM-CRYSTALS": economyLayout({ slot: { x: 1380, y: 12, width: 300, height: 108 }, dividerReferenceX: 1383, iconX: 1407, valueX: 1479, valueWidth: 74 })
+    "ECON-POPULATION": economyLayout({ slot: { x: 990, y: 12, width: 250, height: 108 }, dividerReferenceX: 974, iconX: 998, valueX: 1070, valueWidth: 132 }),
+    "ECON-RESEARCH": economyLayout({ slot: { x: 1215, y: 12, width: 240, height: 108 }, dividerReferenceX: 1193, iconX: 1217, valueX: 1289, valueWidth: 124 }),
+    "ECON-PREMIUM-CRYSTALS": economyLayout({ slot: { x: 1445, y: 12, width: 236, height: 108 }, dividerReferenceX: 1423, iconX: 1447, valueX: 1519, valueWidth: 74 })
   },
   premiumActions: {
     addCrystals: {
-      visible: { x: 1563, y: 43, width: 44, height: 44 },
-      hitArea: { x: 1555, y: 35, width: 60, height: 60 }
+      visible: { x: 1603, y: 43, width: 44, height: 44 },
+      hitArea: { x: 1595, y: 35, width: 60, height: 60 }
     }
   },
   utilities: {
-    add: { x: 1555, y: 35, width: 60, height: 60 },
+    add: { x: 1595, y: 35, width: 60, height: 60 },
     calendar: { x: 1700, y: 24, width: 80, height: 80 },
     trophy: { x: 1770, y: 24, width: 80, height: 80 },
     settings: { x: 1840, y: 24, width: 80, height: 80 }
