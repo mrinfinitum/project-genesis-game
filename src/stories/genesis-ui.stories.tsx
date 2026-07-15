@@ -1159,6 +1159,32 @@ function UpgradeTabsDashboardStory({ categoryId, dataTransform, guides = false }
   return <GameShell data={storyData} activeScreen="dashboard" activeEraId="survival" activeCategoryId={categoryId} embedded frameScale={0.58} initialUpgradeTabGuidesOpen={guides} />;
 }
 
+function categoryArtDataUri(label: string, color: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#041323"/><stop offset="1" stop-color="${color}"/></linearGradient></defs><rect width="920" height="420" fill="url(#g)"/><path d="M18 28h220M268 28h210M520 28h160M728 28h160M32 90h856M32 170h856M32 250h856M32 330h856" stroke="#67e8f9" stroke-opacity=".35" stroke-width="2"/><text x="460" y="226" text-anchor="middle" fill="#cffafe" font-size="54" font-family="Arial" font-weight="900">${label}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function withPublishedCategoryBackground(categoryId: "workforce" | "industry" | "science" | "technology", color: string) {
+  return (data: ReturnType<typeof useGenesisStoryContent>["data"]) => ({
+    ...data,
+    assets: [
+      ...data.assets,
+      {
+        id: `storybook-${categoryId}-upgrade-background`,
+        name: `${categoryId} upgrade background`,
+        type: "Image",
+        category: "Dashboard",
+        artKey: `dashboard_upgrades_${categoryId}_background`,
+        width: 920,
+        height: 420,
+        aspectRatio: 920 / 420,
+        status: "storybook",
+        platformMappings: { web: { path: categoryArtDataUri(categoryId.toUpperCase(), color) } }
+      }
+    ]
+  });
+}
+
 export const UpgradeTabsWorkforceSelected: Story = {
   render: () => <UpgradeTabsDashboardStory categoryId="workforce" />
 };
@@ -1198,6 +1224,43 @@ export const UpgradeTabsAllUnselected: Story = {
 
 export const UpgradeTabsLabelGuides: Story = {
   render: () => <UpgradeTabsDashboardStory categoryId="workforce" guides />
+};
+
+export const UpgradeCategoryWorkforceArt: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="workforce" dataTransform={withPublishedCategoryBackground("workforce", "#064e3b")} />
+};
+
+export const UpgradeCategoryIndustryArt: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="industry" dataTransform={withPublishedCategoryBackground("industry", "#78350f")} />
+};
+
+export const UpgradeCategoryScienceArt: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="science" dataTransform={withPublishedCategoryBackground("science", "#1d4ed8")} />
+};
+
+export const UpgradeCategoryTechnologyArt: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="technology" dataTransform={withPublishedCategoryBackground("technology", "#581c87")} />
+};
+
+export const UpgradeCategoryMissingIndustryAssetFallback: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="industry" />
+};
+
+export const UpgradeCategoryCrossfade: Story = {
+  render: () => <UpgradeTabsDashboardStory categoryId="science" dataTransform={withPublishedCategoryBackground("science", "#075985")} />
+};
+
+export const UpgradeCategoryReducedMotionSwitch: Story = {
+  render: () => (
+    <>
+      <style>{".genesis-dashboard-frame *{transition-duration:0ms!important;animation-duration:0ms!important}"}</style>
+      <UpgradeTabsDashboardStory categoryId="technology" dataTransform={withPublishedCategoryBackground("technology", "#312e81")} />
+    </>
+  )
+};
+
+export const UpgradeCategory1920Crop: Story = {
+  render: () => <DashboardViewportStory width={1920} height={1080} activeCategoryId="workforce" />
 };
 
 export const UpgradeTabsEmptyCategory: Story = {
@@ -1255,7 +1318,7 @@ function topHudStoryPlayerState(overrides: Partial<DashboardPlayerState> = {}): 
   };
 }
 
-function DashboardViewportStory({ width, height, playerState, missingIcon = false, calibration = false, referenceOverlay = false }: { width: number; height: number; playerState?: DashboardPlayerState; missingIcon?: boolean; calibration?: boolean; referenceOverlay?: boolean }) {
+function DashboardViewportStory({ width, height, playerState, missingIcon = false, calibration = false, referenceOverlay = false, activeCategoryId = "workforce" }: { width: number; height: number; playerState?: DashboardPlayerState; missingIcon?: boolean; calibration?: boolean; referenceOverlay?: boolean; activeCategoryId?: string }) {
   const { data } = useGenesisStoryContent();
   const storyData = missingIcon
     ? {
@@ -1271,7 +1334,7 @@ function DashboardViewportStory({ width, height, playerState, missingIcon = fals
           {width} x {height} · scale {scale.toFixed(3)}
         </div>
         <div className="relative" style={{ width: 1920 * scale, height: 1080 * scale }}>
-          <GameShell data={storyData} playerState={playerState} activeScreen="dashboard" activeEraId="survival" activeCategoryId="workforce" frameScale={scale} embedded initialTopHudCalibrationOpen={calibration} />
+          <GameShell data={storyData} playerState={playerState} activeScreen="dashboard" activeEraId="survival" activeCategoryId={activeCategoryId} frameScale={scale} embedded initialTopHudCalibrationOpen={calibration} />
           {referenceOverlay ? <img src="/design-reference/roblox/dashboard/dashboard-main-1920.png" alt="" className="pointer-events-none absolute inset-0 opacity-50 mix-blend-screen" style={{ width: 1920 * scale, height: 1080 * scale }} /> : null}
         </div>
       </div>

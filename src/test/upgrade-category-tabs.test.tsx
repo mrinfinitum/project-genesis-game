@@ -1,9 +1,11 @@
+import { readFileSync } from "node:fs";
 import userEvent from "@testing-library/user-event";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GameShell } from "@/components/game-ui/genesis-ui";
-import { getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
+import { createDashboardArtMap, getBundledStudioRuntimeSnapshot, type GameRuntimeData } from "@/lib/canonical-runtime";
 import { createDashboardModel } from "@/lib/dashboard/dashboard-model";
+import { resolveUpgradeCategoryView, UPGRADE_CATEGORY_ART_KEYS, UPGRADE_CATEGORY_BACKGROUND_SPEC } from "@/lib/dashboard/upgrade-category-art";
 import { resolveSelectedUpgradeCategory, resolveUpgradeCategories, resolveUpgradesForCategory } from "@/lib/dashboard/upgrade-categories";
 import { UPGRADE_TAB_ASSET, UPGRADE_TAB_LAYOUT, UPGRADE_TAB_TYPOGRAPHY, type UpgradeTabLayoutKey } from "@/lib/dashboard/upgrade-tabs-layout";
 
@@ -59,9 +61,60 @@ describe("Roblox upgrade category tabs", () => {
 
       expect(tab).toHaveAttribute("aria-selected", "true");
       expect(screen.getByTestId("dashboard-upgrade-tabpanel")).toHaveAttribute("data-upgrade-category-id", categoryId);
+      expect(screen.getByTestId("dashboard-upgrade-tabpanel")).toHaveAttribute("data-background-art-key", UPGRADE_CATEGORY_ART_KEYS[categoryId].background);
+      expect(screen.getByTestId("upgrade-category-background")).toHaveAttribute("data-category-id", categoryId);
+      expect(screen.getByTestId("upgrade-category-heading")).toHaveTextContent(label);
       expect(categoryIdsFromRows().every((id) => id === categoryId)).toBe(true);
       expect(screen.getByText(expectedRow)).toBeInTheDocument();
     }
+  });
+
+  it("resolves category rows and artwork from one selected category view", async () => {
+    const runtime = await bundledRuntime();
+    const art = createDashboardArtMap(runtime.assets);
+    const science = resolveUpgradeCategoryView("science", runtime, art);
+
+    expect(science.categoryId).toBe("science");
+    expect(science.displayName).toBe("Science");
+    expect(science.heading).toBe("Science Age");
+    expect(science.upgrades.length).toBeGreaterThan(0);
+    expect(science.upgrades.every((upgrade) => upgrade.categoryId === science.categoryId)).toBe(true);
+    expect(science.backgroundArtKey).toBe("dashboard_upgrades_science_background");
+    expect(science.selectedTabArtKey).toBe("dashboard_upgrades_science_tab_selected");
+    expect(science.emptyStateArtKey).toBe("dashboard_upgrades_science_empty");
+    expect(science.assetStatus.background).toBe("fallback");
+    expect(science.assetStatus.resolvedBackgroundArtKey).toBe("dashboard_upgrade_background");
+    expect(science.assetStatus.resolvedUrl).toBe("/roblox-assets/UI/folder-tabs-base-920.png");
+    expect(science.assetStatus.warning).toContain("dashboard_upgrades_science_background");
+  });
+
+  it("uses category-specific web art when Studio publishes an approved mapping", async () => {
+    const runtime = await bundledRuntime();
+    const runtimeWithScienceArt: GameRuntimeData = {
+      ...runtime,
+      assets: [
+        ...runtime.assets,
+        {
+          id: "asset-dashboard-upgrades-science-background",
+          name: "Science Upgrade Background",
+          type: "Image",
+          category: "Dashboard",
+          artKey: "dashboard_upgrades_science_background",
+          platformMappings: { web: { path: "/studio/dashboard/upgrade_panel_science_920x420.webp" } }
+        }
+      ]
+    };
+    const science = resolveUpgradeCategoryView("science", runtimeWithScienceArt, createDashboardArtMap(runtimeWithScienceArt.assets));
+
+    expect(science.assetStatus.background).toBe("ready");
+    expect(science.assetStatus.resolvedBackgroundArtKey).toBe("dashboard_upgrades_science_background");
+    expect(science.assetStatus.resolvedUrl).toBe("/studio/dashboard/upgrade_panel_science_920x420.webp");
+    expect(science.assetStatus.warning).toBeUndefined();
+
+    render(<GameShell data={runtimeWithScienceArt} activeEraId="survival" activeCategoryId="science" />);
+    expect(screen.getByTestId("upgrade-category-background")).toHaveAttribute("src", "/studio/dashboard/upgrade_panel_science_920x420.webp");
+    expect(screen.getByTestId("dashboard-upgrade-tabpanel")).toHaveAttribute("data-upgrade-category-id", "science");
+    expect(categoryIdsFromRows().every((id) => id === "science")).toBe(true);
   });
 
   it("supports arrow, Home, and End keyboard category changes", async () => {
@@ -87,7 +140,21 @@ describe("Roblox upgrade category tabs", () => {
 
     expect(screen.getByTestId("upgrade-category-tablist")).toHaveClass("pointer-events-none");
     expect(screen.getByTestId("upgrade-tab-industry")).toHaveClass("pointer-events-auto");
+    expect(screen.getByTestId("upgrade-category-background")).toHaveClass("pointer-events-none");
     expect(container.querySelector('[alt=""].pointer-events-none')).not.toBeNull();
+  });
+
+  it("documents the canonical category background bounds and keeps raw paths out of JSX", () => {
+    const componentSource = readFileSync("src/components/game-ui/genesis-ui.tsx", "utf8");
+    const artResolverSource = readFileSync("src/lib/dashboard/upgrade-category-art.ts", "utf8");
+
+    expect(UPGRADE_CATEGORY_BACKGROUND_SPEC.canonicalWidth).toBe(920);
+    expect(UPGRADE_CATEGORY_BACKGROUND_SPEC.canonicalHeight).toBe(420);
+    expect(UPGRADE_CATEGORY_BACKGROUND_SPEC.renderedBounds).toEqual({ x: 550, y: 650, width: 910, height: 420 });
+    expect(UPGRADE_CATEGORY_BACKGROUND_SPEC.cropMode).toBe("object-fill");
+    expect(componentSource).not.toContain("/roblox-assets/");
+    expect(artResolverSource).not.toMatch(/visibleCategories\[[^\]]+\]|categories\[[^\]]+\]/);
+    expect(artResolverSource).toContain("UPGRADE_CATEGORY_ART_KEYS[artId]");
   });
 
   it("uses the fixed Roblox tab label geometry without selected-state shifts", async () => {

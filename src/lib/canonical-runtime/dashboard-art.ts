@@ -513,6 +513,102 @@ export const DASHBOARD_ART_REGISTRY = {
     localPath: "/roblox-assets/UI/folder-tabs-base-920.png",
     sourceStatus: "mapped"
   },
+  dashboard_upgrades_workforce_background: {
+    key: "dashboard_upgrades_workforce_background",
+    label: "Workforce upgrade panel background",
+    viteUsage: "Upgrade panel category background",
+    artKey: "dashboard_upgrades_workforce_background",
+    sourceStatus: "source-missing",
+    notes: "Reserved semantic category background. Uses dashboard_upgrade_background until approved category-specific art ships."
+  },
+  dashboard_upgrades_industry_background: {
+    key: "dashboard_upgrades_industry_background",
+    label: "Industry upgrade panel background",
+    viteUsage: "Upgrade panel category background",
+    artKey: "dashboard_upgrades_industry_background",
+    sourceStatus: "source-missing",
+    notes: "Reserved semantic category background. Uses dashboard_upgrade_background until approved category-specific art ships."
+  },
+  dashboard_upgrades_science_background: {
+    key: "dashboard_upgrades_science_background",
+    label: "Science upgrade panel background",
+    viteUsage: "Upgrade panel category background",
+    artKey: "dashboard_upgrades_science_background",
+    sourceStatus: "source-missing",
+    notes: "Reserved semantic category background. Uses dashboard_upgrade_background until approved category-specific art ships."
+  },
+  dashboard_upgrades_technology_background: {
+    key: "dashboard_upgrades_technology_background",
+    label: "Technology upgrade panel background",
+    viteUsage: "Upgrade panel category background",
+    artKey: "dashboard_upgrades_technology_background",
+    sourceStatus: "source-missing",
+    notes: "Reserved semantic category background. Uses dashboard_upgrade_background until approved category-specific art ships."
+  },
+  dashboard_upgrades_workforce_tab_selected: {
+    key: "dashboard_upgrades_workforce_tab_selected",
+    label: "Workforce selected upgrade tab",
+    viteUsage: "Upgrade panel selected category tab",
+    artKey: "dashboard_upgrades_workforce_tab_selected",
+    sourceStatus: "source-missing",
+    notes: "Reserved selected-tab overlay. Current Roblox panel art bakes all tab structure into the shared background."
+  },
+  dashboard_upgrades_industry_tab_selected: {
+    key: "dashboard_upgrades_industry_tab_selected",
+    label: "Industry selected upgrade tab",
+    viteUsage: "Upgrade panel selected category tab",
+    artKey: "dashboard_upgrades_industry_tab_selected",
+    sourceStatus: "source-missing",
+    notes: "Reserved selected-tab overlay. Current Roblox panel art bakes all tab structure into the shared background."
+  },
+  dashboard_upgrades_science_tab_selected: {
+    key: "dashboard_upgrades_science_tab_selected",
+    label: "Science selected upgrade tab",
+    viteUsage: "Upgrade panel selected category tab",
+    artKey: "dashboard_upgrades_science_tab_selected",
+    sourceStatus: "source-missing",
+    notes: "Reserved selected-tab overlay. Current Roblox panel art bakes all tab structure into the shared background."
+  },
+  dashboard_upgrades_technology_tab_selected: {
+    key: "dashboard_upgrades_technology_tab_selected",
+    label: "Technology selected upgrade tab",
+    viteUsage: "Upgrade panel selected category tab",
+    artKey: "dashboard_upgrades_technology_tab_selected",
+    sourceStatus: "source-missing",
+    notes: "Reserved selected-tab overlay. Current Roblox panel art bakes all tab structure into the shared background."
+  },
+  dashboard_upgrades_workforce_empty: {
+    key: "dashboard_upgrades_workforce_empty",
+    label: "Workforce upgrade empty state",
+    viteUsage: "Upgrade panel category empty state",
+    artKey: "dashboard_upgrades_workforce_empty",
+    sourceStatus: "source-missing",
+    notes: "Reserved category empty-state art."
+  },
+  dashboard_upgrades_industry_empty: {
+    key: "dashboard_upgrades_industry_empty",
+    label: "Industry upgrade empty state",
+    viteUsage: "Upgrade panel category empty state",
+    artKey: "dashboard_upgrades_industry_empty",
+    sourceStatus: "source-missing",
+    notes: "Reserved category empty-state art."
+  },
+  dashboard_upgrades_science_empty: {
+    key: "dashboard_upgrades_science_empty",
+    label: "Science upgrade empty state",
+    viteUsage: "Upgrade panel category empty state",
+    artKey: "dashboard_upgrades_science_empty",
+    sourceStatus: "source-missing",
+    notes: "Reserved category empty-state art."
+  },
+  dashboard_upgrades_technology_empty: {
+    key: "dashboard_upgrades_technology_empty",
+    label: "Technology upgrade empty state",
+    viteUsage: "Upgrade panel category empty state",
+    artKey: "dashboard_upgrades_technology_empty",
+    sourceStatus: "source-missing",
+    notes: "Reserved category empty-state art."
+  },
   upgrade_button: {
     key: "upgrade_button",
     label: "Upgrade purchase button",

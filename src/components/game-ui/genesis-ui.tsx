@@ -42,6 +42,7 @@ import { verifyResourceEconomyContracts } from "@/lib/economy/contracts";
 import { resolveLaborRateBreakdown, resolveResearchRateBreakdown } from "@/lib/economy/rate-calculator";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
+import { resolveUpgradeCategoryView, UPGRADE_CATEGORY_ART_KEYS, UPGRADE_CATEGORY_BACKGROUND_SPEC, type UpgradeCategoryView } from "@/lib/dashboard/upgrade-category-art";
 import { UPGRADE_TAB_LAYOUT, UPGRADE_TAB_TYPOGRAPHY, type UpgradeTabLayoutKey } from "@/lib/dashboard/upgrade-tabs-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
 import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplayPreferences, type GameDisplayMode, type GameDisplayPreferences, type GameViewportScaleResult } from "@/lib/dashboard/viewport-scaling";
@@ -731,6 +732,29 @@ const menuIconKeys: DashboardArtKey[] = [
 
 function dashboardImagePath(art: DashboardArtResolution) {
   return art.path;
+}
+
+const preloadedUpgradeCategoryArtUrls = new Set<string>();
+
+function preloadImageUrl(path: string, onComplete?: (status: "loaded" | "error") => void) {
+  if (preloadedUpgradeCategoryArtUrls.has(path)) {
+    onComplete?.("loaded");
+    return;
+  }
+  if (typeof Image === "undefined") {
+    preloadedUpgradeCategoryArtUrls.add(path);
+    onComplete?.("loaded");
+    return;
+  }
+
+  const image = new Image();
+  image.decoding = "async";
+  image.onload = () => {
+    preloadedUpgradeCategoryArtUrls.add(path);
+    onComplete?.("loaded");
+  };
+  image.onerror = () => onComplete?.("error");
+  image.src = path;
 }
 
 function dashboardArtByArtKey(art: DashboardArtMap, artKey: string | undefined, fallbackKey: DashboardArtKey) {
@@ -2490,10 +2514,69 @@ function RobloxHero({ data, model, art: dashboardArt }: { data: GameRuntimeData;
   );
 }
 
-function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, onSelectCategory, showLabelGuides = false }: { categories: UpgradeCategory[]; activeCategoryId: string; model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; onSelectCategory: (categoryId: string) => void; showLabelGuides?: boolean }) {
+function useUpgradeCategoryBackground(categoryView: UpgradeCategoryView) {
+  const reducedMotion = usePrefersReducedMotion();
+  const [visibleArt, setVisibleArt] = useState(categoryView.backgroundArt);
+  const [incomingArt, setIncomingArt] = useState<DashboardArtResolution | null>(null);
+  const [loadedState, setLoadedState] = useState<{ path: string; status: "loaded" | "error" } | null>(null);
+  const nextPath = dashboardImagePath(categoryView.backgroundArt);
+  const visiblePath = dashboardImagePath(visibleArt);
+
+  useEffect(() => {
+    if (!nextPath || nextPath === visiblePath) return;
+
+    let active = true;
+    const revealLoadedArt = () => {
+      if (!active) return;
+      setIncomingArt(categoryView.backgroundArt);
+      window.setTimeout(() => {
+        if (!active) return;
+        setVisibleArt(categoryView.backgroundArt);
+        setIncomingArt(null);
+      }, reducedMotion ? 0 : 150);
+    };
+
+    if (preloadedUpgradeCategoryArtUrls.has(nextPath)) {
+      window.setTimeout(revealLoadedArt, 0);
+      return () => {
+        active = false;
+      };
+    }
+
+    preloadImageUrl(nextPath, (status) => {
+      if (!active) return;
+      setLoadedState({ path: nextPath, status });
+      if (status === "loaded") revealLoadedArt();
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [categoryView.backgroundArt, nextPath, reducedMotion, visiblePath]);
+
+  const preloadStatus = !nextPath ? "missing" : preloadedUpgradeCategoryArtUrls.has(nextPath) ? "cached" : loadedState?.path === nextPath ? loadedState.status : "loading";
+
+  return { visibleArt, incomingArt, preloadStatus, reducedMotion };
+}
+
+function RobloxUpgradePanel({ categories, categoryView, model, assets, art, onSelectCategory, showLabelGuides = false }: { categories: UpgradeCategory[]; categoryView: UpgradeCategoryView; model: DashboardModel; assets: AssetDefinition[]; art: DashboardArtMap; onSelectCategory: (categoryId: string) => void; showLabelGuides?: boolean }) {
   const tabPanelId = "dashboard-upgrade-tabpanel";
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const visibleCategories = categories.slice(0, 4);
+  const { visibleArt, incomingArt, preloadStatus, reducedMotion } = useUpgradeCategoryBackground(categoryView);
+  const [showArtBounds, setShowArtBounds] = useState(false);
+
+  useEffect(() => {
+    const currentPath = dashboardImagePath(categoryView.backgroundArt);
+    if (currentPath) preloadImageUrl(currentPath);
+    const timeout = window.setTimeout(() => {
+      for (const keys of Object.values(UPGRADE_CATEGORY_ART_KEYS)) {
+        const path = dashboardImagePath(art[keys.background]);
+        if (path) preloadImageUrl(path);
+      }
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [art, categoryView.backgroundArt]);
 
   const selectCategoryAtIndex = (index: number) => {
     const category = visibleCategories[index];
@@ -2504,10 +2587,31 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, 
 
   return (
     <section className="relative h-full w-full overflow-hidden">
-      {dashboardImagePath(art.dashboard_upgrade_background) ? <img src={dashboardImagePath(art.dashboard_upgrade_background)} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-fill" /> : <DashboardMissingArt art={art.dashboard_upgrade_background} className="pointer-events-none absolute inset-0" />}
+      {dashboardImagePath(visibleArt) ? (
+        <img
+          src={dashboardImagePath(visibleArt)}
+          alt=""
+          data-testid="upgrade-category-background"
+          data-category-id={categoryView.categoryId}
+          data-target-art-key={categoryView.backgroundArtKey}
+          data-resolved-art-key={categoryView.assetStatus.resolvedBackgroundArtKey}
+          data-asset-status={categoryView.assetStatus.background}
+          data-native-size={`${UPGRADE_CATEGORY_BACKGROUND_SPEC.canonicalWidth}x${UPGRADE_CATEGORY_BACKGROUND_SPEC.canonicalHeight}`}
+          data-render-mode={UPGRADE_CATEGORY_BACKGROUND_SPEC.cropMode}
+          className="pointer-events-none absolute inset-0 h-full w-full object-fill"
+        />
+      ) : (
+        <DashboardMissingArt art={categoryView.backgroundArt} className="pointer-events-none absolute inset-0" />
+      )}
+      {incomingArt && dashboardImagePath(incomingArt) ? (
+        <>
+          {reducedMotion ? null : <style>{"@keyframes upgrade-category-art-fade{from{opacity:0}to{opacity:1}}"}</style>}
+          <img src={dashboardImagePath(incomingArt)} alt="" data-testid="upgrade-category-background-incoming" data-category-id={categoryView.categoryId} data-target-art-key={categoryView.backgroundArtKey} className={`pointer-events-none absolute inset-0 h-full w-full object-fill ${reducedMotion ? "" : "[animation:upgrade-category-art-fade_150ms_ease-out]"}`} />
+        </>
+      ) : null}
       <div className="pointer-events-none absolute inset-0 z-10" role="tablist" aria-label="Upgrade categories" data-testid="upgrade-category-tablist">
       {visibleCategories.map((category, index) => {
-          const active = category.id === activeCategoryId;
+          const active = category.id === categoryView.categoryId;
           const layout = UPGRADE_TAB_LAYOUT[category.id as UpgradeTabLayoutKey]?.panel;
           const hitArea = layout?.hitArea ?? { left: index * 25, top: 0, width: 25, height: 16 };
           const label = layout?.label ?? { left: index * 25, top: 1.76, width: 21.5, height: 5.76 };
@@ -2577,9 +2681,9 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, 
           })
         : null}
       </div>
-      <div className="absolute left-[3.4%] top-[16.8%] h-[5%] w-[33%] text-[13px] font-black uppercase text-cyan-200/86">{shortEraName(model.currentEra)} Age</div>
+      <div className="absolute left-[3.4%] top-[16.8%] h-[5%] w-[33%] text-[13px] font-black uppercase text-cyan-200/86" data-testid="upgrade-category-heading">{categoryView.heading}</div>
       <div className="absolute left-[33%] right-[7%] top-[19.1%] h-px bg-cyan-100/26" />
-      <div id={tabPanelId} role="tabpanel" aria-labelledby={`dashboard-upgrade-tab-${activeCategoryId}`} className="absolute left-0 top-[21.5%] h-[75%] w-full overflow-hidden" data-testid="dashboard-upgrade-tabpanel" data-upgrade-category-id={activeCategoryId}>
+      <div id={tabPanelId} role="tabpanel" aria-labelledby={`dashboard-upgrade-tab-${categoryView.categoryId}`} className="absolute left-0 top-[21.5%] h-[75%] w-full overflow-hidden" data-testid="dashboard-upgrade-tabpanel" data-upgrade-category-id={categoryView.categoryId} data-background-art-key={categoryView.backgroundArtKey}>
         {model.upgradeRows.length ? model.upgradeRows.slice(0, 4).map((row, index) => {
           const { upgrade } = row;
           const rowArt = resolveRuntimeAsset(upgrade, findAsset(assets, upgrade.iconKey));
@@ -2609,6 +2713,20 @@ function RobloxUpgradePanel({ categories, activeCategoryId, model, assets, art, 
         }) : null}
         {!model.upgradeRows.length ? <UnknownUpgradeCard /> : null}
       </div>
+      {dashboardDevToolsEnabled ? (
+        <div className="absolute bottom-2 left-3 z-20 max-w-[70%] rounded border border-cyan-100/28 bg-slate-950/82 px-2 py-1 text-[10px] font-semibold uppercase leading-tight text-cyan-50/82" data-testid="upgrade-art-diagnostics">
+          <div>category {categoryView.categoryId}</div>
+          <div>target {categoryView.backgroundArtKey}</div>
+          <div>resolved {categoryView.assetStatus.resolvedBackgroundArtKey}</div>
+          <div>url {categoryView.assetStatus.resolvedUrl ?? "missing"}</div>
+          <div>native {categoryView.assetStatus.requiredNativeWidth}x{categoryView.assetStatus.requiredNativeHeight}</div>
+          <div>bounds {UPGRADE_CATEGORY_BACKGROUND_SPEC.renderedBounds.width}x{UPGRADE_CATEGORY_BACKGROUND_SPEC.renderedBounds.height}</div>
+          <div>status {categoryView.assetStatus.background} / preload {preloadStatus}</div>
+          {categoryView.assetStatus.warning ? <div className="text-amber-100">{categoryView.assetStatus.warning}</div> : null}
+          <button type="button" className="mt-1 border border-cyan-100/35 px-1 py-0.5 text-cyan-50" onClick={() => setShowArtBounds((open) => !open)}>Show Upgrade Art Bounds</button>
+        </div>
+      ) : null}
+      {dashboardDevToolsEnabled && showArtBounds ? <div className="pointer-events-none absolute inset-0 z-20 border-2 border-fuchsia-200/70 bg-fuchsia-300/5" data-testid="upgrade-art-bounds" /> : null}
     </section>
   );
 }
@@ -3559,9 +3677,9 @@ export function GameShell({
     });
   }, [activeCategoryId, categoryIdsKey, data]);
 
-  const category = resolveSelectedUpgradeCategory(data, selectedUpgradeCategoryId) ?? resolveDefaultUpgradeCategory(data);
-  const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: category?.id }), [activeEraId, category?.id, data, playerState, runtimeState]);
   const dashboardArt = useMemo(() => createDashboardArtMap(data.assets), [data.assets]);
+  const categoryView = useMemo(() => resolveUpgradeCategoryView(selectedUpgradeCategoryId, data, dashboardArt), [dashboardArt, data, selectedUpgradeCategoryId]);
+  const model = useMemo(() => createDashboardModel(data, { runtimeState, playerState, activeEraId, activeCategoryId: categoryView.categoryId }), [activeEraId, categoryView.categoryId, data, playerState, runtimeState]);
   const artAudit = useMemo(() => getDashboardArtAudit(data.assets), [data.assets]);
   const scaleAssetWarnings = useMemo(() => getDashboardScaleAssetWarnings(2), []);
   const [boostsTrayOpen, setBoostsTrayOpen] = useState(false);
@@ -3618,7 +3736,7 @@ export function GameShell({
             <RobloxHero data={data} model={model} art={dashboardArt} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
-            <RobloxUpgradePanel categories={upgradeCategories} activeCategoryId={category?.id ?? ""} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} showLabelGuides={dashboardDevToolsEnabled || initialUpgradeTabGuidesOpen} />
+            <RobloxUpgradePanel categories={upgradeCategories} categoryView={categoryView} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} showLabelGuides={dashboardDevToolsEnabled || initialUpgradeTabGuidesOpen} />
           </div>
           <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
             <RobloxRightColumn model={model} art={dashboardArt} />
