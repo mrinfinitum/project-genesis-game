@@ -42,6 +42,7 @@ import { verifyResourceEconomyContracts } from "@/lib/economy/contracts";
 import { resolveLaborRateBreakdown, resolveResearchRateBreakdown } from "@/lib/economy/rate-calculator";
 import { getFocusedDashboardEras } from "@/lib/dashboard/era-navigation";
 import { ROBLOX_DASHBOARD_LAYOUT, ROBLOX_DASHBOARD_REFERENCE } from "@/lib/dashboard/dashboard-layout";
+import { resolveStudioShellContract } from "@/lib/app-shell/studio-shell-contract";
 import { resolveUpgradeCategoryView, UPGRADE_CATEGORY_ART_KEYS, UPGRADE_CATEGORY_BACKGROUND_SPEC, type UpgradeCategoryView } from "@/lib/dashboard/upgrade-category-art";
 import { UPGRADE_TAB_LAYOUT, UPGRADE_TAB_TYPOGRAPHY, type UpgradeTabLayoutKey } from "@/lib/dashboard/upgrade-tabs-layout";
 import { TOP_HUD_BACKGROUND_ASSET, TOP_HUD_LAYOUT, topHudLocalRectStyle, topHudLocalTextStyle, topHudRectStyle, type TopHudEconomyId } from "@/lib/dashboard/top-hud-layout";
@@ -2034,9 +2035,11 @@ function RobloxTopHud({ model, assets, art, showDevWarnings = false, initialCali
   );
 }
 
-export function RobloxNavigation({ active, art }: { active: string; art: DashboardArtMap }) {
+export function RobloxNavigation({ active, art, onNavigate }: { active: string; art: DashboardArtMap; onNavigate?: (screenId: string) => void }) {
   const activeMap: Record<string, string> = {
     dashboard: "dashboard",
+    overview: "dashboard",
+    buildings: "production",
     production: "production",
     research: "research",
     resources: "resources",
@@ -2140,6 +2143,7 @@ export function RobloxNavigation({ active, art }: { active: string; art: Dashboa
               data-active={isActive}
               data-rojo-size="1,0,0.11,0"
               className="absolute z-30 border-0 bg-transparent p-0 text-transparent outline-none transition hover:bg-cyan-100/5 focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-cyan-100/55"
+              onClick={() => onNavigate?.(item.id)}
               style={{
                 left: ROBLOX_NAV_GEOMETRY.paddingX,
                 top: itemTop,
@@ -3672,7 +3676,11 @@ export function GameShell({
   initialTopHudCalibrationOpen = false,
   initialUpgradeTabGuidesOpen = false,
   platform,
-  profileViewport
+  profileViewport,
+  workspace,
+  workspaceLabel,
+  workspaceBackgroundArtKey,
+  onNavigate
 }: {
   data: GameRuntimeData;
   runtimeState?: RuntimeContentState;
@@ -3694,6 +3702,10 @@ export function GameShell({
   initialUpgradeTabGuidesOpen?: boolean;
   platform?: RuntimePlatform;
   profileViewport?: { width: number; height: number };
+  workspace?: ReactNode;
+  workspaceLabel?: string;
+  workspaceBackgroundArtKey?: string;
+  onNavigate?: (screenId: string) => void;
 }) {
   const runtimePlatform = platform ?? detectRuntimePlatform();
   const measuredViewportSize = useWindowViewportSize();
@@ -3730,6 +3742,9 @@ export function GameShell({
   const [boostOverlayRoot, setBoostOverlayRoot] = useState<HTMLDivElement | null>(null);
   const activeRuntimeBoosts = playerRuntime?.boosts.active ?? [];
   const boostCount = model.playerState.boosts?.length ?? 0;
+  const shellContract = useMemo(() => resolveStudioShellContract(), []);
+  const workspaceSlot = shellContract.mainWorkspaceSlot;
+  const shellMode = workspace ? "workspace" : "dashboard";
   useDashboardAssetDiagnostics(artAudit);
   const embeddedScale = frameScale ?? 1;
   const mobileStyle = {
@@ -3768,30 +3783,49 @@ export function GameShell({
           </div>
           {dashboardDevToolsEnabled ? <RuntimeSourceBadge model={model} /> : null}
           <div data-safe-area-target="navigation" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.sidebar), paddingLeft: "var(--safe-left)" }}>
-            <RobloxNavigation active={activeScreen} art={dashboardArt} />
+            <RobloxNavigation active={activeScreen} art={dashboardArt} onNavigate={onNavigate} />
           </div>
-          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
-            <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} runtimeStatus={runtimeStatus} />
-          </div>
-          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.hero)}>
-            <RobloxHero data={data} model={model} art={dashboardArt} />
-          </div>
-          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
-            <RobloxUpgradePanel categories={upgradeCategories} categoryView={categoryView} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} showLabelGuides={dashboardDevToolsEnabled || initialUpgradeTabGuidesOpen} />
-          </div>
-          <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
-            <RobloxRightColumn model={model} art={dashboardArt} />
-          </div>
-          <div className="z-20" data-safe-area-target="boost-drawer" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle), paddingBottom: "var(--safe-bottom)" }}>
-            <RobloxBoostBar
-              model={model}
-              open={boostsTrayOpen}
-              count={boostCount}
-              controlsId="dashboard-boosts-tray"
-              triggerRef={boostTriggerRef}
-              onToggle={() => setBoostsTrayOpen((open) => !open)}
-            />
-          </div>
+          {workspace ? (
+            <section
+              aria-label={workspaceLabel ?? "Main Workspace"}
+              data-testid="main-workspace-slot"
+              data-shell-id={shellContract.shellId}
+              data-shell-version={shellContract.shellVersion}
+              data-shell-contract-source={shellContract.source}
+              data-presentation-mode="shell_workspace"
+              data-active-screen={activeScreen}
+              data-workspace-background-art-key={workspaceBackgroundArtKey ?? ""}
+              className="absolute z-10 overflow-hidden rounded-sm border border-cyan-200/12 bg-slate-950/40 shadow-[inset_0_0_40px_rgba(45,212,255,0.045)] transition-opacity duration-150 motion-reduce:transition-none"
+              style={robloxLayoutRect(workspaceSlot)}
+            >
+              {workspace}
+            </section>
+          ) : (
+            <>
+              <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.leftColumn)}>
+                <RobloxLeftColumn data={data} model={model} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled} playerRuntimeActions={playerRuntimeActions} runtimeStatus={runtimeStatus} />
+              </div>
+              <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.hero)}>
+                <RobloxHero data={data} model={model} art={dashboardArt} />
+              </div>
+              <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.upgrades)}>
+                <RobloxUpgradePanel categories={upgradeCategories} categoryView={categoryView} model={model} assets={data.assets} art={dashboardArt} onSelectCategory={setSelectedUpgradeCategoryId} showLabelGuides={dashboardDevToolsEnabled || initialUpgradeTabGuidesOpen} />
+              </div>
+              <div style={robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.rightColumn)}>
+                <RobloxRightColumn model={model} art={dashboardArt} />
+              </div>
+              <div className="z-20" data-safe-area-target="boost-drawer" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.boostToggle), paddingBottom: "var(--safe-bottom)" }}>
+                <RobloxBoostBar
+                  model={model}
+                  open={boostsTrayOpen}
+                  count={boostCount}
+                  controlsId="dashboard-boosts-tray"
+                  triggerRef={boostTriggerRef}
+                  onToggle={() => setBoostsTrayOpen((open) => !open)}
+                />
+              </div>
+            </>
+          )}
           <div
             id="game-overlay-root"
             ref={setBoostOverlayRoot}
@@ -3825,6 +3859,11 @@ export function GameShell({
             account={settingsAccount}
           />
           {dashboardDevToolsEnabled ? <DashboardDataArtInspector data={data} model={model} artAudit={artAudit} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} runtimeStatus={runtimeStatus} cloudSync={cloudSync} cloudError={cloudError} /> : null}
+          {dashboardDevToolsEnabled ? (
+            <div className="pointer-events-none absolute bottom-2 right-2 z-[80] rounded-sm border border-cyan-200/20 bg-slate-950/82 px-2 py-1 text-[10px] font-black uppercase text-cyan-100/70" data-testid="app-shell-dev-diagnostics">
+              {shellContract.shellId} · {shellContract.shellVersion} · {shellMode} · {activeScreen}
+            </div>
+          ) : null}
       </GameViewportScaler>
     </main>
   );

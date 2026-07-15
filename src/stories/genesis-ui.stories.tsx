@@ -3,7 +3,14 @@ import type { ReactNode } from "react";
 import { createDashboardArtMap } from "@/lib/canonical-runtime";
 import { createDashboardModel, type DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { calculateGameViewportScale } from "@/lib/dashboard/viewport-scaling";
-import { createNewPlayerRuntimeState } from "@/lib/player-runtime";
+import { createNewPlayerRuntimeState, playerRuntimeToDashboardPlayerState } from "@/lib/player-runtime";
+import { resolveStudioShellContract } from "@/lib/app-shell/studio-shell-contract";
+import {
+  BuildingsWorkspace,
+  GalaxyWorkspace,
+  ResearchWorkspace,
+  UpgradesWorkspace
+} from "@/routes/workspace-components";
 import { getPrimaryHudResources } from "@/lib/player-runtime/economy";
 import {
   AlignmentPanel,
@@ -1651,6 +1658,106 @@ export const SettingsOffline: Story = {
 
 export const SettingsConflict: Story = {
   render: () => <StoryCanvas><SettingsStory variant="conflict" /></StoryCanvas>
+};
+
+function PersistentShellStory({
+  screenId,
+  workspace,
+  profileViewport,
+  frameScale = 0.58
+}: {
+  screenId: string;
+  workspace?: "buildings" | "research" | "upgrades" | "galaxy";
+  profileViewport?: { width: number; height: number };
+  frameScale?: number;
+}) {
+  const { data } = useGenesisStoryContent();
+  const playerRuntime = createNewPlayerRuntimeState(data, { civilizationName: "Planet Prime" });
+  const playerState = playerRuntimeToDashboardPlayerState(data, playerRuntime);
+  const runtimeState = {
+    activeSource: "storybook",
+    configuredMode: "snapshot",
+    status: "ready",
+    contentVersion: data.metadata.contentVersion
+  } as never;
+  const props = { data, runtimeState, playerState, playerRuntime };
+  const workspaceNode =
+    workspace === "buildings" ? <BuildingsWorkspace {...props} /> :
+    workspace === "research" ? <ResearchWorkspace {...props} /> :
+    workspace === "upgrades" ? <UpgradesWorkspace {...props} /> :
+    workspace === "galaxy" ? <GalaxyWorkspace {...props} /> :
+    undefined;
+
+  return (
+    <GameShell
+      data={data}
+      runtimeState={runtimeState}
+      playerState={playerState}
+      playerRuntime={playerRuntime}
+      activeScreen={screenId}
+      activeEraId={playerRuntime.civilization.currentEraId}
+      activeCategoryId="workforce"
+      workspace={workspaceNode}
+      workspaceLabel={resolveStudioShellContract().routes.find((route) => route.id === screenId)?.label}
+      embedded
+      frameScale={frameScale}
+      profileViewport={profileViewport}
+    />
+  );
+}
+
+export const PersistentShellOnly: Story = {
+  render: () => <PersistentShellStory screenId="dashboard" />
+};
+
+export const PersistentShellOverviewWorkspace: Story = {
+  render: () => <PersistentShellStory screenId="dashboard" />
+};
+
+export const PersistentShellBuildingsWorkspace: Story = {
+  render: () => <PersistentShellStory screenId="production" workspace="buildings" />
+};
+
+export const PersistentShellResearchWorkspace: Story = {
+  render: () => <PersistentShellStory screenId="research" workspace="research" />
+};
+
+export const PersistentShellUpgradesWorkspace: Story = {
+  render: () => <PersistentShellStory screenId="upgrades" workspace="upgrades" />
+};
+
+export const PersistentShellRouteTransitionState: Story = {
+  render: () => <PersistentShellStory screenId="galaxy" workspace="galaxy" />
+};
+
+export const PersistentShellMobileNavigation: Story = {
+  render: () => <PersistentShellStory screenId="research" workspace="research" profileViewport={{ width: 932, height: 430 }} frameScale={0.46} />
+};
+
+export const PersistentShellLayoutGuides: Story = {
+  render: () => {
+    const contract = resolveStudioShellContract();
+    return (
+      <div className="relative">
+        <PersistentShellStory screenId="research" workspace="research" />
+        <div className="pointer-events-none absolute left-[calc(184px*0.58)] top-[calc(126px*0.58)] z-50 border border-emerald-300/80" style={{ width: contract.mainWorkspaceSlot.width * 0.58, height: contract.mainWorkspaceSlot.height * 0.58 }} />
+      </div>
+    );
+  }
+};
+
+export const PersistentShellFullScreenTakeoverBoundary: Story = {
+  render: () => (
+    <StoryCanvas>
+      <div className="grid min-h-screen place-items-center bg-slate-950 text-cyan-50">
+        <section className="w-[42rem] rounded-sm border border-cyan-100/35 bg-slate-950/90 p-8 text-center shadow-[0_0_60px_rgba(45,212,255,0.18)]">
+          <div className="text-xs font-black uppercase tracking-[0.42em] text-cyan-100/54">Full Screen Takeover</div>
+          <h1 className="mt-3 text-3xl font-black uppercase text-white">Loading Runtime</h1>
+          <p className="mt-3 text-sm font-semibold leading-6 text-cyan-50/68">Auth, loading, and conflict surfaces remain outside the persistent gameplay shell.</p>
+        </section>
+      </div>
+    </StoryCanvas>
+  )
 };
 
 export const Production: Story = {

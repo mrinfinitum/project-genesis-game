@@ -1,9 +1,5 @@
-import { GameShell } from "@/components/game-ui/genesis-ui";
-import type { GameRuntimeData, RuntimeContentState } from "@/lib/canonical-runtime";
-import type { ComponentProps } from "react";
+import { ResearchWorkspace, type WorkspaceRouteProps } from "@/routes/workspace-components";
 
-type RouteProps = { data: GameRuntimeData; runtimeState: RuntimeContentState } & Pick<ComponentProps<typeof GameShell>, "playerState" | "playerRuntime" | "playerRuntimeActions">;
-
-export default function ResearchRoute({ data, runtimeState, playerState, playerRuntime, playerRuntimeActions }: RouteProps) {
-  return <GameShell data={data} runtimeState={runtimeState} playerState={playerState} playerRuntime={playerRuntime} playerRuntimeActions={playerRuntimeActions} activeScreen="research" activeEraId={playerRuntime?.civilization.currentEraId ?? "space-age"} activeCategoryId="science" />;
+export default function ResearchRoute(props: WorkspaceRouteProps) {
+  return <ResearchWorkspace {...props} />;
 }

@@ -1,9 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useOutletContext } from "react-router-dom";
-import {
-  GameShell,
-  StoryCanvas
-} from "@/components/game-ui/genesis-ui";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { GameShell } from "@/components/game-ui/genesis-ui";
 import {
   BrowserRuntimeContentCache,
   CanonicalRuntimeContentManager,
@@ -47,6 +44,7 @@ import {
 } from "@/lib/supabase";
 import { classifySave, compareSaves, shouldShowConflict, useGameStartup } from "@/lib/startup";
 import { lifecycleService } from "@/platform";
+import { resolveStudioShellContract, routePathForShellId } from "@/lib/app-shell/studio-shell-contract";
 import {
   AccountRoute,
   ForgotPasswordRoute,
@@ -58,10 +56,14 @@ import {
   WelcomeRoute
 } from "@/routes/auth/noveris-auth-routes";
 
-const ProductionRoute = lazy(() => import("@/routes/production-route"));
+const BuildingsRoute = lazy(() => import("@/routes/buildings-route"));
 const ResearchRoute = lazy(() => import("@/routes/research-route"));
 const ResourcesRoute = lazy(() => import("@/routes/resources-route"));
 const CivilizationRoute = lazy(() => import("@/routes/civilization-route"));
+const UpgradesRoute = lazy(() => import("@/routes/upgrades-route"));
+const EventsRoute = lazy(() => import("@/routes/events-route"));
+const GalaxyRoute = lazy(() => import("@/routes/galaxy-route"));
+const SpaceportRoute = lazy(() => import("@/routes/spaceport-route"));
 const EarthRoute = lazy(() => import("@/routes/earth-route"));
 const SolarSystemRoute = lazy(() => import("@/routes/solar-system-route"));
 const DiscoveryRoute = lazy(() => import("@/routes/discovery-route"));
@@ -864,17 +866,15 @@ function useGenesisRouteContext() {
 
 function GenesisRouteFallback({ label }: { label: string }) {
   return (
-    <StoryCanvas>
-      <div className="flex min-h-screen items-center justify-center text-center">
-        <div className="rounded-md border border-cyan-200/25 bg-black/35 px-5 py-4 text-cyan-50 shadow-[0_18px_56px_rgba(0,0,0,0.34)]">
-          <div className="text-xs font-bold uppercase text-cyan-100/55">Project Genesis</div>
-          <div className="mt-1 text-xl font-black text-white">Loading {label}</div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-md bg-cyan-950">
-            <div className="h-full w-2/3 rounded-md bg-gradient-to-r from-cyan-300 via-teal-300 to-amber-300" />
-          </div>
+    <div className="flex h-full w-full items-center justify-center text-center" data-testid="workspace-loading-state">
+      <div className="rounded-md border border-cyan-200/25 bg-black/35 px-5 py-4 text-cyan-50 shadow-[0_18px_56px_rgba(0,0,0,0.34)]">
+        <div className="text-xs font-bold uppercase text-cyan-100/55">Main Workspace</div>
+        <div className="mt-1 text-xl font-black text-white">Loading {label}</div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-md bg-cyan-950">
+          <div className="h-full w-2/3 rounded-md bg-gradient-to-r from-cyan-300 via-teal-300 to-amber-300" />
         </div>
       </div>
-    </StoryCanvas>
+    </div>
   );
 }
 
@@ -897,10 +897,35 @@ function LazyDataRoute({ component: Component, label }: { component: ComponentTy
   );
 }
 
-function DashboardRoute() {
-  const { data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError, runtimeStatus } = useGenesisRouteContext();
+function routeIdFromPath(pathname: string) {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/" || normalized === "/overview") return "dashboard";
+  const contract = resolveStudioShellContract();
+  return contract.routes.find((route) => route.path === normalized)?.id ?? normalized.replace(/^\//, "");
+}
+
+function workspaceBackgroundForRoute(routeId: string) {
+  if (routeId === "research") return "research_screen_background";
+  if (routeId === "buildings" || routeId === "production") return "buildings_workspace_background";
+  if (routeId === "upgrades") return "upgrades_workspace_background";
+  if (routeId === "civilization") return "civilization_workspace_background";
+  if (routeId === "events") return "events_workspace_background";
+  if (routeId === "galaxy" || routeId === "solar-system" || routeId === "discovery") return "galaxy_workspace_background";
+  if (routeId === "spaceport") return "spaceport_workspace_background";
+  return `${routeId}_workspace_background`;
+}
+
+function NoverisAppShell() {
+  const context = useGenesisRouteContext();
+  const { data, state, playerRuntime, playerRuntimeActions, cloudSync, cloudSave, cloudError, runtimeStatus } = context;
   const auth = useNoverisAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const dashboardPlayerState = useMemo(() => playerRuntimeToDashboardPlayerState(data, playerRuntime), [data, playerRuntime]);
+  const activeScreen = routeIdFromPath(location.pathname);
+  const shellContract = useMemo(() => resolveStudioShellContract(), []);
+  const workspace = activeScreen === "dashboard" ? undefined : <Outlet context={context} />;
+
   return (
     <GameShell
       data={data}
@@ -913,9 +938,13 @@ function DashboardRoute() {
       cloudError={cloudError}
       runtimeStatus={runtimeStatus}
       settingsAccount={{ status: auth.state.status, email: auth.state.email, displayName: getSupabaseProfileDisplayName(auth.state.user), supabaseStatus: auth.state.cloudAvailable ? "Available" : "Unavailable" }}
-      activeScreen="dashboard"
+      activeScreen={activeScreen}
       activeEraId={playerRuntime.civilization.currentEraId}
       activeCategoryId="workforce"
+      workspace={workspace}
+      workspaceLabel={shellContract.routes.find((route) => route.id === activeScreen)?.label ?? "Main Workspace"}
+      workspaceBackgroundArtKey={workspaceBackgroundForRoute(activeScreen)}
+      onNavigate={(screenId) => navigate(routePathForShellId(screenId))}
     />
   );
 }
@@ -933,14 +962,22 @@ export default function App() {
           <Route path="save-conflict" element={<SaveConflictRoute />} />
           <Route path="account" element={<AccountRoute />} />
           <Route element={<RuntimeRouteShell />}>
-            <Route index element={<DashboardRoute />} />
-            <Route path="production" element={<LazyDataRoute component={ProductionRoute} label="Production" />} />
-            <Route path="research" element={<LazyDataRoute component={ResearchRoute} label="Research" />} />
-            <Route path="resources" element={<LazyDataRoute component={ResourcesRoute} label="Resources" />} />
-            <Route path="civilization" element={<LazyDataRoute component={CivilizationRoute} label="Civilization" />} />
-            <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
-            <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
-            <Route path="discovery" element={<LazyDataRoute component={DiscoveryRoute} label="Discovery" />} />
+            <Route element={<NoverisAppShell />}>
+              <Route index element={null} />
+              <Route path="overview" element={<Navigate to="/" replace />} />
+              <Route path="production" element={<Navigate to="/buildings" replace />} />
+              <Route path="buildings" element={<LazyDataRoute component={BuildingsRoute} label="Buildings" />} />
+              <Route path="research" element={<LazyDataRoute component={ResearchRoute} label="Research" />} />
+              <Route path="resources" element={<LazyDataRoute component={ResourcesRoute} label="Resources" />} />
+              <Route path="upgrades" element={<LazyDataRoute component={UpgradesRoute} label="Upgrades" />} />
+              <Route path="civilization" element={<LazyDataRoute component={CivilizationRoute} label="Civilization" />} />
+              <Route path="events" element={<LazyDataRoute component={EventsRoute} label="Events" />} />
+              <Route path="galaxy" element={<LazyDataRoute component={GalaxyRoute} label="Galaxy" />} />
+              <Route path="spaceport" element={<LazyDataRoute component={SpaceportRoute} label="Spaceport" />} />
+              <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
+              <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
+              <Route path="discovery" element={<LazyDataRoute component={DiscoveryRoute} label="Discovery" />} />
+            </Route>
             <Route path="art-review" element={<LazyDataRoute component={ArtReviewRoute} label="Art Review" />} />
             <Route path="parity-review" element={<LazyDataRoute component={ParityReviewRoute} label="Parity Review" />} />
           </Route>
