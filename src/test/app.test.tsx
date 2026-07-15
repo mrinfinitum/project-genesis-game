@@ -50,4 +50,17 @@ describe("Project Genesis app", () => {
     expect(screen.getAllByTestId("roblox-integrated-nav-hud")).toHaveLength(1);
     expect(container.querySelectorAll('[data-safe-area-target="top-hud"]')).toHaveLength(1);
   });
+
+  it("routes /discoveries through the persistent shell Discovery Journal", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /continue as guest/i }));
+    window.history.pushState({}, "", "/discoveries");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+
+    expect(await screen.findByTestId("discovery-workspace", undefined, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByTestId("main-workspace-slot")).toHaveAttribute("data-presentation-mode", "shell_workspace");
+    expect(screen.getAllByTestId("roblox-integrated-nav-hud")).toHaveLength(1);
+  });
 });

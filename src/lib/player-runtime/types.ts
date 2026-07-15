@@ -1,4 +1,6 @@
-export const PLAYER_RUNTIME_SAVE_VERSION = 12;
+import type { DiscoveryJournalState } from "@/lib/discovery/types";
+
+export const PLAYER_RUNTIME_SAVE_VERSION = 13;
 
 export type AlignmentKey = "industry" | "technology" | "cyber" | "nature" | "corporate";
 
@@ -149,6 +151,7 @@ export type PlayerRuntimeState = {
     colonyCount: number;
     nextColonyProgress: number;
   };
+  discovery: DiscoveryJournalState;
   unresolved: UnresolvedPlayerRuntimeIds;
   runtimeLoadReport: PlayerRuntimeLoadReport;
 };

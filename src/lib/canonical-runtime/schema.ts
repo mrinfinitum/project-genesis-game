@@ -33,6 +33,7 @@ export const runtimeMetadataSchema = z.object({
   schemaVersion: z.literal("game-runtime-v1"),
   runtimeVersion: z.string().optional(),
   architectureVersion: z.string().optional(),
+  universalDiscoveryRegistryVersion: z.string().optional(),
   contentVersion: z.number().int().positive(),
   releaseName: z.string().optional(),
   checksum: id,
@@ -44,6 +45,98 @@ export const runtimeMetadataSchema = z.object({
   environment: z.string().optional(),
   validationStatus: z.enum(["Ready", "ready", "READY"])
 });
+
+const discoveryNumberRange = z
+  .object({
+    min: optionalFiniteNumber,
+    max: optionalFiniteNumber
+  })
+  .catchall(z.unknown())
+  .optional();
+
+const discoveryEligibilitySchema = z
+  .object({
+    planetClassIds: stringArray.optional(),
+    planetSubclassIds: stringArray.optional(),
+    biomeIds: stringArray.optional(),
+    atmosphereIds: stringArray.optional(),
+    terrainIds: stringArray.optional(),
+    locationTypes: stringArray.optional(),
+    requiredResearchIds: stringArray.optional(),
+    requiredEquipmentIds: stringArray.optional(),
+    requiredEraIds: stringArray.optional(),
+    temperature: discoveryNumberRange,
+    gravity: discoveryNumberRange,
+    humidity: discoveryNumberRange,
+    waterCoverage: discoveryNumberRange,
+    radiation: discoveryNumberRange,
+    volcanism: discoveryNumberRange,
+    biosphereMaturity: discoveryNumberRange,
+    biologicalDiversity: discoveryNumberRange,
+    civilizationPresence: discoveryNumberRange,
+    ruinPresence: discoveryNumberRange,
+    anomalyInfluence: discoveryNumberRange
+  })
+  .catchall(z.unknown());
+
+const discoverySpawnProfileSchema = z
+  .object({
+    id,
+    discoveryId: z.string().optional(),
+    spawnTableId: z.string().optional(),
+    spawnWeight: finiteNumber.optional(),
+    maxPerLocation: finiteNumber.optional(),
+    maxPerPlanet: finiteNumber.optional(),
+    maxPerSystem: finiteNumber.optional(),
+    maxPerUniverse: finiteNumber.optional(),
+    clusterBehavior: z.string().optional(),
+    locationTypes: stringArray.optional(),
+    eligibility: discoveryEligibilitySchema.optional()
+  })
+  .catchall(z.unknown());
+
+const discoveryRecordSchema = z
+  .object({
+    id,
+    name: z.string().optional(),
+    displayName: z.string().optional(),
+    shortDisplayName: z.string().optional(),
+    description: z.string().optional(),
+    categoryId: z.string().optional(),
+    subcategoryId: z.string().optional(),
+    rarityId: z.string().optional(),
+    rarity: z.string().optional(),
+    publishState: z.string().optional(),
+    status: z.string().optional(),
+    artKey: z.string().optional(),
+    iconKey: z.string().optional(),
+    assetSemanticKey: z.string().optional(),
+    encyclopedia: unknownRecord.optional(),
+    eligibility: discoveryEligibilitySchema.optional(),
+    spawnProfile: discoverySpawnProfileSchema.optional(),
+    spawnProfileId: z.string().optional(),
+    scanProfileId: z.string().optional(),
+    collectionProfileId: z.string().optional(),
+    rewardProfileId: z.string().optional(),
+    registryEligible: z.boolean().optional(),
+    tags: stringArray.optional()
+  })
+  .catchall(z.unknown());
+
+const discoveryCategorySchema = z.object({ id, displayName: z.string().optional(), name: z.string().optional(), order: finiteNumber.optional(), description: z.string().optional(), iconKey: z.string().optional() }).catchall(z.unknown());
+const discoverySubcategorySchema = z.object({ id, categoryId: z.string().optional(), displayName: z.string().optional(), name: z.string().optional(), order: finiteNumber.optional(), description: z.string().optional() }).catchall(z.unknown());
+const discoveryRaritySchema = z.object({ id, displayName: z.string().optional(), name: z.string().optional(), order: finiteNumber.optional(), baseSpawnWeight: finiteNumber.optional(), relativeWeight: finiteNumber.optional(), color: z.string().optional(), maxPerLocation: finiteNumber.optional(), universeLimitPolicy: unknownRecord.optional() }).catchall(z.unknown());
+const discoveryCollectionSchema = z.object({ id, displayName: z.string().optional(), name: z.string().optional(), discoveryIds: stringArray.optional(), rewardProfileId: z.string().optional(), order: finiteNumber.optional() }).catchall(z.unknown());
+const discoveryChainSchema = z.object({ id, displayName: z.string().optional(), name: z.string().optional(), discoveryIds: stringArray.optional(), milestoneIds: stringArray.optional(), order: finiteNumber.optional() }).catchall(z.unknown());
+const discoverySpawnTableSchema = z.object({ id, displayName: z.string().optional(), entries: z.array(unknownRecord).optional(), seedPolicy: unknownRecord.optional() }).catchall(z.unknown());
+const discoveryScanProfileSchema = z.object({ id, scanType: z.string().optional(), durationSeconds: finiteNumber.optional(), requiredEquipmentIds: stringArray.optional(), requiredResearchIds: stringArray.optional(), discoveryPoints: finiteNumber.optional(), encyclopediaVisibilityTier: z.string().optional() }).catchall(z.unknown());
+const discoveryCollectionProfileSchema = z.object({ id, collectionType: z.string().optional(), requiredEquipmentIds: stringArray.optional(), requiredResearchIds: stringArray.optional(), protectedStatus: z.string().optional(), duplicateBehavior: z.string().optional(), quantity: finiteNumber.optional() }).catchall(z.unknown());
+const discoveryRewardProfileSchema = z.object({ id, rewards: z.array(unknownRecord).optional(), protectedPremiumReward: z.boolean().optional(), serverAuthoritative: z.boolean().optional(), transactionReason: z.string().optional() }).catchall(z.unknown());
+const discoveryStateDefinitionSchema = z.object({ id, displayName: z.string().optional(), allowedTransitionIds: stringArray.optional(), order: finiteNumber.optional() }).catchall(z.unknown());
+const universalDiscoveryRegistrySchema = z.object({ id: z.string().optional(), version: z.string().optional(), entityTypes: z.array(unknownRecord).optional(), milestones: z.array(unknownRecord).optional(), namingPolicyId: z.string().optional(), attributionPolicyId: z.string().optional() }).catchall(z.unknown());
+const universalObjectIdentityContractSchema = z.object({ id: z.string().optional(), version: z.string().optional(), algorithm: z.string().optional(), requiredFields: stringArray.optional(), namespace: z.string().optional() }).catchall(z.unknown());
+const namingPolicySchema = z.object({ id: z.string().optional(), eligibleEntityTypes: stringArray.optional(), moderationRequired: z.boolean().optional(), fallbackNamePolicy: z.string().optional() }).catchall(z.unknown());
+const attributionPolicySchema = z.object({ id: z.string().optional(), anonymousLabel: z.string().optional(), exposeAuthUserId: z.boolean().optional(), exposeEmail: z.boolean().optional(), publicDisplayFields: stringArray.optional() }).catchall(z.unknown());
 
 export const eraDefinitionSchema = z.object({
   id,
@@ -488,8 +581,24 @@ export const gameRuntimeDataSchema = z.object({
   aiAgentPersonalities: z.array(aiAgentPersonalitySchema).optional(),
   aiAgentAnimationProfiles: z.array(aiAgentAnimationProfileSchema).optional(),
   automationPresentation: automationPresentationSchema.optional(),
-  aiAgentSaveSchema: unknownRecord.optional()
-});
+  aiAgentSaveSchema: unknownRecord.optional(),
+  discoveryCategories: z.array(discoveryCategorySchema).optional(),
+  discoverySubcategories: z.array(discoverySubcategorySchema).optional(),
+  discoveryRarities: z.array(discoveryRaritySchema).optional(),
+  discoveryRecords: z.array(discoveryRecordSchema).optional(),
+  discoveryCollections: z.array(discoveryCollectionSchema).optional(),
+  discoveryChains: z.array(discoveryChainSchema).optional(),
+  discoverySpawnProfiles: z.array(discoverySpawnProfileSchema).optional(),
+  discoverySpawnTables: z.array(discoverySpawnTableSchema).optional(),
+  discoveryScanProfiles: z.array(discoveryScanProfileSchema).optional(),
+  discoveryCollectionProfiles: z.array(discoveryCollectionProfileSchema).optional(),
+  discoveryRewardProfiles: z.array(discoveryRewardProfileSchema).optional(),
+  discoveryStateDefinitions: z.array(discoveryStateDefinitionSchema).optional(),
+  universalDiscoveryRegistry: universalDiscoveryRegistrySchema.optional(),
+  universalObjectIdentityContract: universalObjectIdentityContractSchema.optional(),
+  namingPolicy: namingPolicySchema.optional(),
+  attributionPolicy: attributionPolicySchema.optional()
+}).catchall(z.unknown());
 
 function requireUnique(values: string[], label: string, errors: string[]) {
   const seen = new Set<string>();

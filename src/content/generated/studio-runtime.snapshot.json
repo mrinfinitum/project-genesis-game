@@ -28051,8 +28051,8 @@
   "metadata": {
     "accessLevel": "public-published",
     "architectureVersion": "1.0.0",
-    "checksum": "84000b947e8ac9d9bd6e0eff7649267b0edf22c3c9c217288b496af0cc881dc3",
-    "contentVersion": 14,
+    "checksum": "d3dddd7cb51e0a77a22a106a9a1e32f995362adb83499ca96600e3dc46f47844",
+    "contentVersion": 20,
     "environment": "published",
     "importedAt": "2026-07-12T00:00:00.000Z",
     "importedFrom": "existing_project_migration",

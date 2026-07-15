@@ -6,6 +6,7 @@ export interface RuntimeMetadata {
   schemaVersion: "game-runtime-v1";
   runtimeVersion?: string;
   architectureVersion?: string;
+  universalDiscoveryRegistryVersion?: string;
   contentVersion: number;
   releaseName?: string;
   checksum: string;
@@ -496,6 +497,22 @@ export interface GameRuntimeData {
   aiAgentAnimationProfiles?: AiAgentAnimationProfile[];
   automationPresentation?: AutomationPresentation;
   aiAgentSaveSchema?: Record<string, unknown>;
+  discoveryCategories?: import("@/lib/discovery/types").DiscoveryCategory[];
+  discoverySubcategories?: import("@/lib/discovery/types").DiscoverySubcategory[];
+  discoveryRarities?: import("@/lib/discovery/types").DiscoveryRarity[];
+  discoveryRecords?: import("@/lib/discovery/types").DiscoveryRecord[];
+  discoveryCollections?: import("@/lib/discovery/types").DiscoveryCollection[];
+  discoveryChains?: import("@/lib/discovery/types").DiscoveryChain[];
+  discoverySpawnProfiles?: import("@/lib/discovery/types").DiscoverySpawnProfile[];
+  discoverySpawnTables?: import("@/lib/discovery/types").DiscoverySpawnTable[];
+  discoveryScanProfiles?: import("@/lib/discovery/types").DiscoveryScanProfile[];
+  discoveryCollectionProfiles?: import("@/lib/discovery/types").DiscoveryCollectionProfile[];
+  discoveryRewardProfiles?: import("@/lib/discovery/types").DiscoveryRewardProfile[];
+  discoveryStateDefinitions?: import("@/lib/discovery/types").DiscoveryStateDefinition[];
+  universalDiscoveryRegistry?: import("@/lib/discovery/types").UniversalDiscoveryRegistryContract;
+  universalObjectIdentityContract?: import("@/lib/discovery/types").UniversalObjectIdentityContract;
+  namingPolicy?: import("@/lib/discovery/types").NamingPolicy;
+  attributionPolicy?: import("@/lib/discovery/types").AttributionPolicy;
 }
 
 export interface RuntimeValidationResult {
@@ -552,6 +569,22 @@ export interface RuntimeContentState {
   economyRateBreakdownDefinitions?: ResourceRateBreakdownDefinition[];
   offlineProgressionPolicies?: ResourceOfflinePolicy[];
   economyCalculationRules?: ResourceCalculationRules;
+  discoveryCategories?: GameRuntimeData["discoveryCategories"];
+  discoverySubcategories?: GameRuntimeData["discoverySubcategories"];
+  discoveryRarities?: GameRuntimeData["discoveryRarities"];
+  discoveryRecords?: GameRuntimeData["discoveryRecords"];
+  discoveryCollections?: GameRuntimeData["discoveryCollections"];
+  discoveryChains?: GameRuntimeData["discoveryChains"];
+  discoverySpawnProfiles?: GameRuntimeData["discoverySpawnProfiles"];
+  discoverySpawnTables?: GameRuntimeData["discoverySpawnTables"];
+  discoveryScanProfiles?: GameRuntimeData["discoveryScanProfiles"];
+  discoveryCollectionProfiles?: GameRuntimeData["discoveryCollectionProfiles"];
+  discoveryRewardProfiles?: GameRuntimeData["discoveryRewardProfiles"];
+  discoveryStateDefinitions?: GameRuntimeData["discoveryStateDefinitions"];
+  universalDiscoveryRegistry?: GameRuntimeData["universalDiscoveryRegistry"];
+  universalObjectIdentityContract?: GameRuntimeData["universalObjectIdentityContract"];
+  namingPolicy?: GameRuntimeData["namingPolicy"];
+  attributionPolicy?: GameRuntimeData["attributionPolicy"];
   validationErrors: string[];
   validationWarnings: string[];
   lastCheckedAt?: string;

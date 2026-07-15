@@ -7,6 +7,7 @@ import { createNewPlayerRuntimeState, playerRuntimeToDashboardPlayerState } from
 import { resolveStudioShellContract } from "@/lib/app-shell/studio-shell-contract";
 import {
   BuildingsWorkspace,
+  DiscoveryJournalWorkspace,
   GalaxyWorkspace,
   ResearchWorkspace,
   UpgradesWorkspace
@@ -1667,7 +1668,7 @@ function PersistentShellStory({
   frameScale = 0.58
 }: {
   screenId: string;
-  workspace?: "buildings" | "research" | "upgrades" | "galaxy";
+  workspace?: "buildings" | "research" | "upgrades" | "galaxy" | "discovery";
   profileViewport?: { width: number; height: number };
   frameScale?: number;
 }) {
@@ -1686,6 +1687,7 @@ function PersistentShellStory({
     workspace === "research" ? <ResearchWorkspace {...props} /> :
     workspace === "upgrades" ? <UpgradesWorkspace {...props} /> :
     workspace === "galaxy" ? <GalaxyWorkspace {...props} /> :
+    workspace === "discovery" ? <DiscoveryJournalWorkspace {...props} /> :
     undefined;
 
   return (
@@ -1728,6 +1730,74 @@ export const PersistentShellUpgradesWorkspace: Story = {
 
 export const PersistentShellRouteTransitionState: Story = {
   render: () => <PersistentShellStory screenId="galaxy" workspace="galaxy" />
+};
+
+export const DiscoveryJournalEmpty: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryJournalPopulated: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardUnknown: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardDetected: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardAnalyzed: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardCollected: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardRare: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardLegendary: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardMythic: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryCardUnique: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryFirstDiscoveredByPlayer: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryDiscoveredByAnotherPlayer: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryAnonymousAttribution: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryPendingOfflineVerification: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryNamingPending: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const DiscoveryDetail: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
+};
+
+export const CurrentPlanetDiscoveries: Story = {
+  render: () => <PersistentShellStory screenId="discovery" workspace="discovery" />
 };
 
 export const PersistentShellMobileNavigation: Story = {

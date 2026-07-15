@@ -1,4 +1,5 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
+import { createEmptyDiscoveryJournal } from "@/lib/discovery/journal";
 import { PLAYER_RUNTIME_SAVE_VERSION, type AlignmentKey, type PlayerRuntimeState } from "./types";
 import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId } from "./ai-agent";
 import { getEconomyResourceIds, getInventoryResources, getStartingEconomyBalances, getStartingEconomyRates, POPULATION_ECONOMY_ID } from "./economy";
@@ -118,6 +119,7 @@ export function createNewPlayerRuntimeState(content: GameRuntimeData, options: {
       colonyCount: 1,
       nextColonyProgress: 0
     },
+    discovery: createEmptyDiscoveryJournal(),
     unresolved: {
       economy: {},
       economyRates: {},

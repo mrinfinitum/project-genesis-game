@@ -110,7 +110,7 @@ describe("canonical player runtime", () => {
     expect(Object.values(state.resources.storageLimits)).toEqual(getInventoryResources(runtime).map(() => Number.MAX_SAFE_INTEGER));
   });
 
-  it("verifies the Studio v14 resource economy and AI Agent contract", async () => {
+  it("verifies the Studio resource economy and AI Agent contract", async () => {
     const runtime = await bundledRuntime();
     const verification = verifyResourceEconomyContracts(runtime);
     const laborContract = runtime.economyBehaviorContracts?.find((contract) => contract.economyId === LABOR_ECONOMY_ID);
@@ -120,8 +120,8 @@ describe("canonical player runtime", () => {
     const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
     expect(verification.ok).toBe(true);
-    expect(runtime.metadata.contentVersion).toBe(14);
-    expect(runtime.metadata.checksum).toBe("84000b947e8ac9d9bd6e0eff7649267b0edf22c3c9c217288b496af0cc881dc3");
+    expect(runtime.metadata.contentVersion).toBeGreaterThanOrEqual(20);
+    expect(runtime.metadata.checksum).toBe("d3dddd7cb51e0a77a22a106a9a1e32f995362adb83499ca96600e3dc46f47844");
     expect(verification.counts).toMatchObject({
       behaviorContracts: 5,
       producers: 569,
@@ -659,7 +659,7 @@ describe("canonical player runtime", () => {
     expect(advanced.civilization.eraProgress).toBeGreaterThan(state.civilization.eraProgress);
   });
 
-  it("uses v14 rate breakdowns for Labor and keeps Research at zero without active producers", async () => {
+  it("uses canonical rate breakdowns for Labor and keeps Research at zero without active producers", async () => {
     const runtime = await bundledRuntime();
     const base = createNewPlayerRuntimeState(runtime, { now: fixedDate() });
     const offline = {

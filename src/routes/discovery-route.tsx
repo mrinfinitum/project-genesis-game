@@ -1,5 +1,5 @@
-import { GalaxyWorkspace, type WorkspaceRouteProps } from "@/routes/workspace-components";
+import { DiscoveryJournalWorkspace, type WorkspaceRouteProps } from "@/routes/workspace-components";
 
 export default function DiscoveryRoute(props: WorkspaceRouteProps) {
-  return <GalaxyWorkspace {...props} />;
+  return <DiscoveryJournalWorkspace {...props} />;
 }

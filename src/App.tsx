@@ -910,7 +910,7 @@ function workspaceBackgroundForRoute(routeId: string) {
   if (routeId === "upgrades") return "upgrades_workspace_background";
   if (routeId === "civilization") return "civilization_workspace_background";
   if (routeId === "events") return "events_workspace_background";
-  if (routeId === "galaxy" || routeId === "solar-system" || routeId === "discovery") return "galaxy_workspace_background";
+  if (routeId === "galaxy" || routeId === "solar-system" || routeId === "discovery" || routeId === "discoveries") return "galaxy_workspace_background";
   if (routeId === "spaceport") return "spaceport_workspace_background";
   return `${routeId}_workspace_background`;
 }
@@ -977,6 +977,7 @@ export default function App() {
               <Route path="earth" element={<LazyDataRoute component={EarthRoute} label="Earth" />} />
               <Route path="solar-system" element={<LazyDataRoute component={SolarSystemRoute} label="Solar System" />} />
               <Route path="discovery" element={<LazyDataRoute component={DiscoveryRoute} label="Discovery" />} />
+              <Route path="discoveries" element={<LazyDataRoute component={DiscoveryRoute} label="Discoveries" />} />
             </Route>
             <Route path="art-review" element={<LazyDataRoute component={ArtReviewRoute} label="Art Review" />} />
             <Route path="parity-review" element={<LazyDataRoute component={ParityReviewRoute} label="Parity Review" />} />

@@ -56,7 +56,8 @@ export const TEMPORARY_STUDIO_SHELL_CONTRACT: StudioShellContract = {
     { id: "resources", label: "Resources", path: "/resources", screenId: "resources", presentationMode: "shell_workspace" },
     { id: "earth", label: "Earth", path: "/earth", screenId: "earth", presentationMode: "shell_workspace" },
     { id: "solar-system", label: "Solar System", path: "/solar-system", screenId: "solar-system", presentationMode: "shell_workspace" },
-    { id: "discovery", label: "Discovery", path: "/discovery", screenId: "discovery", presentationMode: "shell_workspace" }
+    { id: "discovery", label: "Discovery", path: "/discovery", screenId: "discovery", presentationMode: "shell_workspace" },
+    { id: "discoveries", label: "Discoveries", path: "/discoveries", screenId: "discovery", presentationMode: "shell_workspace" }
   ],
   fullScreenTakeovers: ["loading", "welcome", "login", "signup", "forgot-password", "reset-password", "save-conflict"]
 };

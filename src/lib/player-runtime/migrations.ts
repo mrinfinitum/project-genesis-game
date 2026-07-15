@@ -1,4 +1,5 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
+import { normalizeDiscoveryJournal } from "@/lib/discovery/journal";
 import { CREDITS_ECONOMY_ID, getEconomyResourceIds, getPrimaryHudResourceIds, LABOR_ECONOMY_ID, LEGACY_CIVILIZATION_ENERGY_ECONOMY_ID, POPULATION_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "./economy";
 import { createNewPlayerRuntimeState } from "./initializer";
 import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId, resolveSelectedAiAgent, resolveSelectedAiAgentVariant } from "./ai-agent";
@@ -176,6 +177,7 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
       ...seed.colonies,
       ...(record.colonies ?? {})
     },
+    discovery: normalizeDiscoveryJournal(record.discovery),
     unresolved: {
       economy: normalizeNumberMap(record.unresolved?.economy),
       economyRates: normalizeNumberMap(record.unresolved?.economyRates),
@@ -329,6 +331,11 @@ export function migratePlayerRuntimeState(raw: unknown, content: GameRuntimeData
   if (!next.aiAgent.unlockedAiAgentVariantIds.includes(defaultAiAgentVariantId)) {
     next.aiAgent.unlockedAiAgentVariantIds.push(defaultAiAgentVariantId);
     next.unresolved.migrationNotes.push(`Unlocked default AI Agent variant ${defaultAiAgentVariantId}.`);
+  }
+
+  if (previousSaveVersion < 13) {
+    next.discovery = normalizeDiscoveryJournal(record.discovery);
+    next.unresolved.migrationNotes.push("Initialized Discovery Journal save fields.");
   }
 
   const resolvedVariant = resolveSelectedAiAgentVariant(content, next);

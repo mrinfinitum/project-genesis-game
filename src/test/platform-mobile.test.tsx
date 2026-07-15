@@ -20,11 +20,11 @@ async function bundledRuntime() {
 }
 
 describe("mobile platform preparation", () => {
-  it("loads Studio iOS and Android presentation profiles from contentVersion 14", async () => {
+  it("loads Studio iOS and Android presentation profiles from current content", async () => {
     const runtime = await bundledRuntime();
     const profiles = getMobilePresentationProfiles(runtime);
 
-    expect(runtime.metadata.contentVersion).toBe(14);
+    expect(runtime.metadata.contentVersion).toBeGreaterThanOrEqual(20);
     expect(profiles.ios?.platform).toBe("ios");
     expect(profiles.android?.platform).toBe("android");
     expect(profiles.ios?.safeAreaPolicy).toMatchObject({ minimumEdgePadding: 16, topHudSafeOffset: 20 });
