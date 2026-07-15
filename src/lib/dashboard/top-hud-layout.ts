@@ -31,7 +31,7 @@ export const TOP_HUD_SPACING = {
   iconCanvasSize: 50,
   valueLineHeight: 34,
   rateLineHeight: 22,
-  valueFontSize: 31,
+  valueFontSize: 28,
   rateFontSize: 17,
   tolerancePx: 2
 } as const;
