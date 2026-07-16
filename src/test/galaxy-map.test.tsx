@@ -208,4 +208,22 @@ describe("persistent 3D semantic galaxy map", () => {
     await user.click(within(screen.getByTestId("galaxy-map-detail-panel")).getByRole("button", { name: /^survey$/i }));
     expect(map).toHaveAttribute("data-exploration-state", "surveyed");
   });
+
+  it("shows planet evaluation choices when a planet is selected", async () => {
+    const user = userEvent.setup();
+    render(<GalaxySemanticMap data={runtime} playerRuntime={runtimeInEra(runtime, "survival")} entry="solar-system" />);
+    const map = screen.getByTestId("galaxy-semantic-map");
+    const fallback = screen.getByTestId("galaxy-map-fallback");
+    const planetButton = await within(fallback).findByRole("button", { name: /sol system 1/i });
+
+    await user.click(planetButton);
+
+    const panel = screen.getByTestId("planet-evaluation-panel");
+    expect(map).toHaveAttribute("data-selected-object-id", "BODY-000-00-01");
+    expect(panel).toHaveAttribute("data-opportunity-profile-source", "derived-fallback");
+    expect(within(panel).getByText("Planet Evaluation")).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: /colonize/i })).toBeInTheDocument();
+    await user.click(within(panel).getByRole("button", { name: /catalog/i }));
+    expect(within(panel).getByText(/selected action/i)).toBeInTheDocument();
+  });
 });

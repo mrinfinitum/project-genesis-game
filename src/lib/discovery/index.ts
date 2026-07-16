@@ -6,6 +6,7 @@ export * from "./encyclopedia";
 export * from "./environment";
 export * from "./exploration-gameplay";
 export * from "./journal";
+export * from "./planet-evaluation";
 export * from "./registry-client";
 export * from "./rewards";
 export * from "./runtime-adapter";

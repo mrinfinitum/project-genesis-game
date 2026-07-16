@@ -11,8 +11,10 @@ import {
   completeExplorationSurvey,
   createExplorationExpedition,
   launchExplorationProbe,
+  resolvePlanetEvaluation,
   startExplorationScan,
-  type ExplorationTarget
+  type ExplorationTarget,
+  type PlanetEvaluationActionId
 } from "@/lib/discovery";
 import {
   composeVisibleNodes,
@@ -128,6 +130,13 @@ function toExplorationTarget(node: VisibleMapNode): ExplorationTarget {
     canTravel: node.canTravel,
     classification: node.classification
   };
+}
+
+function evaluationTone(score: number) {
+  if (score >= 75) return "text-emerald-100";
+  if (score >= 45) return "text-cyan-100";
+  if (score >= 25) return "text-amber-100";
+  return "text-slate-300";
 }
 
 function CameraRig({ level, focusTarget }: { level: SemanticZoomLevel; focusTarget?: VisibleMapNode["coordinates"] }) {
@@ -435,6 +444,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
   const visibility = useMemo(() => resolveTechnologyVisibility(data, playerRuntime), [data, playerRuntime]);
   const [state, setState] = usePersistentGalaxyState(model, visibility, entry);
   const [explorationRuntime, setExplorationRuntime] = useState(playerRuntime);
+  const [planetEvaluationChoices, setPlanetEvaluationChoices] = useState<Record<string, PlanetEvaluationActionId>>({});
   const [hoveredId, setHoveredId] = useState<string | undefined>();
   const [webgl] = useState(() => canUseWebGL());
   const nodes = useMemo(() => composeVisibleNodes(model, state.level, { sectorId: state.sectorId, systemId: state.systemId, visibility, probedIds: state.probedIds }), [model, state.level, state.sectorId, state.systemId, state.probedIds, visibility]);
@@ -455,6 +465,8 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
   const selectedProbeMission = selectedTarget
     ? Object.values(explorationRuntime.discovery.probeMissions ?? {}).find((mission) => mission.targetId === selectedTarget.id && mission.status !== "completed" && mission.status !== "failed")
     : undefined;
+  const selectedPlanetEvaluation = selectedTarget ? resolvePlanetEvaluation(data, selectedTarget, { discoveryState: selectedExplorationState, canShowRegistry: selected?.canShowRegistry }) : undefined;
+  const selectedPlanetChoice = selectedPlanetEvaluation ? planetEvaluationChoices[selectedPlanetEvaluation.targetId] : undefined;
   const recentDiscoveries = explorationRuntime.discovery.recentDiscoveries?.slice(0, 3) ?? [];
   const currentSector = model.sectors.find((sector) => sector.id === state.sectorId);
   const currentSystem = (model.systemsBySectorId[state.sectorId] ?? []).find((system) => system.id === state.systemId);
@@ -521,6 +533,25 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
   function createExpeditionSelected() {
     if (!selected) return;
     setExplorationRuntime((current) => createExplorationExpedition(current, toExplorationTarget(selected)).state);
+  }
+
+  function choosePlanetEvaluationAction(actionId: PlanetEvaluationActionId) {
+    if (!selectedPlanetEvaluation) return;
+    setPlanetEvaluationChoices((current) => ({ ...current, [selectedPlanetEvaluation.targetId]: actionId }));
+    if (actionId === "bookmark") bookmarkSelected();
+    if (actionId === "deep_probe") probeSelected();
+    if (actionId === "catalog" && selectedTarget) {
+      setExplorationRuntime((current) => ({
+        ...current,
+        discovery: {
+          ...current.discovery,
+          explorationStates: {
+            ...(current.discovery.explorationStates ?? {}),
+            [selectedTarget.id]: "catalogued"
+          }
+        }
+      }));
+    }
   }
 
   function travelSelected() {
@@ -687,6 +718,67 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
           <div className="mt-1 flex justify-between gap-3"><span>Survey Intel</span><span>{selectedSurvey ? `${Math.round(selectedSurvey.resources)}% resources` : "Hidden"}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Rewards</span><span>DP + Research, never crystals</span></div>
         </div>
+        {selectedPlanetEvaluation ? (
+          <div className="mt-4 rounded-sm border border-emerald-200/18 bg-black/34 px-3 py-3 text-[0.66rem] font-black uppercase text-cyan-50/70 shadow-[0_0_24px_rgba(16,185,129,0.12)]" data-testid="planet-evaluation-panel" data-opportunity-profile-source={selectedPlanetEvaluation.opportunityProfile.source} data-supports-colonization={String(selectedPlanetEvaluation.opportunityProfile.supportsColonization)}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="tracking-[0.18em] text-emerald-100/72">Planet Evaluation</div>
+                <div className="mt-1 text-sm text-white">{selectedPlanetEvaluation.planetName}</div>
+              </div>
+              <div className={`text-right ${selectedPlanetEvaluation.dangerLabel === "Low" ? "text-emerald-100" : selectedPlanetEvaluation.dangerLabel === "Medium" ? "text-amber-100" : "text-red-100"}`}>
+                Danger {selectedPlanetEvaluation.dangerLabel}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1">
+              <div className="flex justify-between gap-2"><span>Class</span><span className="text-white">{selectedPlanetEvaluation.planetClass}</span></div>
+              <div className="flex justify-between gap-2"><span>Registry</span><span className="text-white">{selectedPlanetEvaluation.registryState}</span></div>
+              <div className="flex justify-between gap-2"><span>Discovery</span><span className="text-white">{selectedPlanetEvaluation.discoveryState}</span></div>
+              <div className="flex justify-between gap-2"><span>Profile</span><span className="text-white">{selectedPlanetEvaluation.opportunityProfile.source === "studio" ? "Studio" : "Derived"}</span></div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1">
+              {([
+                ["Colonization", selectedPlanetEvaluation.scores.colonization],
+                ["Mining", selectedPlanetEvaluation.scores.mining],
+                ["Harvesting", selectedPlanetEvaluation.scores.harvesting],
+                ["Research", selectedPlanetEvaluation.scores.research],
+                ["Trade", selectedPlanetEvaluation.scores.trade],
+                ["Tourism", selectedPlanetEvaluation.scores.tourism],
+                ["Terraforming", selectedPlanetEvaluation.scores.terraforming],
+                ["Orbital Infra", selectedPlanetEvaluation.scores.orbitalInfrastructure],
+                ["Danger", selectedPlanetEvaluation.scores.danger]
+              ] as const).map(([label, score]) => (
+                <div key={label} className="flex justify-between gap-2">
+                  <span>{label}</span>
+                  <span className={evaluationTone(score)}>{score}%</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 border-t border-cyan-100/12 pt-3">
+              <div className="text-cyan-100/48">Recommended</div>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {selectedPlanetEvaluation.recommendedActions.length ? selectedPlanetEvaluation.recommendedActions.map((recommendation) => (
+                  <span key={recommendation.id} className="rounded-sm border border-emerald-100/22 bg-emerald-300/10 px-2 py-1 text-emerald-50">{recommendation.label}</span>
+                )) : <span className="text-cyan-50/52">No primary action</span>}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {selectedPlanetEvaluation.validActions.map((planetAction) => (
+                <button
+                  key={planetAction.id}
+                  type="button"
+                  className={`min-h-8 rounded-sm border px-2 py-1 text-left text-[0.6rem] font-black uppercase ${selectedPlanetChoice === planetAction.id ? "border-emerald-100 bg-emerald-300/18 text-white" : "border-cyan-100/18 bg-cyan-300/8 text-cyan-50 hover:border-cyan-100/42"}`}
+                  onClick={() => choosePlanetEvaluationAction(planetAction.id)}
+                  title={planetAction.reason}
+                >
+                  {planetAction.label}
+                </button>
+              ))}
+            </div>
+            {selectedPlanetChoice ? (
+              <div className="mt-2 text-cyan-100/62">Selected Action: <span className="text-white">{selectedPlanetEvaluation.validActions.find((planetAction) => planetAction.id === selectedPlanetChoice)?.label}</span></div>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mt-4 rounded-sm border border-cyan-200/12 bg-black/28 px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68">
           <div className="flex justify-between gap-3"><span>Route Preview</span><span>{routePreview ? `${Math.round(routePreview.distance)}u` : "--"}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Stops / Fuel</span><span>{routePreview ? `${routePreview.stops} / ${routePreview.fuel}` : "--"}</span></div>
