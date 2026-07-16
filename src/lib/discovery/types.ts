@@ -2,6 +2,7 @@ import type { GameRuntimeData } from "@/lib/canonical-runtime";
 
 export type DiscoveryPublishState = "published" | "ready" | "draft" | "deprecated" | string;
 export type DiscoveryPersonalState = "unknown" | "detected" | "partially_scanned" | "identified" | "analyzed" | "collected" | "decoded" | "researched";
+export type ExplorationDiscoveryState = "unknown" | "detected" | "probed" | "scanned" | "surveyed" | "explored" | "catalogued" | "colonized";
 export type DiscoveryRegistryState = "unknown" | "available" | "pending_verification" | "first_discovered_by_player" | "globally_discovered";
 export type DiscoveryCollectionType = "observation" | "biological_sample" | "mineral_extraction" | "artifact_recovery" | "data_decoding" | "protected" | "special_containment" | "site_excavation" | string;
 
@@ -337,7 +338,97 @@ export type DiscoveryJournalState = {
   discoveryLocationHistory: Record<string, string[]>;
   discoverySpecimenInventory: Record<string, number>;
   bookmarks?: string[];
+  explorationStates?: Record<string, ExplorationDiscoveryState>;
+  scanJobs?: Record<string, ExplorationScanJob>;
+  probeMissions?: Record<string, ExplorationProbeMission>;
+  surveyRecords?: Record<string, ExplorationSurveyRecord>;
+  explorationScores?: Record<string, ExplorationScoreRecord>;
+  recentDiscoveries?: ExplorationJournalEntry[];
+  encyclopediaProgress?: Record<string, ExplorationEncyclopediaTier>;
+  expeditionRecords?: ExplorationExpeditionRecord[];
   privateNotes?: Record<string, string>;
+};
+
+export type ExplorationTargetType = "galaxy" | "sector" | "system" | "star" | "planet" | "moon" | "anomaly" | "lifeform" | "artifact" | "resource" | "discovery";
+
+export type ExplorationTarget = {
+  id: string;
+  type: ExplorationTargetType;
+  label: string;
+  distance: number;
+  knowledgeState?: string;
+  rangeState?: string;
+  canProbe?: boolean;
+  canTravel?: boolean;
+  classification?: string;
+};
+
+export type ExplorationScanJob = {
+  id: string;
+  targetId: string;
+  targetType: ExplorationTargetType;
+  status: "queued" | "scanning" | "completed" | "failed";
+  startedAt: string;
+  completesAt: string;
+  completedAt?: string;
+  durationSeconds: number;
+  revealed: Array<"name" | "class" | "resources" | "discoveries" | "threats" | "biome" | "life" | "registry">;
+};
+
+export type ExplorationProbeMission = {
+  id: string;
+  targetId: string;
+  targetType: ExplorationTargetType;
+  status: "preparing" | "traveling" | "scanning" | "returning" | "failed" | "destroyed" | "lost" | "completed";
+  launchedAt: string;
+  completesAt: string;
+  completedAt?: string;
+  risk: number;
+  range: number;
+};
+
+export type ExplorationSurveyRecord = {
+  targetId: string;
+  updatedAt: string;
+  surface: number;
+  resources: number;
+  life: number;
+  ruins: number;
+  hazards: number;
+  weather?: string;
+  temperature?: string;
+  gravity?: string;
+  atmosphere?: string;
+};
+
+export type ExplorationScoreRecord = {
+  targetId: string;
+  exploration: number;
+  survey: number;
+  discovery: number;
+  completion: number;
+  updatedAt: string;
+};
+
+export type ExplorationJournalEntry = {
+  id: string;
+  targetId: string;
+  targetType: ExplorationTargetType;
+  label: string;
+  event: "detected" | "probed" | "scanned" | "surveyed" | "explored" | "catalogued" | "colonized" | "rewarded";
+  occurredAt: string;
+};
+
+export type ExplorationEncyclopediaTier = "unknown" | "known" | "analyzed" | "complete";
+
+export type ExplorationExpeditionRecord = {
+  id: string;
+  targetId: string;
+  targetType: ExplorationTargetType;
+  routeId: string;
+  status: "planned" | "traveling" | "surveying" | "returning" | "completed" | "failed";
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type DiscoveryPendingClaim = {

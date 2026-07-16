@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { ChevronLeft, Crosshair, Radar, Route, ScanSearch, Telescope } from "lucide-react";
+import { Bookmark, ChevronLeft, Crosshair, FlaskConical, Radar, Route, ScanSearch, Telescope } from "lucide-react";
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
+import {
+  bookmarkExplorationTarget,
+  completeExplorationProbe,
+  completeExplorationScan,
+  completeExplorationSurvey,
+  createExplorationExpedition,
+  launchExplorationProbe,
+  startExplorationScan,
+  type ExplorationTarget
+} from "@/lib/discovery";
 import {
   composeVisibleNodes,
   createPersistentUniverseModel,
@@ -103,6 +113,21 @@ function distanceClass(rangeState: VisibleMapNode["rangeState"]) {
   if (rangeState === "probe_reachable") return "text-cyan-100";
   if (rangeState === "blocked_by_technology") return "text-amber-100";
   return "text-cyan-100/54";
+}
+
+function toExplorationTarget(node: VisibleMapNode): ExplorationTarget {
+  const distance = Math.hypot(node.coordinates[0], node.coordinates[1], node.coordinates[2]);
+  return {
+    id: node.id,
+    type: node.type === "system" ? "system" : node.type === "star" ? "star" : node.type === "planet" ? "planet" : node.type === "moon" ? "moon" : node.type === "sector" ? "sector" : node.type === "galaxy" ? "galaxy" : "anomaly",
+    label: node.label,
+    distance,
+    knowledgeState: node.knowledgeState,
+    rangeState: node.rangeState,
+    canProbe: node.canProbe,
+    canTravel: node.canTravel,
+    classification: node.classification
+  };
 }
 
 function CameraRig({ level, focusTarget }: { level: SemanticZoomLevel; focusTarget?: VisibleMapNode["coordinates"] }) {
@@ -409,6 +434,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
   const model = useMemo(() => createPersistentUniverseModel(data), [data]);
   const visibility = useMemo(() => resolveTechnologyVisibility(data, playerRuntime), [data, playerRuntime]);
   const [state, setState] = usePersistentGalaxyState(model, visibility, entry);
+  const [explorationRuntime, setExplorationRuntime] = useState(playerRuntime);
   const [hoveredId, setHoveredId] = useState<string | undefined>();
   const [webgl] = useState(() => canUseWebGL());
   const nodes = useMemo(() => composeVisibleNodes(model, state.level, { sectorId: state.sectorId, systemId: state.systemId, visibility, probedIds: state.probedIds }), [model, state.level, state.sectorId, state.systemId, state.probedIds, visibility]);
@@ -419,6 +445,17 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
   const hoveredNode = nodes.find((node) => node.id === hoveredId);
   const currentNode = nodes.find((node) => node.id === model.currentSystemId) ?? nodes[0];
   const routePreview = selected && currentNode ? createRoutePreview(currentNode, selected) : undefined;
+  const selectedTarget = selected ? toExplorationTarget(selected) : undefined;
+  const selectedExplorationState = selectedTarget ? explorationRuntime.discovery.explorationStates?.[selectedTarget.id] ?? "unknown" : "unknown";
+  const selectedScore = selectedTarget ? explorationRuntime.discovery.explorationScores?.[selectedTarget.id] : undefined;
+  const selectedSurvey = selectedTarget ? explorationRuntime.discovery.surveyRecords?.[selectedTarget.id] : undefined;
+  const selectedScanJob = selectedTarget
+    ? Object.values(explorationRuntime.discovery.scanJobs ?? {}).find((job) => job.targetId === selectedTarget.id && job.status === "scanning")
+    : undefined;
+  const selectedProbeMission = selectedTarget
+    ? Object.values(explorationRuntime.discovery.probeMissions ?? {}).find((mission) => mission.targetId === selectedTarget.id && mission.status !== "completed" && mission.status !== "failed")
+    : undefined;
+  const recentDiscoveries = explorationRuntime.discovery.recentDiscoveries?.slice(0, 3) ?? [];
   const currentSector = model.sectors.find((sector) => sector.id === state.sectorId);
   const currentSystem = (model.systemsBySectorId[state.sectorId] ?? []).find((system) => system.id === state.systemId);
   const selectedLabel = selected?.label ?? "No object selected";
@@ -441,9 +478,49 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
 
   function probeSelected() {
     if (!selected?.canProbe) return;
+    const target = toExplorationTarget(selected);
+    setExplorationRuntime((current) => {
+      const active = Object.values(current.discovery.probeMissions ?? {}).find((mission) => mission.targetId === target.id && mission.status !== "completed" && mission.status !== "failed");
+      if (active) {
+        const completed = completeExplorationProbe(data, current, active.id, target);
+        return completed.ok ? completed.state : current;
+      }
+      return launchExplorationProbe(current, target).state;
+    });
     setState((current) => current.probedIds.includes(selected.id)
       ? current
       : { ...current, selectedId: selected.id, focusedId: selected.id, probedIds: [...current.probedIds, selected.id] });
+  }
+
+  function startScanSelected() {
+    if (!selected) return;
+    const target = toExplorationTarget(selected);
+    setExplorationRuntime((current) => startExplorationScan(current, target).state);
+  }
+
+  function analyzeSelectedScan() {
+    if (!selected || !selectedScanJob) return;
+    const target = toExplorationTarget(selected);
+    setExplorationRuntime((current) => {
+      const completed = completeExplorationScan(data, current, selectedScanJob.id, target);
+      return completed.ok ? completed.state : current;
+    });
+  }
+
+  function surveySelected() {
+    if (!selected) return;
+    const target = toExplorationTarget(selected);
+    setExplorationRuntime((current) => completeExplorationSurvey(data, current, target));
+  }
+
+  function bookmarkSelected() {
+    if (!selected) return;
+    setExplorationRuntime((current) => bookmarkExplorationTarget(current, toExplorationTarget(selected)));
+  }
+
+  function createExpeditionSelected() {
+    if (!selected) return;
+    setExplorationRuntime((current) => createExplorationExpedition(current, toExplorationTarget(selected)).state);
   }
 
   function travelSelected() {
@@ -492,6 +569,9 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
       data-focused-object-id={state.focusedId ?? ""}
       data-hovered-object-id={hoveredId ?? ""}
       data-technology-gate={visibility.gateId}
+      data-exploration-state={selectedExplorationState}
+      data-active-scan-job={selectedScanJob?.id ?? ""}
+      data-active-probe-mission={selectedProbeMission?.id ?? ""}
       data-preloaded-context={`${state.sectorId}:${state.systemId}`}
       data-loaded-chunks={streaming.loadedChunks.length}
       data-gpu-instances={streaming.gpuInstances}
@@ -568,6 +648,45 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
             <Route className="h-4 w-4" /> Travel
           </button>
         </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-sky-100/24 bg-sky-300/10 text-[0.68rem] font-black uppercase text-sky-50 disabled:opacity-45" onClick={selectedScanJob ? analyzeSelectedScan : startScanSelected} disabled={!selected}>
+            <ScanSearch className="h-4 w-4" /> {selectedScanJob ? "Analyze" : "Start Scan"}
+          </button>
+          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-cyan-100/24 bg-cyan-300/10 text-[0.68rem] font-black uppercase text-cyan-50 disabled:opacity-45" onClick={surveySelected} disabled={!selected || selectedExplorationState === "unknown"}>
+            <FlaskConical className="h-4 w-4" /> Survey
+          </button>
+          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-cyan-100/18 bg-black/26 text-[0.68rem] font-black uppercase text-cyan-50 disabled:opacity-45" onClick={bookmarkSelected} disabled={!selected}>
+            <Bookmark className="h-4 w-4" /> Bookmark
+          </button>
+          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-emerald-100/18 bg-black/26 text-[0.68rem] font-black uppercase text-emerald-50 disabled:opacity-45" onClick={createExpeditionSelected} disabled={!selected || !routePreview}>
+            <Route className="h-4 w-4" /> Expedition
+          </button>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-black uppercase">
+          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+            <div className="text-cyan-100/48">Explore</div>
+            <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.exploration)}%` : "0%"}</div>
+          </div>
+          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+            <div className="text-cyan-100/48">Survey</div>
+            <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.survey)}%` : "0%"}</div>
+          </div>
+          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+            <div className="text-cyan-100/48">Discovery</div>
+            <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.discovery)}%` : "0%"}</div>
+          </div>
+          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+            <div className="text-cyan-100/48">Complete</div>
+            <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.completion)}%` : "0%"}</div>
+          </div>
+        </div>
+        <div className="mt-4 rounded-sm border border-cyan-200/12 bg-black/28 px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68" data-testid="exploration-gameplay-panel">
+          <div className="flex justify-between gap-3"><span>Exploration State</span><span className="text-white">{selectedExplorationState}</span></div>
+          <div className="mt-1 flex justify-between gap-3"><span>Scan</span><span>{selectedScanJob ? `Completes ${new Date(selectedScanJob.completesAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Ready"}</span></div>
+          <div className="mt-1 flex justify-between gap-3"><span>Probe</span><span>{selectedProbeMission ? selectedProbeMission.status : selected?.canProbe ? "Ready" : "Out of range"}</span></div>
+          <div className="mt-1 flex justify-between gap-3"><span>Survey Intel</span><span>{selectedSurvey ? `${Math.round(selectedSurvey.resources)}% resources` : "Hidden"}</span></div>
+          <div className="mt-1 flex justify-between gap-3"><span>Rewards</span><span>DP + Research, never crystals</span></div>
+        </div>
         <div className="mt-4 rounded-sm border border-cyan-200/12 bg-black/28 px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68">
           <div className="flex justify-between gap-3"><span>Route Preview</span><span>{routePreview ? `${Math.round(routePreview.distance)}u` : "--"}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Stops / Fuel</span><span>{routePreview ? `${routePreview.stops} / ${routePreview.fuel}` : "--"}</span></div>
@@ -599,7 +718,19 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
           <div className="flex justify-between gap-3"><span>Virtual Scale</span><span className="text-white">{Math.round(streaming.virtualSystems / 1000)}K systems</span></div>
           <div className="flex justify-between gap-3"><span>Transition</span><span className="text-white">{transitionLabel}</span></div>
           <div className="flex justify-between gap-3"><span>Missing Contracts</span><span className="text-amber-100">{model.audit.missingStudioContracts.length}</span></div>
+          <div className="flex justify-between gap-3"><span>Exploration State</span><span className="text-white">{selectedExplorationState}</span></div>
+          <div className="flex justify-between gap-3"><span>Journal</span><span className="text-white">{recentDiscoveries.length}</span></div>
         </div>
+        {recentDiscoveries.length ? (
+          <div className="mt-3 border-t border-cyan-100/12 pt-3">
+            {recentDiscoveries.map((entry) => (
+              <div key={entry.id} className="mt-1 flex justify-between gap-3 text-[0.62rem]">
+                <span className="truncate">{entry.label}</span>
+                <span className="text-cyan-100">{entry.event}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </aside>
     </section>
   );

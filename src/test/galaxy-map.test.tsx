@@ -200,5 +200,12 @@ describe("persistent 3D semantic galaxy map", () => {
     expect(map).toHaveAttribute("data-focused-object-id", "SEC-000");
 
     expect(within(screen.getByTestId("galaxy-map-detail-panel")).getByRole("button", { name: /^travel$/i })).toBeDisabled();
+
+    await user.click(within(screen.getByTestId("galaxy-map-detail-panel")).getByRole("button", { name: /start scan/i }));
+    expect(map.getAttribute("data-active-scan-job")).toContain("scan:SEC-000");
+    await user.click(within(screen.getByTestId("galaxy-map-detail-panel")).getByRole("button", { name: /analyze/i }));
+    expect(map).toHaveAttribute("data-exploration-state", "scanned");
+    await user.click(within(screen.getByTestId("galaxy-map-detail-panel")).getByRole("button", { name: /^survey$/i }));
+    expect(map).toHaveAttribute("data-exploration-state", "surveyed");
   });
 });

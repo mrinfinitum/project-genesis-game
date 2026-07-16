@@ -4,6 +4,7 @@ export * from "./diagnostics";
 export * from "./eligibility";
 export * from "./encyclopedia";
 export * from "./environment";
+export * from "./exploration-gameplay";
 export * from "./journal";
 export * from "./registry-client";
 export * from "./rewards";
