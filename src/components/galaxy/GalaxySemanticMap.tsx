@@ -7,6 +7,9 @@ import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import {
   composeVisibleNodes,
   createPersistentUniverseModel,
+  createKnownSearchIndex,
+  createRoutePreview,
+  createStreamingSnapshot,
   resolveSemanticZoomLevel,
   resolveStarSystemPresentation,
   resolveTechnologyVisibility,
@@ -100,38 +103,90 @@ function distanceClass(rangeState: VisibleMapNode["rangeState"]) {
 }
 
 function CameraRig({ level }: { level: SemanticZoomLevel }) {
-  const target = level === "galaxy" ? new THREE.Vector3(0, 0, 0) : level === "sector" ? new THREE.Vector3(0, 0, 0) : new THREE.Vector3(0, 0, 0);
+  const target = new THREE.Vector3(0, 0, 0);
   useFrame(({ camera }) => {
-    const desired = level === "galaxy" ? new THREE.Vector3(0, 190, 520) : level === "sector" ? new THREE.Vector3(0, 82, 154) : new THREE.Vector3(0, 44, 98);
+    const desired = level === "universe"
+      ? new THREE.Vector3(0, 360, 920)
+      : level === "galaxy"
+        ? new THREE.Vector3(0, 190, 520)
+        : level === "sector"
+          ? new THREE.Vector3(0, 82, 154)
+          : new THREE.Vector3(0, 44, 98);
     camera.position.lerp(desired, 0.045);
     camera.lookAt(target);
   });
   return null;
 }
 
-function GalaxyNodeMesh({ node, onSelect, onEnter }: { node: VisibleMapNode; onSelect: (node: VisibleMapNode) => void; onEnter: (node: VisibleMapNode) => void }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const color = node.knowledgeState === "charted" ? "#5eead4" : node.canProbe ? "#38bdf8" : "#475569";
+function InstancedNodeField({ nodes, onSelect, onEnter }: { nodes: VisibleMapNode[]; onSelect: (node: VisibleMapNode) => void; onEnter: (node: VisibleMapNode) => void }) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const color = useMemo(() => new THREE.Color(), []);
+  const matrix = useMemo(() => new THREE.Matrix4(), []);
+  const position = useMemo(() => new THREE.Vector3(), []);
+  const scale = useMemo(() => new THREE.Vector3(), []);
+
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    nodes.forEach((node, index) => {
+      const size = node.type === "sector" ? Math.max(8, node.radius * 0.45) : Math.max(2.4, node.radius);
+      position.set(node.coordinates[0], node.coordinates[1], node.coordinates[2]);
+      scale.setScalar(size);
+      matrix.compose(position, new THREE.Quaternion(), scale);
+      mesh.setMatrixAt(index, matrix);
+      color.set(node.knowledgeState === "charted" ? "#5eead4" : node.canProbe ? "#38bdf8" : "#475569");
+      mesh.setColorAt(index, color);
+    });
+    mesh.count = nodes.length;
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }, [color, matrix, nodes, position, scale]);
+
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
-    const pulse = 1 + Math.sin(clock.elapsedTime * 2.4 + node.coordinates[0]) * 0.045;
-    meshRef.current.scale.setScalar(pulse);
+    meshRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.2) * 0.018;
   });
+
   return (
-    <mesh
+    <instancedMesh
       ref={meshRef}
-      position={node.coordinates}
+      args={[undefined, undefined, Math.max(1, nodes.length)]}
       onClick={(event) => {
         event.stopPropagation();
-        onSelect(node);
+        const node = typeof event.instanceId === "number" ? nodes[event.instanceId] : undefined;
+        if (node) onSelect(node);
       }}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        onEnter(node);
+        const node = typeof event.instanceId === "number" ? nodes[event.instanceId] : undefined;
+        if (node) onEnter(node);
       }}
     >
-      <sphereGeometry args={[node.type === "sector" ? Math.max(8, node.radius * 0.45) : Math.max(2.4, node.radius), 18, 18]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={node.knowledgeState === "charted" ? 1.2 : 0.45} transparent opacity={node.knowledgeState === "unknown" ? 0.34 : 0.82} />
+      <sphereGeometry args={[1, 18, 18]} />
+      <meshStandardMaterial vertexColors emissive="#0e7490" emissiveIntensity={0.55} transparent opacity={0.86} />
+    </instancedMesh>
+  );
+}
+
+function CurrentLocationBeacon({ level }: { level: SemanticZoomLevel }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const pulse = 1 + Math.sin(clock.elapsedTime * 3.2) * 0.12;
+    ref.current.scale.setScalar(pulse);
+  });
+  if (level === "system") {
+    return (
+      <mesh ref={ref} position={[0, 13, 0]}>
+        <octahedronGeometry args={[2.2, 0]} />
+        <meshStandardMaterial color="#34d399" emissive="#34d399" emissiveIntensity={1.6} />
+      </mesh>
+    );
+  }
+  return (
+    <mesh ref={ref} position={[0, 0, 0]}>
+      <torusGeometry args={[12, 0.55, 10, 48]} />
+      <meshBasicMaterial color="#34d399" transparent opacity={0.76} />
     </mesh>
   );
 }
@@ -192,6 +247,7 @@ function UniverseScene({ model, level, nodes, systemId, visibility, onSelect, on
       <ambientLight intensity={0.45} />
       <pointLight position={[20, 80, 120]} intensity={1.1} color="#67e8f9" />
       <CameraRig level={level} />
+      <CurrentLocationBeacon level={level} />
       {starField.map((position, index) => (
         <mesh key={index} position={position}>
           <sphereGeometry args={[0.75 + (index % 3) * 0.25, 8, 8]} />
@@ -201,9 +257,7 @@ function UniverseScene({ model, level, nodes, systemId, visibility, onSelect, on
       {level === "system" ? (
         <SystemScene model={model} systemId={systemId} visibility={visibility} onSelect={onSelect} />
       ) : (
-        <group>
-          {nodes.map((node) => <GalaxyNodeMesh key={node.id} node={node} onSelect={onSelect} onEnter={onEnter} />)}
-        </group>
+        <InstancedNodeField nodes={nodes} onSelect={onSelect} onEnter={onEnter} />
       )}
     </>
   );
@@ -237,7 +291,11 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
   const [state, setState] = usePersistentGalaxyState(model, visibility, entry);
   const [webgl] = useState(() => canUseWebGL());
   const nodes = useMemo(() => composeVisibleNodes(model, state.level, { sectorId: state.sectorId, systemId: state.systemId, visibility }), [model, state.level, state.sectorId, state.systemId, visibility]);
+  const streaming = useMemo(() => createStreamingSnapshot(model, state.level, { sectorId: state.sectorId, systemId: state.systemId, visibility }), [model, state.level, state.sectorId, state.systemId, visibility]);
+  const knownSearchIndex = useMemo(() => createKnownSearchIndex(nodes), [nodes]);
   const selected = nodes.find((node) => node.id === state.selectedId) ?? nodes[0];
+  const currentNode = nodes.find((node) => node.id === model.currentSystemId) ?? nodes[0];
+  const routePreview = selected && currentNode ? createRoutePreview(currentNode, selected) : undefined;
   const currentSector = model.sectors.find((sector) => sector.id === state.sectorId);
   const currentSystem = (model.systemsBySectorId[state.sectorId] ?? []).find((system) => system.id === state.systemId);
   const selectedLabel = selected?.label ?? "No object selected";
@@ -286,6 +344,10 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
       data-transition-state={state.transitionState}
       data-selected-object-id={state.selectedId ?? ""}
       data-preloaded-context={`${state.sectorId}:${state.systemId}`}
+      data-loaded-chunks={streaming.loadedChunks.length}
+      data-gpu-instances={streaming.gpuInstances}
+      data-virtual-sectors={model.virtualCounts.sectors}
+      data-virtual-systems={model.virtualCounts.systems}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(20,184,166,0.18),transparent_32rem),radial-gradient(circle_at_72%_18%,rgba(59,130,246,0.16),transparent_26rem)]" />
       <div className="absolute inset-0">
@@ -354,16 +416,26 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
             <Route className="h-4 w-4" /> Enter
           </button>
         </div>
+        <div className="mt-4 rounded-sm border border-cyan-200/12 bg-black/28 px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68">
+          <div className="flex justify-between gap-3"><span>Route Preview</span><span>{routePreview ? `${Math.round(routePreview.distance)}u` : "--"}</span></div>
+          <div className="mt-1 flex justify-between gap-3"><span>Stops / Fuel</span><span>{routePreview ? `${routePreview.stops} / ${routePreview.fuel}` : "--"}</span></div>
+          <div className="mt-1 flex justify-between gap-3"><span>Status</span><span className={routePreview?.travelAllowed ? "text-emerald-100" : "text-amber-100"}>{routePreview?.requiresProbeFirst ? "Probe First" : routePreview?.travelAllowed ? "Travel Ready" : "Plot Only"}</span></div>
+        </div>
       </aside>
 
-      <aside className="absolute bottom-5 right-5 z-10 w-[20rem] rounded-sm border border-cyan-100/18 bg-slate-950/70 p-4 text-xs font-black uppercase text-cyan-50/74 backdrop-blur-md">
+      <aside className="absolute bottom-5 right-5 z-10 w-[20rem] rounded-sm border border-cyan-100/18 bg-slate-950/70 p-4 text-xs font-black uppercase text-cyan-50/74 backdrop-blur-md" data-testid="galaxy-map-dev-hud">
         <div className="flex items-center gap-2 text-cyan-100">
           <Telescope className="h-4 w-4" />
-          Runtime Audit
+          Galaxy Engine
         </div>
         <div className="mt-3 space-y-2">
-          <div className="flex justify-between gap-3"><span>Seed</span><span className="truncate text-right text-white">{model.audit.seed}</span></div>
-          <div className="flex justify-between gap-3"><span>Hierarchy</span><span className={model.audit.usesCanonicalHierarchy ? "text-emerald-100" : "text-amber-100"}>{model.audit.usesCanonicalHierarchy ? "Studio" : "Fallback"}</span></div>
+          <div className="flex justify-between gap-3"><span>Chunks</span><span className="text-white">{streaming.loadedChunks.length}</span></div>
+          <div className="flex justify-between gap-3"><span>LOD</span><span className="text-white">{streaming.lod}</span></div>
+          <div className="flex justify-between gap-3"><span>Visible Sectors</span><span className="text-white">{streaming.visibleSectors}</span></div>
+          <div className="flex justify-between gap-3"><span>Visible Systems</span><span className="text-white">{streaming.visibleSystems}</span></div>
+          <div className="flex justify-between gap-3"><span>GPU Instances</span><span className="text-white">{streaming.gpuInstances}</span></div>
+          <div className="flex justify-between gap-3"><span>Searchable</span><span className="text-white">{knownSearchIndex.length}</span></div>
+          <div className="flex justify-between gap-3"><span>Virtual Scale</span><span className="text-white">{Math.round(streaming.virtualSystems / 1000)}K systems</span></div>
           <div className="flex justify-between gap-3"><span>Transition</span><span className="text-white">{transitionLabel}</span></div>
           <div className="flex justify-between gap-3"><span>Missing Contracts</span><span className="text-amber-100">{model.audit.missingStudioContracts.length}</span></div>
         </div>

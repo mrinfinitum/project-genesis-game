@@ -2,16 +2,27 @@ import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import type {
   MapRangeProfile,
+  RoutePreview,
+  SearchableMapResult,
   SemanticZoomInput,
   SemanticZoomLevel,
   SemanticZoomResolution,
+  SpatialChunk,
   StarSystemPresentation,
+  StreamingSnapshot,
   TechnologyVisibility,
   UniverseGenerationAudit,
   UniverseMapModel,
   UniverseMapNode,
   VisibleMapNode
 } from "./types";
+
+const GALAXY_SECTOR_COUNT = 12_000;
+const GALAXY_CHUNK_COUNT = 96;
+const SECTOR_SYSTEM_COUNT = 1_024;
+const SECTOR_CHUNK_COUNT = 32;
+const FALLBACK_VISIBLE_SECTOR_COUNT = 120;
+const FALLBACK_VISIBLE_SYSTEM_COUNT = 144;
 
 const MISSING_STUDIO_CONTRACTS = [
   "universeSeed",
@@ -64,8 +75,9 @@ function spherePoint(random: Rng, radius: number): [number, number, number] {
 }
 
 function clampLevel(level: SemanticZoomLevel, visibility: TechnologyVisibility): SemanticZoomLevel {
+  if (level === "universe" && visibility.canAccessUniverse) return "universe";
   if (level === "galaxy" && visibility.canAccessGalaxy) return "galaxy";
-  if ((level === "galaxy" || level === "sector") && visibility.canAccessSector) return "sector";
+  if ((level === "universe" || level === "galaxy" || level === "sector") && visibility.canAccessSector) return "sector";
   return "system";
 }
 
@@ -101,8 +113,18 @@ export function auditPersistentUniverseContract(content: GameRuntimeData): Unive
 
 export function createPersistentUniverseModel(content: GameRuntimeData): UniverseMapModel {
   const audit = auditPersistentUniverseContract(content);
+  const universe: UniverseMapNode = {
+    id: "UNI-NOVERIS-PRIME",
+    type: "universe",
+    seed: `${audit.seed}:universe`,
+    canonicalName: "NOVERIS Universe",
+    displayName: "NOVERIS Universe",
+    coordinates: [0, 0, 0],
+    radius: 4_200
+  };
   const galaxy: UniverseMapNode = {
     id: "GAL-MILKY-WAY",
+    parentId: universe.id,
     type: "galaxy",
     seed: `${audit.seed}:galaxy`,
     canonicalName: "Milky Way",
@@ -111,17 +133,34 @@ export function createPersistentUniverseModel(content: GameRuntimeData): Univers
     radius: 460
   };
 
-  const sectors: UniverseMapNode[] = Array.from({ length: 18 }, (_, index) => {
+  const galaxyChunks: SpatialChunk[] = Array.from({ length: GALAXY_CHUNK_COUNT }, (_, index) => {
+    const random = seededRandom(`${audit.seed}:galaxy-chunk:${index}`);
+    return {
+      id: `GCH-${String(index).padStart(3, "0")}`,
+      level: "galaxy",
+      parentId: galaxy.id,
+      origin: spherePoint(random, 410),
+      boundsRadius: 70 + random() * 42,
+      nodeCount: Math.ceil(GALAXY_SECTOR_COUNT / GALAXY_CHUNK_COUNT),
+      loaded: index < 8,
+      lod: "density"
+    };
+  });
+
+  const sectors: UniverseMapNode[] = Array.from({ length: FALLBACK_VISIBLE_SECTOR_COUNT }, (_, index) => {
     const id = `SEC-${String(index).padStart(3, "0")}`;
     const random = seededRandom(`${audit.seed}:${id}`);
+    const chunk = galaxyChunks[index % galaxyChunks.length];
+    const [x, y, z] = spherePoint(random, chunk.boundsRadius);
     return {
       id,
       parentId: galaxy.id,
       type: "sector",
+      chunkId: chunk.id,
       seed: `${audit.seed}:${id}`,
       canonicalName: index === 0 ? "Orion Sector" : `Sector ${String(index + 1).padStart(2, "0")}`,
       displayName: index === 0 ? "Orion Sector" : `Sector ${String(index + 1).padStart(2, "0")}`,
-      coordinates: spherePoint(random, 380),
+      coordinates: [chunk.origin[0] + x, chunk.origin[1] + y, chunk.origin[2] + z],
       radius: 22 + random() * 18,
       classification: index === 0 ? "Current Region" : "Unresolved Sector"
     };
@@ -129,21 +168,37 @@ export function createPersistentUniverseModel(content: GameRuntimeData): Univers
 
   const systemsBySectorId: Record<string, UniverseMapNode[]> = {};
   const bodiesBySystemId: Record<string, UniverseMapNode[]> = {};
+  const sectorChunksBySectorId: Record<string, SpatialChunk[]> = {};
 
   sectors.forEach((sector, sectorIndex) => {
-    const systemCount = 9 + (fnv1a(sector.id) % 5);
+    sectorChunksBySectorId[sector.id] = Array.from({ length: SECTOR_CHUNK_COUNT }, (_, chunkIndex) => {
+      const random = seededRandom(`${audit.seed}:${sector.id}:system-chunk:${chunkIndex}`);
+      return {
+        id: `SCH-${sector.id}-${String(chunkIndex).padStart(2, "0")}`,
+        level: "sector",
+        parentId: sector.id,
+        origin: spherePoint(random, 82),
+        boundsRadius: 18 + random() * 18,
+        nodeCount: Math.ceil(SECTOR_SYSTEM_COUNT / SECTOR_CHUNK_COUNT),
+        loaded: chunkIndex < 6,
+        lod: "point"
+      };
+    });
+    const systemCount = Math.min(FALLBACK_VISIBLE_SYSTEM_COUNT, SECTOR_SYSTEM_COUNT);
     systemsBySectorId[sector.id] = Array.from({ length: systemCount }, (_, systemIndex) => {
       const id = `SYS-${String(sectorIndex).padStart(3, "0")}-${String(systemIndex).padStart(2, "0")}`;
       const random = seededRandom(`${audit.seed}:${id}`);
-      const [x, y, z] = spherePoint(random, 72);
+      const chunk = sectorChunksBySectorId[sector.id][systemIndex % SECTOR_CHUNK_COUNT];
+      const [x, y, z] = spherePoint(random, chunk.boundsRadius);
       const system: UniverseMapNode = {
         id,
         parentId: sector.id,
         type: "system",
+        chunkId: chunk.id,
         seed: `${audit.seed}:${id}`,
         canonicalName: sectorIndex === 0 && systemIndex === 0 ? "Sol System" : `System ${sectorIndex + 1}-${systemIndex + 1}`,
         displayName: sectorIndex === 0 && systemIndex === 0 ? "Sol System" : `System ${sectorIndex + 1}-${systemIndex + 1}`,
-        coordinates: [x, y, z],
+        coordinates: [chunk.origin[0] + x, chunk.origin[1] + y, chunk.origin[2] + z],
         radius: 4 + random() * 4,
         classification: ["G-Type", "K-Type", "M-Type", "Binary", "Blue-White"][Math.floor(random() * 5)],
         bodyCount: 4 + (fnv1a(id) % 6)
@@ -170,7 +225,16 @@ export function createPersistentUniverseModel(content: GameRuntimeData): Univers
 
   return {
     audit,
+    universe,
     galaxy,
+    virtualCounts: {
+      galaxies: 1,
+      sectors: GALAXY_SECTOR_COUNT,
+      systems: GALAXY_SECTOR_COUNT * SECTOR_SYSTEM_COUNT,
+      bodies: GALAXY_SECTOR_COUNT * SECTOR_SYSTEM_COUNT * 7
+    },
+    galaxyChunks,
+    sectorChunksBySectorId,
     sectors,
     systemsBySectorId,
     bodiesBySystemId,
@@ -187,10 +251,20 @@ export function resolveTechnologyVisibility(content: GameRuntimeData, playerRunt
   const canAccessGalaxy = normalized.includes("galactic") || order >= 9;
   const canAccessSector = canAccessGalaxy || normalized.includes("interstellar") || order >= 8;
   const canAccessSystem = canAccessSector || normalized.includes("space") || order >= 7;
-  if (canAccessGalaxy) return { maxLevel: "galaxy", canAccessGalaxy, canAccessSector, canAccessSystem, reason: "Galactic navigation technology unlocked." };
-  if (canAccessSector) return { maxLevel: "sector", canAccessGalaxy, canAccessSector, canAccessSystem, reason: "Interstellar sector navigation unlocked." };
-  if (canAccessSystem) return { maxLevel: "system", canAccessGalaxy, canAccessSector, canAccessSystem, reason: "Star-system navigation unlocked." };
-  return { maxLevel: "system", canAccessGalaxy: false, canAccessSector: false, canAccessSystem: true, reason: "Survival era limits the map to local system awareness." };
+  return {
+    maxLevel: canAccessGalaxy ? "galaxy" : canAccessSector ? "sector" : "system",
+    canAccessUniverse: false,
+    canAccessGalaxy,
+    canAccessSector,
+    canAccessSystem: true,
+    reason: canAccessGalaxy
+      ? "Galactic navigation technology unlocked."
+      : canAccessSector
+        ? "Interstellar sector navigation unlocked."
+        : canAccessSystem
+          ? "Star-system navigation unlocked."
+          : "Survival era limits the map to local system awareness."
+  };
 }
 
 export function resolveSemanticZoomLevel(input: SemanticZoomInput): SemanticZoomResolution {
@@ -209,6 +283,7 @@ export function resolveSemanticZoomLevel(input: SemanticZoomInput): SemanticZoom
 }
 
 export function resolveRangeProfile(level: SemanticZoomLevel, visibility: TechnologyVisibility): MapRangeProfile {
+  if (level === "universe") return { view: visibility.canAccessUniverse ? 900 : 0, probe: 0, travel: 0 };
   if (level === "galaxy") return { view: visibility.canAccessGalaxy ? 480 : 0, probe: 190, travel: 95 };
   if (level === "sector") return { view: visibility.canAccessSector ? 140 : 0, probe: 72, travel: 34 };
   return { view: 96, probe: visibility.canAccessSystem ? 62 : 18, travel: visibility.canAccessSystem ? 36 : 0 };
@@ -246,6 +321,9 @@ export function filterVisibleNode(node: UniverseMapNode, options: { distance: nu
 
 export function composeVisibleNodes(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility }) {
   const ranges = resolveRangeProfile(level, context.visibility);
+  if (level === "universe") {
+    return [filterVisibleNode(model.galaxy, { distance: 0, ranges, known: true, technologyAllowed: context.visibility.canAccessUniverse })];
+  }
   if (level === "galaxy") {
     return model.sectors.map((sector) => {
       const distance = Math.hypot(sector.coordinates[0], sector.coordinates[1], sector.coordinates[2]);
@@ -266,6 +344,67 @@ export function composeVisibleNodes(model: UniverseMapModel, level: SemanticZoom
     known: index <= 2,
     technologyAllowed: context.visibility.canAccessSystem
   }));
+}
+
+export function resolveLoadedChunks(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility }) {
+  if (level === "universe") {
+    return [{ id: "UCH-000", level: "universe" as const, parentId: model.universe.id, origin: [0, 0, 0] as const, boundsRadius: model.universe.radius, nodeCount: 1, loaded: true, lod: "proxy" as const }];
+  }
+  if (level === "galaxy") {
+    const ranges = resolveRangeProfile("galaxy", context.visibility);
+    return model.galaxyChunks
+      .map((chunk) => ({ ...chunk, loaded: Math.hypot(chunk.origin[0], chunk.origin[1], chunk.origin[2]) <= ranges.view * 0.62 || chunk.loaded }))
+      .filter((chunk) => chunk.loaded);
+  }
+  if (level === "sector") {
+    const sectorId = context.sectorId ?? model.currentSectorId;
+    const ranges = resolveRangeProfile("sector", context.visibility);
+    return (model.sectorChunksBySectorId[sectorId] ?? [])
+      .map((chunk) => ({ ...chunk, loaded: Math.hypot(chunk.origin[0], chunk.origin[1], chunk.origin[2]) <= ranges.view || chunk.loaded }))
+      .filter((chunk) => chunk.loaded);
+  }
+  return [{ id: `SYCH-${context.systemId ?? model.currentSystemId}`, level: "system" as const, parentId: context.systemId ?? model.currentSystemId, origin: [0, 0, 0] as const, boundsRadius: 96, nodeCount: model.bodiesBySystemId[context.systemId ?? model.currentSystemId]?.length ?? 0, loaded: true, lod: "mesh" as const }];
+}
+
+export function createStreamingSnapshot(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility }): StreamingSnapshot {
+  const nodes = composeVisibleNodes(model, level, context);
+  const loadedChunks = resolveLoadedChunks(model, level, context);
+  const visibleSectors = level === "galaxy" ? nodes.length : level === "sector" || level === "system" ? 1 : 0;
+  const visibleSystems = level === "sector" ? nodes.length : level === "system" ? 1 : 0;
+  const visibleBodies = level === "system" ? nodes.length : 0;
+  const lod = level === "galaxy" ? "density" : level === "sector" ? "point" : level === "system" ? "mesh" : "proxy";
+  return {
+    level,
+    lod,
+    loadedChunks,
+    visibleSectors,
+    visibleSystems,
+    visibleBodies,
+    gpuInstances: level === "system" ? visibleBodies : nodes.length,
+    virtualSectors: model.virtualCounts.sectors,
+    virtualSystems: model.virtualCounts.systems
+  };
+}
+
+export function createKnownSearchIndex(nodes: VisibleMapNode[]): SearchableMapResult[] {
+  return nodes
+    .filter((node) => node.knowledgeState === "charted" || node.knowledgeState === "visited")
+    .map((node) => ({ id: node.id, type: node.type, label: node.label, parentId: node.parentId }));
+}
+
+export function createRoutePreview(from: VisibleMapNode, to: VisibleMapNode): RoutePreview {
+  const distance = Math.hypot(to.coordinates[0] - from.coordinates[0], to.coordinates[1] - from.coordinates[1], to.coordinates[2] - from.coordinates[2]);
+  const requiresProbeFirst = to.knowledgeState !== "charted" && to.knowledgeState !== "visited";
+  return {
+    fromId: from.id,
+    toId: to.id,
+    distance,
+    stops: Math.max(0, Math.ceil(distance / 34) - 1),
+    fuel: Math.ceil(distance * 1.8),
+    hazards: to.rangeState === "visible_unresolved" ? ["Unresolved signal"] : [],
+    requiresProbeFirst,
+    travelAllowed: to.canTravel && !requiresProbeFirst
+  };
 }
 
 export function resolveStarSystemPresentation(model: UniverseMapModel, systemId: string, visibility: TechnologyVisibility): StarSystemPresentation {

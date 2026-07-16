@@ -1,9 +1,9 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 
-export type SemanticZoomLevel = "galaxy" | "sector" | "system";
-export type SemanticTransitionState = "stable" | "galaxy_to_sector" | "sector_to_system" | "system_to_sector" | "sector_to_galaxy";
-export type CelestialObjectType = "galaxy" | "sector" | "system" | "star" | "planet" | "moon" | "belt";
+export type SemanticZoomLevel = "universe" | "galaxy" | "sector" | "system";
+export type SemanticTransitionState = "stable" | "universe_to_galaxy" | "galaxy_to_sector" | "sector_to_system" | "system_to_sector" | "sector_to_galaxy" | "galaxy_to_universe";
+export type CelestialObjectType = "universe" | "galaxy" | "sector" | "system" | "star" | "planet" | "moon" | "belt" | "station" | "discovery";
 export type KnowledgeState = "unknown" | "detected" | "probed" | "scanned" | "charted" | "visited";
 export type RangeState = "outside_view" | "visible_unresolved" | "view_only" | "probe_reachable" | "travel_reachable" | "blocked_by_technology";
 
@@ -26,6 +26,7 @@ export type UniverseMapNode = {
   id: string;
   parentId?: string;
   type: CelestialObjectType;
+  chunkId?: string;
   seed: string;
   canonicalName: string;
   displayName: string;
@@ -36,9 +37,31 @@ export type UniverseMapNode = {
   children?: UniverseMapNode[];
 };
 
+export type SpatialChunkLevel = "universe" | "galaxy" | "sector" | "system";
+
+export type SpatialChunk = {
+  id: string;
+  level: SpatialChunkLevel;
+  parentId: string;
+  origin: Vector3Tuple;
+  boundsRadius: number;
+  nodeCount: number;
+  loaded: boolean;
+  lod: "density" | "proxy" | "point" | "mesh";
+};
+
 export type UniverseMapModel = {
   audit: UniverseGenerationAudit;
+  universe: UniverseMapNode;
   galaxy: UniverseMapNode;
+  virtualCounts: {
+    galaxies: number;
+    sectors: number;
+    systems: number;
+    bodies: number;
+  };
+  galaxyChunks: SpatialChunk[];
+  sectorChunksBySectorId: Record<string, SpatialChunk[]>;
   sectors: UniverseMapNode[];
   systemsBySectorId: Record<string, UniverseMapNode[]>;
   bodiesBySystemId: Record<string, UniverseMapNode[]>;
@@ -48,6 +71,7 @@ export type UniverseMapModel = {
 
 export type TechnologyVisibility = {
   maxLevel: SemanticZoomLevel;
+  canAccessUniverse: boolean;
   canAccessGalaxy: boolean;
   canAccessSector: boolean;
   canAccessSystem: boolean;
@@ -58,6 +82,18 @@ export type MapRangeProfile = {
   view: number;
   probe: number;
   travel: number;
+};
+
+export type StreamingSnapshot = {
+  level: SemanticZoomLevel;
+  lod: "density" | "proxy" | "point" | "mesh";
+  loadedChunks: SpatialChunk[];
+  visibleSectors: number;
+  visibleSystems: number;
+  visibleBodies: number;
+  gpuInstances: number;
+  virtualSectors: number;
+  virtualSystems: number;
 };
 
 export type SemanticZoomInput = {
@@ -93,6 +129,30 @@ export type VisibleMapNode = {
   bodyCount?: number;
   canProbe: boolean;
   canTravel: boolean;
+};
+
+export type SearchableMapResult = {
+  id: string;
+  type: CelestialObjectType;
+  label: string;
+  parentId?: string;
+};
+
+export type BookmarkTarget = {
+  id: string;
+  type: Extract<CelestialObjectType, "galaxy" | "sector" | "system" | "planet" | "discovery">;
+  label: string;
+};
+
+export type RoutePreview = {
+  fromId: string;
+  toId: string;
+  distance: number;
+  stops: number;
+  fuel: number;
+  hazards: string[];
+  requiresProbeFirst: boolean;
+  travelAllowed: boolean;
 };
 
 export type StarSystemPresentation = {
