@@ -1,6 +1,9 @@
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
 import type {
+  GalaxyEngineContractView,
+  GalaxyEngineKnowledgeRule,
+  KnowledgeState,
   MapRangeProfile,
   RoutePreview,
   SearchableMapResult,
@@ -25,20 +28,129 @@ const FALLBACK_VISIBLE_SECTOR_COUNT = 120;
 const FALLBACK_VISIBLE_SYSTEM_COUNT = 144;
 
 const MISSING_STUDIO_CONTRACTS = [
-  "universeSeed",
-  "generationVersion",
-  "galaxies[]",
-  "sectors[]",
-  "starSystems[]",
-  "celestialBodies[]",
-  "sectorCoordinates",
-  "starSystemCoordinates",
-  "systemLayoutSeed",
-  "mapTechnologyGates",
-  "viewProbeTravelRanges",
-  "playerKnowledgeStateDefinitions",
-  "registryVisibilityRules"
+  "galaxyEngineContract.semanticZoom",
+  "galaxyEngineContract.technologyGates",
+  "galaxyEngineContract.knowledgeVisibility"
 ];
+
+function normalizeZoomLevel(value: unknown): SemanticZoomLevel | undefined {
+  if (value === "star_system") return "system";
+  if (value === "galaxy" || value === "sector" || value === "system" || value === "universe") return value;
+  return undefined;
+}
+
+function normalizeKnowledgeState(value: unknown): GalaxyEngineKnowledgeRule["id"] {
+  return typeof value === "string" && value ? value : "unknown";
+}
+
+function numberField(record: Record<string, unknown>, key: string, fallback: number) {
+  const value = record[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+export function resolveGalaxyEngineContract(content: GameRuntimeData): GalaxyEngineContractView {
+  const raw = runtimeRecord(content).galaxyEngineContract;
+  const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  const rawGates = Array.isArray(record.technologyGates) ? record.technologyGates : [];
+  const rawKnowledge = Array.isArray(record.knowledgeVisibility) ? record.knowledgeVisibility : [];
+  const rawZoom = Array.isArray(record.semanticZoom) ? record.semanticZoom : [];
+  const fallbackKnowledge: GalaxyEngineKnowledgeRule[] = [
+    { id: "unknown", canShowName: false, canShowBodyCount: false, canShowResources: false, canShowRegistry: false, canShowDiscoveries: false, canShowTravelRoutes: false, unknownDisplayName: "???" },
+    { id: "charted", canShowName: true, canShowBodyCount: true, canShowResources: false, canShowRegistry: true, canShowDiscoveries: true, canShowTravelRoutes: true, unknownDisplayName: "???" },
+    { id: "visited", canShowName: true, canShowBodyCount: true, canShowResources: true, canShowRegistry: true, canShowDiscoveries: true, canShowTravelRoutes: true, unknownDisplayName: "???" }
+  ];
+  return {
+    id: typeof record.id === "string" ? record.id : "fallback_galaxy_engine_contract",
+    version: typeof record.version === "string" ? record.version : "fallback",
+    technologyGates: rawGates.map((gate): GalaxyEngineContractView["technologyGates"][number] => {
+      const gateRecord = gate && typeof gate === "object" ? gate as Record<string, unknown> : {};
+      return {
+        id: typeof gateRecord.id === "string" ? gateRecord.id : "unknown",
+        displayName: typeof gateRecord.displayName === "string" ? gateRecord.displayName : "Unknown",
+        unlockedZoom: (Array.isArray(gateRecord.unlockedZoom) ? gateRecord.unlockedZoom : []).map(normalizeZoomLevel).filter((level): level is SemanticZoomLevel => Boolean(level)),
+        maximumViewDistance: numberField(gateRecord, "maximumViewDistance", 1),
+        maximumProbeDistance: numberField(gateRecord, "maximumProbeDistance", 0),
+        maximumTravelDistance: numberField(gateRecord, "maximumTravelDistance", 0),
+        distanceUnit: typeof gateRecord.distanceUnit === "string" ? gateRecord.distanceUnit : "units"
+      };
+    }),
+    knowledgeVisibility: rawKnowledge.length ? rawKnowledge.map((rule): GalaxyEngineKnowledgeRule => {
+      const ruleRecord = rule && typeof rule === "object" ? rule as Record<string, unknown> : {};
+      return {
+        id: normalizeKnowledgeState(ruleRecord.id),
+        canShowName: ruleRecord.canShowName === true,
+        canShowBodyCount: ruleRecord.canShowBodyCount === true,
+        canShowResources: ruleRecord.canShowResources === true,
+        canShowRegistry: ruleRecord.canShowRegistry === true,
+        canShowDiscoveries: ruleRecord.canShowDiscoveries === true,
+        canShowTravelRoutes: ruleRecord.canShowTravelRoutes === true,
+        unknownDisplayName: typeof ruleRecord.unknownDisplayName === "string" ? ruleRecord.unknownDisplayName : "???"
+      };
+    }) : fallbackKnowledge,
+    semanticZoom: rawZoom.map((zoom) => {
+      const zoomRecord = zoom && typeof zoom === "object" ? zoom as Record<string, unknown> : {};
+      const level = normalizeZoomLevel(zoomRecord.id) ?? "system";
+      return {
+        id: level,
+        canonicalEntityType: typeof zoomRecord.canonicalEntityType === "string" ? zoomRecord.canonicalEntityType : level,
+        childEntityTypes: Array.isArray(zoomRecord.childEntityTypes) ? zoomRecord.childEntityTypes.filter((item): item is string => typeof item === "string") : [],
+        defaultKnowledgeState: normalizeKnowledgeState(zoomRecord.defaultKnowledgeState) as KnowledgeState,
+        hierarchyLevel: numberField(zoomRecord, "hierarchyLevel", level === "galaxy" ? 1 : level === "sector" ? 2 : 3)
+      };
+    })
+  };
+}
+
+function knowledgeRule(contract: GalaxyEngineContractView, state: KnowledgeState): GalaxyEngineKnowledgeRule {
+  return contract.knowledgeVisibility.find((rule) => rule.id === state) ?? contract.knowledgeVisibility.find((rule) => rule.id === "unknown") ?? {
+    id: "unknown",
+    canShowName: false,
+    canShowBodyCount: false,
+    canShowResources: false,
+    canShowRegistry: false,
+    canShowDiscoveries: false,
+    canShowTravelRoutes: false,
+    unknownDisplayName: "???"
+  };
+}
+
+function semanticDefaultKnowledge(contract: GalaxyEngineContractView, level: SemanticZoomLevel): KnowledgeState {
+  return contract.semanticZoom.find((entry) => entry.id === level)?.defaultKnowledgeState ?? "unknown";
+}
+
+function resolveEraGateId(content: GameRuntimeData, playerRuntime: PlayerRuntimeState) {
+  const currentEraId = playerRuntime.civilization.currentEraId;
+  const era = content.eras.find((candidate) => candidate.id === currentEraId);
+  const order = typeof era?.index === "number" ? era.index : Math.max(1, content.eras.findIndex((candidate) => candidate.id === currentEraId) + 1);
+  const normalized = currentEraId.toLowerCase();
+  if (normalized.includes("galactic") || order >= 9) return "galactic";
+  if (normalized.includes("interstellar") || order >= 8) return "interstellar";
+  if (normalized.includes("space") || order >= 7) return "interplanetary";
+  if (normalized.includes("modern") || order >= 6) return "planetary";
+  return "survival";
+}
+
+function scaledRangesForGate(gate: GalaxyEngineContractView["technologyGates"][number], maxLevel: SemanticZoomLevel): MapRangeProfile {
+  if (maxLevel === "galaxy") {
+    return {
+      view: 480,
+      probe: gate.maximumProbeDistance > 0 ? 190 : 0,
+      travel: gate.maximumTravelDistance > 0 ? 95 : 0
+    };
+  }
+  if (maxLevel === "sector") {
+    return {
+      view: 140,
+      probe: gate.maximumProbeDistance > 0 ? 72 : 0,
+      travel: gate.maximumTravelDistance > 0 ? 34 : 0
+    };
+  }
+  return {
+    view: 96,
+    probe: gate.maximumProbeDistance > 0 ? 62 : 0,
+    travel: gate.maximumTravelDistance > 0 ? 36 : 0
+  };
+}
 
 type Rng = () => number;
 
@@ -87,9 +199,10 @@ function runtimeRecord(content: GameRuntimeData) {
 
 export function auditPersistentUniverseContract(content: GameRuntimeData): UniverseGenerationAudit {
   const record = runtimeRecord(content);
+  const rawContract = record.galaxyEngineContract && typeof record.galaxyEngineContract === "object" ? record.galaxyEngineContract as Record<string, unknown> : {};
   const missing = MISSING_STUDIO_CONTRACTS.filter((key) => {
-    const rootKey = key.replace(/\[\]$/, "");
-    return record[rootKey] == null;
+    const field = key.replace("galaxyEngineContract.", "");
+    return !Array.isArray(rawContract[field]) || (rawContract[field] as unknown[]).length === 0;
   });
   const seed = typeof record.universeSeed === "string"
     ? record.universeSeed
@@ -101,11 +214,12 @@ export function auditPersistentUniverseContract(content: GameRuntimeData): Unive
   return {
     seed,
     generationVersion,
-    usesCanonicalHierarchy: missing.length === 0,
+    usesCanonicalHierarchy: false,
+    usesStudioGalaxyContract: missing.length === 0,
     missingStudioContracts: missing,
     followUpPrompt: [
-      "Studio follow-up: publish the canonical universe navigation contract for the game runtime.",
-      "Required fields: universeSeed, generationVersion, galaxies, sectors, starSystems, celestialBodies, stable hierarchy IDs, coordinates/bounds, systemLayoutSeed, map technology gates, view/probe/travel ranges, player knowledge-state definitions, and registry visibility rules.",
+      "Studio follow-up: publish the canonical universe hierarchy data for the game runtime.",
+      "Required fields: universeSeed, generationVersion, galaxies, sectors, starSystems, celestialBodies, stable hierarchy IDs, coordinates/bounds, and systemLayoutSeed.",
       "Keep object identity immutable and shared across players; the game client will only render, filter, and persist camera/focus state."
     ].join(" ")
   };
@@ -113,6 +227,7 @@ export function auditPersistentUniverseContract(content: GameRuntimeData): Unive
 
 export function createPersistentUniverseModel(content: GameRuntimeData): UniverseMapModel {
   const audit = auditPersistentUniverseContract(content);
+  const contract = resolveGalaxyEngineContract(content);
   const universe: UniverseMapNode = {
     id: "UNI-NOVERIS-PRIME",
     type: "universe",
@@ -225,6 +340,7 @@ export function createPersistentUniverseModel(content: GameRuntimeData): Univers
 
   return {
     audit,
+    contract,
     universe,
     galaxy,
     virtualCounts: {
@@ -244,26 +360,39 @@ export function createPersistentUniverseModel(content: GameRuntimeData): Univers
 }
 
 export function resolveTechnologyVisibility(content: GameRuntimeData, playerRuntime: PlayerRuntimeState): TechnologyVisibility {
-  const currentEraId = playerRuntime.civilization.currentEraId;
-  const era = content.eras.find((candidate) => candidate.id === currentEraId);
-  const order = typeof era?.index === "number" ? era.index : Math.max(1, content.eras.findIndex((candidate) => candidate.id === currentEraId) + 1);
-  const normalized = currentEraId.toLowerCase();
-  const canAccessGalaxy = normalized.includes("galactic") || order >= 9;
-  const canAccessSector = canAccessGalaxy || normalized.includes("interstellar") || order >= 8;
-  const canAccessSystem = canAccessSector || normalized.includes("space") || order >= 7;
+  const contract = resolveGalaxyEngineContract(content);
+  const gateId = resolveEraGateId(content, playerRuntime);
+  const gate = contract.technologyGates.find((candidate) => candidate.id === gateId)
+    ?? contract.technologyGates.find((candidate) => candidate.id === "survival")
+    ?? {
+      id: "survival",
+      displayName: "Survival",
+      unlockedZoom: ["system"] as SemanticZoomLevel[],
+      maximumViewDistance: 1,
+      maximumProbeDistance: 0,
+      maximumTravelDistance: 0,
+      distanceUnit: "star_system"
+    };
+  const unlockedZoom: SemanticZoomLevel[] = gate.unlockedZoom.includes("system") ? gate.unlockedZoom : [...gate.unlockedZoom, "system"];
+  const canAccessGalaxy = unlockedZoom.includes("galaxy");
+  const canAccessSector = canAccessGalaxy || unlockedZoom.includes("sector");
+  const canAccessSystem = unlockedZoom.includes("system");
+  const maxLevel = canAccessGalaxy ? "galaxy" : canAccessSector ? "sector" : "system";
   return {
-    maxLevel: canAccessGalaxy ? "galaxy" : canAccessSector ? "sector" : "system",
+    maxLevel,
     canAccessUniverse: false,
     canAccessGalaxy,
     canAccessSector,
-    canAccessSystem: true,
+    canAccessSystem,
+    gateId: gate.id,
+    gateDisplayName: gate.displayName,
+    ranges: scaledRangesForGate(gate, maxLevel),
+    unlockedZoom,
     reason: canAccessGalaxy
-      ? "Galactic navigation technology unlocked."
+      ? "Galaxy-level navigation technology unlocked."
       : canAccessSector
         ? "Interstellar sector navigation unlocked."
-        : canAccessSystem
-          ? "Star-system navigation unlocked."
-          : "Survival era limits the map to local system awareness."
+        : "Survival era limits the map to local star-system awareness."
   };
 }
 
@@ -284,13 +413,13 @@ export function resolveSemanticZoomLevel(input: SemanticZoomInput): SemanticZoom
 
 export function resolveRangeProfile(level: SemanticZoomLevel, visibility: TechnologyVisibility): MapRangeProfile {
   if (level === "universe") return { view: visibility.canAccessUniverse ? 900 : 0, probe: 0, travel: 0 };
-  if (level === "galaxy") return { view: visibility.canAccessGalaxy ? 480 : 0, probe: 190, travel: 95 };
-  if (level === "sector") return { view: visibility.canAccessSector ? 140 : 0, probe: 72, travel: 34 };
-  return { view: 96, probe: visibility.canAccessSystem ? 62 : 18, travel: visibility.canAccessSystem ? 36 : 0 };
+  if (level === "galaxy") return visibility.canAccessGalaxy ? visibility.ranges : { view: 0, probe: 0, travel: 0 };
+  if (level === "sector") return visibility.canAccessSector ? visibility.ranges : { view: 0, probe: 0, travel: 0 };
+  return visibility.canAccessSystem ? visibility.ranges : { view: 0, probe: 0, travel: 0 };
 }
 
-export function filterVisibleNode(node: UniverseMapNode, options: { distance: number; ranges: MapRangeProfile; known: boolean; technologyAllowed: boolean }): VisibleMapNode {
-  const { distance, ranges, known, technologyAllowed } = options;
+export function filterVisibleNode(node: UniverseMapNode, options: { distance: number; ranges: MapRangeProfile; known: boolean; technologyAllowed: boolean; contract: GalaxyEngineContractView; knowledgeState?: KnowledgeState }): VisibleMapNode {
+  const { distance, ranges, known, technologyAllowed, contract } = options;
   const rangeState = !technologyAllowed
     ? "blocked_by_technology"
     : distance > ranges.view
@@ -300,41 +429,49 @@ export function filterVisibleNode(node: UniverseMapNode, options: { distance: nu
         : distance > ranges.travel
           ? "probe_reachable"
           : "travel_reachable";
-  const knowledgeState = known ? "charted" : rangeState === "outside_view" ? "unknown" : rangeState === "visible_unresolved" ? "detected" : "probed";
-  const reveal = known || knowledgeState === "charted";
+  const knowledgeState = known
+    ? "charted"
+    : options.knowledgeState ?? (rangeState === "outside_view" || rangeState === "blocked_by_technology" ? "unknown" : "detected");
+  const rule = knowledgeRule(contract, knowledgeState);
   return {
     id: node.id,
     parentId: node.parentId,
     type: node.type,
-    displayName: reveal ? node.displayName : "???",
-    label: reveal ? node.displayName : "???",
+    displayName: rule.canShowName ? node.displayName : rule.unknownDisplayName,
+    label: rule.canShowName ? node.displayName : rule.unknownDisplayName,
     coordinates: node.coordinates,
     radius: node.radius,
     knowledgeState,
     rangeState,
-    classification: reveal ? node.classification : undefined,
-    bodyCount: reveal ? node.bodyCount : undefined,
+    classification: rule.canShowRegistry ? node.classification : undefined,
+    bodyCount: rule.canShowBodyCount ? node.bodyCount : undefined,
+    canShowResources: rule.canShowResources,
+    canShowRegistry: rule.canShowRegistry,
+    canShowDiscoveries: rule.canShowDiscoveries,
     canProbe: rangeState === "probe_reachable" || rangeState === "travel_reachable",
-    canTravel: rangeState === "travel_reachable"
+    canTravel: rangeState === "travel_reachable" && rule.canShowTravelRoutes
   };
 }
 
-export function composeVisibleNodes(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility }) {
+export function composeVisibleNodes(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility; probedIds?: string[] }) {
   const ranges = resolveRangeProfile(level, context.visibility);
+  const probedIds = new Set(context.probedIds ?? []);
   if (level === "universe") {
-    return [filterVisibleNode(model.galaxy, { distance: 0, ranges, known: true, technologyAllowed: context.visibility.canAccessUniverse })];
+    return [filterVisibleNode(model.galaxy, { distance: 0, ranges, known: true, technologyAllowed: context.visibility.canAccessUniverse, contract: model.contract })];
   }
   if (level === "galaxy") {
     return model.sectors.map((sector) => {
       const distance = Math.hypot(sector.coordinates[0], sector.coordinates[1], sector.coordinates[2]);
-      return filterVisibleNode(sector, { distance, ranges, known: sector.id === model.currentSectorId, technologyAllowed: context.visibility.canAccessGalaxy });
+      const knowledgeState = probedIds.has(sector.id) ? "probed" : semanticDefaultKnowledge(model.contract, "sector");
+      return filterVisibleNode(sector, { distance, ranges, known: sector.id === model.currentSectorId, technologyAllowed: context.visibility.canAccessGalaxy, contract: model.contract, knowledgeState });
     }).filter((node) => node.rangeState !== "outside_view");
   }
   if (level === "sector") {
     const systems = model.systemsBySectorId[context.sectorId ?? model.currentSectorId] ?? [];
     return systems.map((system) => {
       const distance = Math.hypot(system.coordinates[0], system.coordinates[1], system.coordinates[2]);
-      return filterVisibleNode(system, { distance, ranges, known: system.id === model.currentSystemId, technologyAllowed: context.visibility.canAccessSector });
+      const knowledgeState = probedIds.has(system.id) ? "probed" : semanticDefaultKnowledge(model.contract, "system");
+      return filterVisibleNode(system, { distance, ranges, known: system.id === model.currentSystemId, technologyAllowed: context.visibility.canAccessSector, contract: model.contract, knowledgeState });
     }).filter((node) => node.rangeState !== "outside_view");
   }
   const bodies = model.bodiesBySystemId[context.systemId ?? model.currentSystemId] ?? [];
@@ -342,7 +479,9 @@ export function composeVisibleNodes(model: UniverseMapModel, level: SemanticZoom
     distance: index * 8,
     ranges,
     known: index <= 2,
-    technologyAllowed: context.visibility.canAccessSystem
+    technologyAllowed: context.visibility.canAccessSystem,
+    contract: model.contract,
+    knowledgeState: probedIds.has(body.id) ? "probed" : "unknown"
   }));
 }
 
@@ -366,7 +505,7 @@ export function resolveLoadedChunks(model: UniverseMapModel, level: SemanticZoom
   return [{ id: `SYCH-${context.systemId ?? model.currentSystemId}`, level: "system" as const, parentId: context.systemId ?? model.currentSystemId, origin: [0, 0, 0] as const, boundsRadius: 96, nodeCount: model.bodiesBySystemId[context.systemId ?? model.currentSystemId]?.length ?? 0, loaded: true, lod: "mesh" as const }];
 }
 
-export function createStreamingSnapshot(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility }): StreamingSnapshot {
+export function createStreamingSnapshot(model: UniverseMapModel, level: SemanticZoomLevel, context: { sectorId?: string; systemId?: string; visibility: TechnologyVisibility; probedIds?: string[] }): StreamingSnapshot {
   const nodes = composeVisibleNodes(model, level, context);
   const loadedChunks = resolveLoadedChunks(model, level, context);
   const visibleSectors = level === "galaxy" ? nodes.length : level === "sector" || level === "system" ? 1 : 0;
@@ -407,8 +546,8 @@ export function createRoutePreview(from: VisibleMapNode, to: VisibleMapNode): Ro
   };
 }
 
-export function resolveStarSystemPresentation(model: UniverseMapModel, systemId: string, visibility: TechnologyVisibility): StarSystemPresentation {
-  const visible = composeVisibleNodes(model, "system", { systemId, visibility });
+export function resolveStarSystemPresentation(model: UniverseMapModel, systemId: string, visibility: TechnologyVisibility, probedIds: string[] = []): StarSystemPresentation {
+  const visible = composeVisibleNodes(model, "system", { systemId, visibility, probedIds });
   const stars = visible.filter((node) => node.type === "star");
   const bodies = visible.filter((node) => node.type !== "star").map((body, index) => {
     const random = seededRandom(`${model.audit.seed}:${body.id}:orbit`);

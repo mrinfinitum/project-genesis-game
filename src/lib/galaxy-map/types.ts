@@ -4,7 +4,7 @@ import type { PlayerRuntimeState } from "@/lib/player-runtime";
 export type SemanticZoomLevel = "universe" | "galaxy" | "sector" | "system";
 export type SemanticTransitionState = "stable" | "universe_to_galaxy" | "galaxy_to_sector" | "sector_to_system" | "system_to_sector" | "sector_to_galaxy" | "galaxy_to_universe";
 export type CelestialObjectType = "universe" | "galaxy" | "sector" | "system" | "star" | "planet" | "moon" | "belt" | "station" | "discovery";
-export type KnowledgeState = "unknown" | "detected" | "probed" | "scanned" | "charted" | "visited";
+export type KnowledgeState = "unknown" | "detected" | "probed" | "scanned" | "charted" | "explored" | "colonized" | "mastered" | "visited";
 export type RangeState = "outside_view" | "visible_unresolved" | "view_only" | "probe_reachable" | "travel_reachable" | "blocked_by_technology";
 
 export type Vector3Tuple = readonly [number, number, number];
@@ -13,8 +13,44 @@ export type UniverseGenerationAudit = {
   seed: string;
   generationVersion: string;
   usesCanonicalHierarchy: boolean;
+  usesStudioGalaxyContract: boolean;
   missingStudioContracts: string[];
   followUpPrompt: string;
+};
+
+export type GalaxyEngineKnowledgeRule = {
+  id: KnowledgeState | string;
+  canShowName: boolean;
+  canShowBodyCount: boolean;
+  canShowResources: boolean;
+  canShowRegistry: boolean;
+  canShowDiscoveries: boolean;
+  canShowTravelRoutes: boolean;
+  unknownDisplayName: string;
+};
+
+export type GalaxyEngineTechnologyGate = {
+  id: string;
+  displayName: string;
+  unlockedZoom: SemanticZoomLevel[];
+  maximumViewDistance: number;
+  maximumProbeDistance: number;
+  maximumTravelDistance: number;
+  distanceUnit: string;
+};
+
+export type GalaxyEngineContractView = {
+  id: string;
+  version: string;
+  technologyGates: GalaxyEngineTechnologyGate[];
+  knowledgeVisibility: GalaxyEngineKnowledgeRule[];
+  semanticZoom: Array<{
+    id: SemanticZoomLevel;
+    canonicalEntityType: string;
+    childEntityTypes: string[];
+    defaultKnowledgeState: KnowledgeState;
+    hierarchyLevel: number;
+  }>;
 };
 
 export type UniverseMapContext = {
@@ -52,6 +88,7 @@ export type SpatialChunk = {
 
 export type UniverseMapModel = {
   audit: UniverseGenerationAudit;
+  contract: GalaxyEngineContractView;
   universe: UniverseMapNode;
   galaxy: UniverseMapNode;
   virtualCounts: {
@@ -75,6 +112,10 @@ export type TechnologyVisibility = {
   canAccessGalaxy: boolean;
   canAccessSector: boolean;
   canAccessSystem: boolean;
+  gateId: string;
+  gateDisplayName: string;
+  ranges: MapRangeProfile;
+  unlockedZoom: SemanticZoomLevel[];
   reason: string;
 };
 
@@ -127,6 +168,9 @@ export type VisibleMapNode = {
   rangeState: RangeState;
   classification?: string;
   bodyCount?: number;
+  canShowResources: boolean;
+  canShowRegistry: boolean;
+  canShowDiscoveries: boolean;
   canProbe: boolean;
   canTravel: boolean;
 };

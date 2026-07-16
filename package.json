@@ -18,6 +18,7 @@
     "verify:discovery-determinism": "vitest run src/test/discovery.test.ts",
     "verify:discovery-save": "vitest run src/test/discovery-save.test.ts",
     "verify:discovery-registry": "node scripts/verify-discovery-registry.mjs",
+    "verify:semantic-zoom": "vitest run src/test/galaxy-map.test.tsx",
     "verify:supabase-game": "node scripts/verify-supabase-game.mjs",
     "storybook": "HOME=$PWD/.storybook-home STORYBOOK_DISABLE_TELEMETRY=1 storybook dev -p 6006 --disable-telemetry",
     "build-storybook": "HOME=$PWD/.storybook-home STORYBOOK_DISABLE_TELEMETRY=1 storybook build --disable-telemetry"

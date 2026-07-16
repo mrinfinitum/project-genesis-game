@@ -120,8 +120,8 @@ describe("canonical player runtime", () => {
     const survivalIconKeys = selectHudEconomySlots(runtime, "survival").map((slot) => slot.iconKey);
 
     expect(verification.ok).toBe(true);
-    expect(runtime.metadata.contentVersion).toBeGreaterThanOrEqual(20);
-    expect(runtime.metadata.checksum).toBe("d3dddd7cb51e0a77a22a106a9a1e32f995362adb83499ca96600e3dc46f47844");
+    expect(runtime.metadata.contentVersion).toBeGreaterThanOrEqual(21);
+    expect(runtime.metadata.checksum).toBe("6612a1d1dc644cc7566019dca5c43496872c73d89e0bc61b215dcf858d9a76b8");
     expect(verification.counts).toMatchObject({
       behaviorContracts: 5,
       producers: 569,
