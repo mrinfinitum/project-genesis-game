@@ -4203,7 +4203,7 @@ export function RobloxParityReview({
 
 export function StoryCanvas({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <div className="min-h-screen bg-[image:var(--genesis-app-gradient)] p-4 text-[var(--genesis-text)]" style={{ ...shellStyle, ...style }}>
+    <div className="cinematic-world-root min-h-screen p-4 text-[var(--genesis-text)]" style={{ ...shellStyle, ...style }}>
       {children}
     </div>
   );

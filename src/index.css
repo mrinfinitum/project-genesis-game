@@ -29,6 +29,17 @@
   --genesis-radius-panel: 8px;
   --genesis-shadow-neon: 0 0 28px rgba(45, 212, 255, 0.28);
   --genesis-shadow-panel: 0 16px 52px rgba(0, 0, 0, 0.42);
+  --cinematic-deep-space: #061426;
+  --cinematic-void: #020712;
+  --cinematic-cyan: #67e8f9;
+  --cinematic-cyan-soft: #a5f3fc;
+  --cinematic-gold: #f8c76f;
+  --cinematic-amber: #fbbf24;
+  --cinematic-red: #fb7185;
+  --cinematic-green: #7ddfbc;
+  --cinematic-hud-opacity: 0.14;
+  --cinematic-hud-border-opacity: 0.18;
+  --cinematic-hud-blur: 14px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -87,6 +98,202 @@ button:disabled {
 
 ::selection {
   background: rgba(45, 212, 191, 0.35);
+}
+
+.cinematic-world-root {
+  background:
+    radial-gradient(circle at 56% 38%, rgba(103, 232, 249, 0.18), transparent 28rem),
+    radial-gradient(circle at 73% 18%, rgba(248, 199, 111, 0.12), transparent 25rem),
+    radial-gradient(circle at 26% 76%, rgba(93, 234, 212, 0.11), transparent 30rem),
+    linear-gradient(150deg, rgba(2, 7, 18, 0.98), rgba(6, 20, 38, 0.96) 55%, rgba(2, 7, 18, 0.98));
+}
+
+.cinematic-vector-grid {
+  background:
+    linear-gradient(90deg, rgba(103, 232, 249, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(103, 232, 249, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(103, 232, 249, 0.08), transparent 30rem);
+  background-size: 74px 74px, 74px 74px, auto;
+  mask-image: radial-gradient(circle at 50% 45%, black, transparent 72%);
+}
+
+.cinematic-atmosphere-layer {
+  background:
+    radial-gradient(circle at 40% 34%, rgba(103, 232, 249, 0.16), transparent 34rem),
+    radial-gradient(circle at 68% 48%, rgba(248, 199, 111, 0.1), transparent 24rem),
+    linear-gradient(180deg, transparent 0%, rgba(2, 7, 18, 0.2) 100%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.cinematic-hud-surface,
+.cinematic-hud-projection,
+.cinematic-hud-compact,
+.cinematic-hud-metric,
+.cinematic-hud-control,
+.cinematic-hud-warning,
+.cinematic-hud-danger,
+.cinematic-hud-selection {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(165, 243, 252, var(--cinematic-hud-border-opacity));
+  background:
+    linear-gradient(135deg, rgba(103, 232, 249, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(6, 20, 38, var(--cinematic-hud-opacity)), rgba(2, 7, 18, calc(var(--cinematic-hud-opacity) + 0.04)));
+  box-shadow:
+    0 0 26px rgba(103, 232, 249, 0.1),
+    inset 0 0 28px rgba(103, 232, 249, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(var(--cinematic-hud-blur)) saturate(1.28);
+}
+
+.cinematic-hud-surface::before,
+.cinematic-hud-projection::before,
+.cinematic-hud-compact::before,
+.cinematic-hud-metric::before,
+.cinematic-hud-control::before,
+.cinematic-hud-warning::before,
+.cinematic-hud-danger::before,
+.cinematic-hud-selection::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.055), transparent),
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.08), transparent 16rem);
+  opacity: 0.72;
+}
+
+.cinematic-hud-projection {
+  --cinematic-hud-opacity: 0.1;
+  --cinematic-hud-border-opacity: 0.16;
+  border-color: rgba(248, 199, 111, 0.2);
+  box-shadow:
+    0 0 24px rgba(248, 199, 111, 0.1),
+    inset 0 0 30px rgba(248, 199, 111, 0.035);
+}
+
+.cinematic-hud-compact {
+  --cinematic-hud-opacity: 0.12;
+  --cinematic-hud-border-opacity: 0.16;
+  --cinematic-hud-blur: 10px;
+}
+
+.cinematic-hud-metric {
+  --cinematic-hud-opacity: 0.11;
+  --cinematic-hud-border-opacity: 0.12;
+  --cinematic-hud-blur: 8px;
+}
+
+.cinematic-hud-control {
+  --cinematic-hud-opacity: 0.1;
+  --cinematic-hud-border-opacity: 0.2;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cinematic-hud-control:hover,
+.cinematic-hud-button:hover {
+  border-color: rgba(236, 254, 255, 0.62);
+  box-shadow:
+    0 0 24px rgba(103, 232, 249, 0.16),
+    inset 0 0 20px rgba(103, 232, 249, 0.055);
+}
+
+.cinematic-hud-warning {
+  border-color: rgba(251, 191, 36, 0.24);
+  box-shadow:
+    0 0 24px rgba(251, 191, 36, 0.12),
+    inset 0 0 24px rgba(251, 191, 36, 0.04);
+}
+
+.cinematic-hud-danger {
+  border-color: rgba(251, 113, 133, 0.24);
+  box-shadow:
+    0 0 24px rgba(251, 113, 133, 0.12),
+    inset 0 0 24px rgba(251, 113, 133, 0.04);
+}
+
+.cinematic-hud-selection {
+  --cinematic-hud-opacity: 0.16;
+  border-color: rgba(125, 223, 188, 0.34);
+  box-shadow:
+    0 0 30px rgba(125, 223, 188, 0.17),
+    inset 0 0 26px rgba(125, 223, 188, 0.045);
+}
+
+.cinematic-hud-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(165, 243, 252, 0.2);
+  background: rgba(103, 232, 249, 0.08);
+  color: rgba(236, 254, 255, 0.92);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cinematic-hud-button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.cinematic-hud-button:disabled {
+  opacity: 0.44;
+}
+
+.cinematic-hud-button--primary {
+  border-color: rgba(103, 232, 249, 0.28);
+  background: rgba(103, 232, 249, 0.1);
+}
+
+.cinematic-hud-button--gold {
+  border-color: rgba(248, 199, 111, 0.3);
+  background: rgba(248, 199, 111, 0.1);
+  color: rgba(255, 251, 235, 0.92);
+}
+
+.cinematic-hud-button--danger {
+  border-color: rgba(251, 113, 133, 0.28);
+  background: rgba(251, 113, 133, 0.09);
+}
+
+.cinematic-hud-label {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(207, 250, 254, 0.58);
+}
+
+.cinematic-hud-title {
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 0 18px rgba(103, 232, 249, 0.18);
+}
+
+@keyframes cinematic-hud-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cinematic-hud-enter {
+  animation: cinematic-hud-fade-up 220ms ease-out both;
 }
 
 @keyframes genesis-control-ring-spin {
@@ -217,7 +424,8 @@ button:disabled {
 
 .genesis-motion-disabled .genesis-era-current-card,
 .genesis-motion-disabled .genesis-era-sweep,
-.genesis-motion-disabled .genesis-auto-robot-blink {
+.genesis-motion-disabled .genesis-auto-robot-blink,
+.genesis-motion-disabled .cinematic-hud-enter {
   animation: none !important;
   transition: none !important;
 }
@@ -228,7 +436,8 @@ button:disabled {
   .genesis-control-pulse,
   .genesis-era-current-card,
   .genesis-era-sweep,
-  .genesis-auto-robot-blink {
+  .genesis-auto-robot-blink,
+  .cinematic-hud-enter {
     animation: none !important;
   }
 }

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { Bookmark, ChevronLeft, Crosshair, FlaskConical, Radar, Route, ScanSearch, Telescope } from "lucide-react";
 import type { GameRuntimeData } from "@/lib/canonical-runtime";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
+import { CINEMATIC_RENDERING_VERSION, cinematicHudClasses, cinematicLighting, cinematicPalette } from "@/lib/rendering";
 import {
   bookmarkExplorationTarget,
   completeExplorationProbe,
@@ -389,11 +390,12 @@ function UniverseScene({ model, level, nodes, systemId, visibility, focusedNode,
   }), []);
   return (
     <>
-      <color attach="background" args={["#071629"]} />
-      <fog attach="fog" args={["#0b1d35", 95, 820]} />
-      <ambientLight intensity={0.55} />
-      <hemisphereLight args={["#93c5fd", "#020617", 0.55]} />
-      <pointLight position={[20, 80, 120]} intensity={1.35} color="#67e8f9" />
+      <color attach="background" args={[cinematicLighting.background]} />
+      <fog attach="fog" args={[cinematicLighting.fog.color, cinematicLighting.fog.near, cinematicLighting.fog.far]} />
+      <ambientLight intensity={cinematicLighting.ambientIntensity} />
+      <hemisphereLight args={[cinematicLighting.hemisphere.skyColor, cinematicLighting.hemisphere.groundColor, cinematicLighting.hemisphere.intensity]} />
+      <pointLight position={cinematicLighting.keyLight.position} intensity={cinematicLighting.keyLight.intensity} color={cinematicLighting.keyLight.color} />
+      <pointLight position={cinematicLighting.rimLight.position} intensity={cinematicLighting.rimLight.intensity} color={cinematicLighting.rimLight.color} />
       <CameraRig level={level} focusTarget={focusedNode?.coordinates} />
       <PersistentGalaxyBackdrop level={level} />
       <CurrentLocationBeacon level={level} />
@@ -401,7 +403,7 @@ function UniverseScene({ model, level, nodes, systemId, visibility, focusedNode,
       {starField.map((position, index) => (
         <mesh key={index} position={position}>
           <sphereGeometry args={[0.75 + (index % 3) * 0.25, 8, 8]} />
-          <meshBasicMaterial color={index % 5 === 0 ? "#67e8f9" : "#e0f2fe"} transparent opacity={0.5} blending={THREE.AdditiveBlending} />
+          <meshBasicMaterial color={index % 5 === 0 ? cinematicPalette.cyan : "#e0f2fe"} transparent opacity={0.5} blending={THREE.AdditiveBlending} />
         </mesh>
       ))}
       {level === "system" ? (
@@ -420,7 +422,7 @@ function FallbackMap({ nodes, selectedId, onSelect, onEnter, onHover }: { nodes:
         <button
           key={node.id}
           type="button"
-          className={`flex items-center justify-between rounded-sm border px-4 py-3 text-left transition ${selectedId === node.id ? "border-cyan-100 bg-cyan-300/16" : "border-cyan-200/18 bg-black/34 hover:border-cyan-100/40"}`}
+          className={`flex items-center justify-between rounded-sm px-4 py-3 text-left transition ${selectedId === node.id ? cinematicHudClasses.selection : cinematicHudClasses.compact}`}
           onClick={() => onSelect(node)}
           onDoubleClick={() => onEnter(node)}
           onMouseEnter={() => onHover(node)}
@@ -591,8 +593,9 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
 
   return (
     <section
-      className="relative h-full w-full overflow-hidden bg-[#071629] text-cyan-50"
+      className={`relative h-full w-full overflow-hidden text-cyan-50 ${cinematicHudClasses.worldRoot}`}
       data-testid="galaxy-semantic-map"
+      data-rendering-framework={CINEMATIC_RENDERING_VERSION}
       data-semantic-level={state.level}
       data-max-semantic-level={visibility.maxLevel}
       data-transition-state={state.transitionState}
@@ -609,7 +612,8 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
       data-virtual-sectors={model.virtualCounts.sectors}
       data-virtual-systems={model.virtualCounts.systems}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(20,184,166,0.18),transparent_32rem),radial-gradient(circle_at_72%_18%,rgba(59,130,246,0.16),transparent_26rem)]" />
+      <div className={`absolute inset-0 ${cinematicHudClasses.atmosphere}`} data-render-layer="atmosphere" />
+      <div className={`absolute inset-0 ${cinematicHudClasses.vectorGrid} opacity-55`} data-render-layer="navigation" />
       <div className="absolute inset-0">
         {webgl ? (
           <Canvas camera={{ position: [0, 160, 460], fov: 55, near: 0.1, far: 2200 }} gl={{ preserveDrawingBuffer: true }} data-testid="galaxy-map-canvas">
@@ -621,7 +625,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
       </div>
 
       <header className="pointer-events-none absolute left-5 right-5 top-5 z-10 flex items-start justify-between gap-4">
-        <div className="pointer-events-auto max-w-[36rem] rounded-sm border border-cyan-100/24 bg-slate-950/72 px-4 py-3 shadow-[0_0_32px_rgba(8,145,178,0.18)] backdrop-blur-md">
+        <div className={`pointer-events-auto max-w-[36rem] rounded-sm px-4 py-3 ${cinematicHudClasses.glass}`}>
           <div className="flex flex-wrap items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.18em] text-cyan-100/62" data-testid="galaxy-map-breadcrumb">
             <button type="button" className="hover:text-white" onClick={() => visibility.canAccessGalaxy && setState((current) => ({ ...current, level: "galaxy" }))}>Milky Way</button>
             <span>/</span>
@@ -633,16 +637,16 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
           <div className="mt-2 text-sm font-semibold text-cyan-50/70">{visibility.reason}</div>
         </div>
         <div className="pointer-events-auto flex gap-2">
-          <button type="button" className="grid h-11 w-11 place-items-center rounded-sm border border-cyan-100/28 bg-slate-950/72 text-cyan-100 hover:border-white hover:text-white" aria-label="Back one level" onClick={backOneLevel}>
+          <button type="button" className={`grid h-11 w-11 place-items-center rounded-sm text-cyan-100 hover:text-white ${cinematicHudClasses.control}`} aria-label="Back one level" onClick={backOneLevel}>
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button type="button" className="grid h-11 w-11 place-items-center rounded-sm border border-cyan-100/28 bg-slate-950/72 text-cyan-100 hover:border-white hover:text-white" aria-label="Focus current location" onClick={focusCurrentLocation}>
+          <button type="button" className={`grid h-11 w-11 place-items-center rounded-sm text-cyan-100 hover:text-white ${cinematicHudClasses.control}`} aria-label="Focus current location" onClick={focusCurrentLocation}>
             <Crosshair className="h-5 w-5" />
           </button>
         </div>
       </header>
 
-      <aside className="absolute bottom-5 left-5 z-10 w-[23rem] max-w-[calc(100%-2.5rem)] rounded-sm border border-cyan-100/24 bg-slate-950/76 p-4 shadow-[0_0_34px_rgba(8,145,178,0.18)] backdrop-blur-md" data-testid="galaxy-map-detail-panel">
+      <aside className={`absolute bottom-5 left-5 z-10 w-[23rem] max-w-[calc(100%-2.5rem)] rounded-sm p-4 ${cinematicHudClasses.glass} cinematic-hud-enter`} data-testid="galaxy-map-detail-panel">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-cyan-100/55">{state.level} level</div>
@@ -651,67 +655,67 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
           <Radar className="h-7 w-7 text-cyan-100/70" />
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-black uppercase">
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Knowledge</div>
             <div className="mt-1 text-white">{selected?.knowledgeState ?? "unknown"}</div>
           </div>
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Range</div>
             <div className={`mt-1 ${selected ? distanceClass(selected.rangeState) : "text-cyan-100/54"}`}>{selected?.rangeState.replaceAll("_", " ") ?? "unknown"}</div>
           </div>
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Classification</div>
             <div className="mt-1 text-white">{selected?.classification ?? "Hidden"}</div>
           </div>
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Children</div>
             <div className="mt-1 text-white">{selected?.bodyCount ?? "Hidden"}</div>
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <button type="button" className="flex h-10 flex-1 items-center justify-center gap-2 rounded-sm border border-cyan-100/26 bg-cyan-300/10 text-xs font-black uppercase text-cyan-50 disabled:opacity-45" onClick={focusSelected} disabled={!selected}>
+          <button type="button" className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-sm text-xs font-black uppercase text-cyan-50 disabled:opacity-45 ${cinematicHudClasses.buttonPrimary}`} onClick={focusSelected} disabled={!selected}>
             <Crosshair className="h-4 w-4" /> Focus
           </button>
-          <button type="button" className="flex h-10 flex-1 items-center justify-center gap-2 rounded-sm border border-cyan-100/26 bg-cyan-300/10 text-xs font-black uppercase text-cyan-50 disabled:opacity-45" onClick={probeSelected} disabled={!selected?.canProbe}>
+          <button type="button" className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-sm text-xs font-black uppercase text-cyan-50 disabled:opacity-45 ${cinematicHudClasses.buttonPrimary}`} onClick={probeSelected} disabled={!selected?.canProbe}>
             <ScanSearch className="h-4 w-4" /> Probe
           </button>
-          <button type="button" className="flex h-10 flex-1 items-center justify-center gap-2 rounded-sm border border-emerald-100/26 bg-emerald-300/10 text-xs font-black uppercase text-emerald-50 disabled:opacity-45" disabled={!routePreview?.travelAllowed} onClick={travelSelected}>
+          <button type="button" className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-sm text-xs font-black uppercase text-emerald-50 disabled:opacity-45 ${cinematicHudClasses.buttonGold}`} disabled={!routePreview?.travelAllowed} onClick={travelSelected}>
             <Route className="h-4 w-4" /> Travel
           </button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-sky-100/24 bg-sky-300/10 text-[0.68rem] font-black uppercase text-sky-50 disabled:opacity-45" onClick={selectedScanJob ? analyzeSelectedScan : startScanSelected} disabled={!selected}>
+          <button type="button" className={`flex h-10 items-center justify-center gap-2 rounded-sm text-[0.68rem] font-black uppercase text-sky-50 disabled:opacity-45 ${cinematicHudClasses.buttonPrimary}`} onClick={selectedScanJob ? analyzeSelectedScan : startScanSelected} disabled={!selected}>
             <ScanSearch className="h-4 w-4" /> {selectedScanJob ? "Analyze" : "Start Scan"}
           </button>
-          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-cyan-100/24 bg-cyan-300/10 text-[0.68rem] font-black uppercase text-cyan-50 disabled:opacity-45" onClick={surveySelected} disabled={!selected || selectedExplorationState === "unknown"}>
+          <button type="button" className={`flex h-10 items-center justify-center gap-2 rounded-sm text-[0.68rem] font-black uppercase text-cyan-50 disabled:opacity-45 ${cinematicHudClasses.buttonPrimary}`} onClick={surveySelected} disabled={!selected || selectedExplorationState === "unknown"}>
             <FlaskConical className="h-4 w-4" /> Survey
           </button>
-          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-cyan-100/18 bg-black/26 text-[0.68rem] font-black uppercase text-cyan-50 disabled:opacity-45" onClick={bookmarkSelected} disabled={!selected}>
+          <button type="button" className={`flex h-10 items-center justify-center gap-2 rounded-sm text-[0.68rem] font-black uppercase text-cyan-50 disabled:opacity-45 ${cinematicHudClasses.button}`} onClick={bookmarkSelected} disabled={!selected}>
             <Bookmark className="h-4 w-4" /> Bookmark
           </button>
-          <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-sm border border-emerald-100/18 bg-black/26 text-[0.68rem] font-black uppercase text-emerald-50 disabled:opacity-45" onClick={createExpeditionSelected} disabled={!selected || !routePreview}>
+          <button type="button" className={`flex h-10 items-center justify-center gap-2 rounded-sm text-[0.68rem] font-black uppercase text-emerald-50 disabled:opacity-45 ${cinematicHudClasses.buttonGold}`} onClick={createExpeditionSelected} disabled={!selected || !routePreview}>
             <Route className="h-4 w-4" /> Expedition
           </button>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-black uppercase">
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Explore</div>
             <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.exploration)}%` : "0%"}</div>
           </div>
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Survey</div>
             <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.survey)}%` : "0%"}</div>
           </div>
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Discovery</div>
             <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.discovery)}%` : "0%"}</div>
           </div>
-          <div className="rounded-sm border border-cyan-200/12 bg-black/32 px-3 py-2">
+          <div className={`rounded-sm px-3 py-2 ${cinematicHudClasses.metric}`}>
             <div className="text-cyan-100/48">Complete</div>
             <div className="mt-1 text-white">{selectedScore ? `${Math.round(selectedScore.completion)}%` : "0%"}</div>
           </div>
         </div>
-        <div className="mt-4 rounded-sm border border-cyan-200/12 bg-black/28 px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68" data-testid="exploration-gameplay-panel">
+        <div className={`mt-4 rounded-sm px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68 ${cinematicHudClasses.compact}`} data-testid="exploration-gameplay-panel">
           <div className="flex justify-between gap-3"><span>Exploration State</span><span className="text-white">{selectedExplorationState}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Scan</span><span>{selectedScanJob ? `Completes ${new Date(selectedScanJob.completesAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Ready"}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Probe</span><span>{selectedProbeMission ? selectedProbeMission.status : selected?.canProbe ? "Ready" : "Out of range"}</span></div>
@@ -719,7 +723,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
           <div className="mt-1 flex justify-between gap-3"><span>Rewards</span><span>DP + Research, never crystals</span></div>
         </div>
         {selectedPlanetEvaluation ? (
-          <div className="mt-4 rounded-sm border border-emerald-200/18 bg-black/34 px-3 py-3 text-[0.66rem] font-black uppercase text-cyan-50/70 shadow-[0_0_24px_rgba(16,185,129,0.12)]" data-testid="planet-evaluation-panel" data-opportunity-profile-source={selectedPlanetEvaluation.opportunityProfile.source} data-supports-colonization={String(selectedPlanetEvaluation.opportunityProfile.supportsColonization)}>
+          <div className={`mt-4 rounded-sm px-3 py-3 text-[0.66rem] font-black uppercase text-cyan-50/70 ${cinematicHudClasses.selection}`} data-testid="planet-evaluation-panel" data-opportunity-profile-source={selectedPlanetEvaluation.opportunityProfile.source} data-supports-colonization={String(selectedPlanetEvaluation.opportunityProfile.supportsColonization)}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="tracking-[0.18em] text-emerald-100/72">Planet Evaluation</div>
@@ -766,7 +770,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
                 <button
                   key={planetAction.id}
                   type="button"
-                  className={`min-h-8 rounded-sm border px-2 py-1 text-left text-[0.6rem] font-black uppercase ${selectedPlanetChoice === planetAction.id ? "border-emerald-100 bg-emerald-300/18 text-white" : "border-cyan-100/18 bg-cyan-300/8 text-cyan-50 hover:border-cyan-100/42"}`}
+                  className={`min-h-8 rounded-sm px-2 py-1 text-left text-[0.6rem] font-black uppercase ${selectedPlanetChoice === planetAction.id ? cinematicHudClasses.selection : cinematicHudClasses.button}`}
                   onClick={() => choosePlanetEvaluationAction(planetAction.id)}
                   title={planetAction.reason}
                 >
@@ -779,7 +783,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
             ) : null}
           </div>
         ) : null}
-        <div className="mt-4 rounded-sm border border-cyan-200/12 bg-black/28 px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68">
+        <div className={`mt-4 rounded-sm px-3 py-2 text-[0.66rem] font-black uppercase text-cyan-50/68 ${cinematicHudClasses.compact}`}>
           <div className="flex justify-between gap-3"><span>Route Preview</span><span>{routePreview ? `${Math.round(routePreview.distance)}u` : "--"}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Stops / Fuel</span><span>{routePreview ? `${routePreview.stops} / ${routePreview.fuel}` : "--"}</span></div>
           <div className="mt-1 flex justify-between gap-3"><span>Status</span><span className={routePreview?.travelAllowed ? "text-emerald-100" : "text-amber-100"}>{routePreview?.requiresProbeFirst ? "Probe First" : routePreview?.travelAllowed ? "Travel Ready" : "Plot Only"}</span></div>
@@ -787,7 +791,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
       </aside>
 
       {hoveredNode ? (
-        <aside className="absolute left-1/2 top-24 z-10 w-[18rem] -translate-x-1/2 rounded-sm border border-cyan-100/30 bg-slate-950/82 px-4 py-3 text-xs font-black uppercase text-cyan-50/72 shadow-[0_0_34px_rgba(34,211,238,0.18)] backdrop-blur-md" data-testid="galaxy-map-hover-panel">
+        <aside className={`absolute left-1/2 top-24 z-10 w-[18rem] -translate-x-1/2 rounded-sm px-4 py-3 text-xs font-black uppercase text-cyan-50/72 ${cinematicHudClasses.projection} cinematic-hud-enter`} data-testid="galaxy-map-hover-panel">
           <div className="text-[0.64rem] tracking-[0.2em] text-cyan-100/52">Hover Target</div>
           <div className="mt-1 text-lg text-white">{hoveredNode.label}</div>
           <div className="mt-2 flex justify-between gap-3"><span>{hoveredNode.type}</span><span>{hoveredNode.knowledgeState}</span></div>
@@ -795,7 +799,7 @@ export function GalaxySemanticMap({ data, playerRuntime, entry = "galaxy" }: Gal
         </aside>
       ) : null}
 
-      <aside className="absolute bottom-5 right-5 z-10 w-[20rem] rounded-sm border border-cyan-100/18 bg-slate-950/70 p-4 text-xs font-black uppercase text-cyan-50/74 backdrop-blur-md" data-testid="galaxy-map-dev-hud">
+      <aside className={`absolute bottom-5 right-5 z-10 w-[20rem] rounded-sm p-4 text-xs font-black uppercase text-cyan-50/74 ${cinematicHudClasses.compact}`} data-testid="galaxy-map-dev-hud">
         <div className="flex items-center gap-2 text-cyan-100">
           <Telescope className="h-4 w-4" />
           Galaxy Engine

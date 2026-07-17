@@ -12,6 +12,7 @@
     "sync:studio-runtime": "tsx scripts/sync-studio-runtime.ts",
     "verify:dashboard-assets": "node scripts/verify-dashboard-assets.mjs",
     "verify:architecture-reference": "node scripts/verify-architecture-reference.mjs",
+    "verify:cinematic-rendering": "node scripts/verify-cinematic-rendering.mjs",
     "verify:mobile-readiness": "node scripts/verify-mobile-readiness.mjs",
     "verify:app-shell-consumption": "node scripts/verify-app-shell-consumption.mjs",
     "verify:discovery-runtime": "node scripts/verify-discovery-runtime.mjs",

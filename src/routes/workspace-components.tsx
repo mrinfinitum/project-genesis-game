@@ -4,6 +4,7 @@ import type { GameRuntimeData, RuntimeContentState } from "@/lib/canonical-runti
 import type { DashboardPlayerState } from "@/lib/dashboard/dashboard-model";
 import { resolveWorkspaceLayout, TEMPORARY_STUDIO_SHELL_CONTRACT } from "@/lib/app-shell/studio-shell-contract";
 import type { PlayerRuntimeState } from "@/lib/player-runtime";
+import { cinematicHudClasses } from "@/lib/rendering";
 import {
   auditDiscoveryRuntime,
   composeDiscoveryCatalogView,
@@ -51,18 +52,19 @@ function WorkspaceFrame({ screenId, title, eyebrow, icon: Icon, background = "ra
   const layout = resolveWorkspaceLayout({ shellProfile: TEMPORARY_STUDIO_SHELL_CONTRACT });
   return (
     <main
-      className="relative h-full w-full overflow-hidden text-cyan-50"
+      className={`relative h-full w-full overflow-hidden text-cyan-50 ${cinematicHudClasses.worldRoot}`}
       data-testid={`${screenId}-workspace`}
       data-workspace-screen-id={screenId}
       data-local-coordinate-origin={`${layout.origin.x},${layout.origin.y}`}
       style={{ background }}
       tabIndex={-1}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(45,212,255,0.055)_1px,transparent_1px),linear-gradient(rgba(45,212,255,0.045)_1px,transparent_1px)] bg-[size:64px_64px] opacity-45" />
+      <div className={`absolute inset-0 ${cinematicHudClasses.vectorGrid} opacity-45`} />
+      <div className={`absolute inset-0 ${cinematicHudClasses.atmosphere} opacity-70`} />
       <section className="relative z-10 flex h-full flex-col p-6">
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-cyan-200/16 pb-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-14 w-14 place-items-center rounded-sm border border-cyan-100/28 bg-cyan-300/10 shadow-[0_0_26px_rgba(45,212,255,0.16)]">
+            <div className={`grid h-14 w-14 place-items-center rounded-sm ${cinematicHudClasses.projection}`}>
               <Icon className="h-8 w-8 text-cyan-100" />
             </div>
             <div>
@@ -70,7 +72,7 @@ function WorkspaceFrame({ screenId, title, eyebrow, icon: Icon, background = "ra
               <h1 className="text-3xl font-black uppercase tracking-normal text-white">{title}</h1>
             </div>
           </div>
-          <div className="rounded-sm border border-cyan-200/18 bg-black/35 px-3 py-2 text-[0.68rem] font-black uppercase text-cyan-100/62">
+          <div className={`rounded-sm px-3 py-2 text-[0.68rem] font-black uppercase text-cyan-100/62 ${cinematicHudClasses.compact}`}>
             Shell Workspace · {TEMPORARY_STUDIO_SHELL_CONTRACT.shellVersion}
           </div>
         </header>
