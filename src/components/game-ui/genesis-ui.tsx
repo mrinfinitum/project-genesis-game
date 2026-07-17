@@ -50,6 +50,7 @@ import { calculateGameViewportScale, loadGameDisplayPreferences, saveGameDisplay
 import { resolveDefaultAiAgentId, resolveDefaultAiAgentVariantId, type PlayerRuntimeState } from "@/lib/player-runtime";
 import { CREDITS_ECONOMY_ID, LABOR_ECONOMY_ID, resolvePrimaryEconomyIdForCurrentEra } from "@/lib/player-runtime/economy";
 import type { CloudSave, CloudSyncMetadata } from "@/lib/supabase";
+import { CINEMATIC_RENDERING_VERSION } from "@/lib/rendering";
 import { cssSafeAreaVariables, defaultStorageService, detectRuntimePlatform, getPresentationProfile, resolveDeviceClass, resolveSafeAreaInsets, resolveTouchProfile, shouldShowRotateDevice, type RuntimePlatform } from "@/platform";
 import { genesisTokens, tokenStyle, type AlignmentName } from "./design-tokens";
 import robloxReferenceManifest from "../../design-reference/roblox/reference-manifest.json";
@@ -3638,6 +3639,16 @@ function DashboardDataArtInspector({
   );
 }
 
+function CinematicDashboardOverlay() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[26]" data-testid="dashboard-cinematic-overlay" aria-hidden="true">
+      <div className="cinematic-dashboard-atmosphere absolute inset-0" />
+      <div className="cinematic-dashboard-projection absolute inset-0" />
+      <div className="cinematic-dashboard-vignette absolute inset-0" />
+    </div>
+  );
+}
+
 function RotateDeviceOverlay({ profile }: { profile: ClientProfile }) {
   const orientation = profile.orientation && typeof profile.orientation === "object" ? profile.orientation as Record<string, unknown> : {};
   const notes = typeof orientation.notes === "string" ? orientation.notes : "Gameplay is optimized for landscape.";
@@ -3757,7 +3768,9 @@ export function GameShell({
 
   return (
     <main
-      className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} overflow-hidden bg-[radial-gradient(circle_at_50%_12%,rgba(45,212,255,0.14),transparent_34rem),linear-gradient(145deg,#030713_0%,#071225_52%,#050816_100%)] text-[var(--genesis-text)]`}
+      className={`${embedded ? "" : "h-[100dvh] w-[100dvw]"} cinematic-world-root overflow-hidden text-[var(--genesis-text)]`}
+      data-testid="game-shell-root"
+      data-rendering-framework={CINEMATIC_RENDERING_VERSION}
       data-platform={runtimePlatform}
       data-device-class={deviceClass.id}
       data-safe-area-profile={runtimePlatform === "web" ? "desktop-web" : "studio-mobile"}
@@ -3778,6 +3791,7 @@ export function GameShell({
       ) : null}
       <GameViewportScaler explicitScale={frameScale} embedded={embedded} assetWarnings={scaleAssetWarnings}>
           {dashboardImagePath(dashboardArt.dashboard_background) ? <img src={dashboardImagePath(dashboardArt.dashboard_background)} alt="" className="absolute inset-0 h-full w-full object-fill opacity-95" /> : <DashboardMissingArt art={dashboardArt.dashboard_background} className="absolute inset-0" />}
+          <CinematicDashboardOverlay />
           <div data-safe-area-target="top-hud" style={{ ...robloxLayoutRect(ROBLOX_DASHBOARD_LAYOUT.topHud), paddingTop: "var(--safe-top)" }}>
             <RobloxTopHud model={model} assets={data.assets} art={dashboardArt} showDevWarnings={dashboardDevToolsEnabled || initialTopHudCalibrationOpen} initialCalibrationOpen={initialTopHudCalibrationOpen} onSettingsClick={() => setSettingsOpen(true)} settingsButtonRef={settingsButtonRef} />
           </div>

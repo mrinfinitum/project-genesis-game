@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { GalaxySemanticMap } from "@/components/galaxy/GalaxySemanticMap";
+import { GameShell } from "@/components/game-ui/genesis-ui";
 import { getBundledStudioRuntimeSnapshot, mockRuntimeData, type GameRuntimeData } from "@/lib/canonical-runtime";
 import {
   CINEMATIC_RENDERING_LAYERS,
@@ -54,5 +55,17 @@ describe("cinematic rendering framework", () => {
     expect(devHud).toHaveClass(cinematicHudClasses.compact);
     expect(map.querySelector('[data-render-layer="atmosphere"]')).toHaveClass(cinematicHudClasses.atmosphere);
     expect(map.querySelector('[data-render-layer="navigation"]')).toHaveClass(cinematicHudClasses.vectorGrid);
+  });
+
+  it("applies the cinematic overlay to the main dashboard shell", () => {
+    render(<GameShell data={runtime} embedded frameScale={0.5} />);
+    const dashboard = screen.getByTestId("game-shell-root");
+    const overlay = screen.getByTestId("dashboard-cinematic-overlay");
+
+    expect(dashboard).toHaveAttribute("data-rendering-framework", CINEMATIC_RENDERING_VERSION);
+    expect(dashboard).toHaveClass(cinematicHudClasses.worldRoot);
+    expect(overlay.querySelector(".cinematic-dashboard-atmosphere")).toBeInTheDocument();
+    expect(overlay.querySelector(".cinematic-dashboard-projection")).toBeInTheDocument();
+    expect(overlay.querySelector(".cinematic-dashboard-vignette")).toBeInTheDocument();
   });
 });
